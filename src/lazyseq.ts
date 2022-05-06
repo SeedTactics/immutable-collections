@@ -1,5 +1,5 @@
-import { IMap, HashKey, buildIMap, iterableToIMap } from "./imap";
-import { ISet } from "./iset";
+import { IMap, HashKey, buildIMap, iterableToIMap } from "./imap.js";
+import { ISet } from "./iset.js";
 
 declare global {
   interface Array<T> {
@@ -99,11 +99,21 @@ export class LazySeq<T> {
 
   static ofRange(start: number, end: number, step?: number): LazySeq<number> {
     const s = step || 1;
-    return LazySeq.ofIterator(function* () {
-      for (let x = start; x < end; x += s) {
-        yield x;
-      }
-    });
+    if (s > 0) {
+      return LazySeq.ofIterator(function* () {
+        for (let x = start; x < end; x += s) {
+          yield x;
+        }
+      });
+    } else if (s < 0) {
+      return LazySeq.ofIterator(function* () {
+        for (let x = start; x > end; x += s) {
+          yield x;
+        }
+      });
+    } else {
+      throw new Error("step must be nonzero");
+    }
   }
 
   [Symbol.iterator](): Iterator<T> {
@@ -154,14 +164,6 @@ export class LazySeq<T> {
     });
   }
 
-  appendAll(i: Iterable<T>): LazySeq<T> {
-    const iter = this.iter;
-    return LazySeq.ofIterator(function* () {
-      yield* iter;
-      yield* i;
-    });
-  }
-
   chunk(size: number): LazySeq<ReadonlyArray<T>> {
     const iter = this.iter;
     return LazySeq.ofIterator(function* () {
@@ -176,6 +178,14 @@ export class LazySeq<T> {
       if (chunk.length > 0) {
         yield chunk;
       }
+    });
+  }
+
+  concat(i: Iterable<T>): LazySeq<T> {
+    const iter = this.iter;
+    return LazySeq.ofIterator(function* () {
+      yield* iter;
+      yield* i;
     });
   }
 
@@ -516,6 +526,10 @@ export class LazySeq<T> {
     return m;
   }
 
+  toRMap<K, S>(f: (x: T) => readonly [K & PrimitiveOrd, S], merge?: (v1: S, v2: S) => S): ReadonlyMap<K, S> {
+    return this.toMutableMap(f, merge);
+  }
+
   toObject<S>(f: (x: T) => readonly [string, S], merge?: (v1: S, v2: S) => S): { [key: string]: S };
   toObject<S>(f: (x: T) => readonly [number, S], merge?: (v1: S, v2: S) => S): { [key: number]: S };
   toObject<S>(f: (x: T) => readonly [string | number, S], merge?: (v1: S, v2: S) => S): { [key: string | number]: S } {
@@ -534,10 +548,6 @@ export class LazySeq<T> {
       }
     }
     return m;
-  }
-
-  toRMap<K, S>(f: (x: T) => readonly [K & PrimitiveOrd, S], merge?: (v1: S, v2: S) => S): ReadonlyMap<K, S> {
-    return this.toMutableMap(f, merge);
   }
 
   toMutableSet<S>(converter: (x: T) => S & PrimitiveOrd): Set<S> {

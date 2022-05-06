@@ -1,5 +1,5 @@
-import { emptyIMap, HashKey, IMap, iterableToIMap } from "./imap";
-import { LazySeq } from "./lazyseq";
+import { emptyIMap, HashKey, IMap, iterableToIMap } from "./imap.js";
+import { LazySeq } from "./lazyseq.js";
 
 export class ISet<T> {
   #imap: IMap<T, undefined>;

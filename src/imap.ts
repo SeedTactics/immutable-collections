@@ -1,6 +1,5 @@
-import { LazySeq } from "./lazyseq";
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-var-requires
-const hamt: any = require("hamt_plus");
+import { LazySeq } from "./lazyseq.js";
+import hamt from "hamt_plus";
 
 export type HashKeyObj = {
   equals(other: unknown): boolean;
@@ -288,7 +287,7 @@ function collectValuesIMap<K, V>(this: IMap<K & HashKey, V>, f: (v: V) => V | nu
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-const hamtProto = hamt.empty.prototype;
+const hamtProto = hamt.empty.__proto__;
 if (hamtProto.toLazySeq === undefined) {
   hamtProto.toLazySeq = imapToLazySeq;
   hamtProto.keysToLazySeq = imapToKeysLazySeq;
