@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
+import assert from "assert";
 
 import { LazySeq } from "../src/lazyseq.js";
 import { IntStrKey } from "./hashing.test.js";
@@ -402,15 +403,168 @@ describe("LazySeq", () => {
 
   it("converts to a IMap");
 
-  it("converts to a JS map");
+  it("converts to a JS map", () => {
+    const seq = LazySeq.ofIterable([
+      {
+        foo: 1,
+        bar: "hello",
+      },
+      {
+        foo: 1,
+        bar: "world",
+      },
+      {
+        foo: 2,
+        bar: "!!!",
+      },
+      {
+        foo: 3,
+        bar: "??!?",
+      },
+    ]);
 
-  it("converts to an object");
+    const m = seq.toRMap(
+      (x) => [x.foo, x.bar],
+      (x, y) => x + y
+    );
 
-  it("converts to a JS set");
+    expect(m).to.deep.equal(
+      new Map([
+        [1, "helloworld"],
+        [2, "!!!"],
+        [3, "??!?"],
+      ])
+    );
+
+    const mm = seq.toMutableMap(
+      (x) => [x.foo, x.bar],
+      (x, y) => x + y
+    );
+    mm.set(4, "new");
+    expect(mm).to.deep.equal(
+      new Map([
+        [1, "helloworld"],
+        [2, "!!!"],
+        [3, "??!?"],
+        [4, "new"],
+      ])
+    );
+
+    // try without a merge function
+    const m3 = seq.toRMap((x) => [x.foo, x.bar]);
+    expect(m3).to.deep.equal(
+      new Map([
+        [1, "world"],
+        [2, "!!!"],
+        [3, "??!?"],
+      ])
+    );
+  });
+
+  it("converts to an object", () => {
+    const seq = LazySeq.ofIterable([
+      {
+        foo: 1,
+        bar: "hello",
+      },
+      {
+        foo: 1,
+        bar: "world",
+      },
+      {
+        foo: 2,
+        bar: "!!!",
+      },
+      {
+        foo: 3,
+        bar: "??!?",
+      },
+    ]);
+
+    const o = seq.toObject(
+      (x) => [x.foo, x.bar],
+      (x, y) => x + y
+    );
+
+    expect(o).to.deep.equal({
+      1: "helloworld",
+      2: "!!!",
+      3: "??!?",
+    });
+
+    // try without a merge function
+    const o2 = seq.toObject((x) => [x.foo, x.bar]);
+    expect(o2).to.deep.equal({
+      1: "world",
+      2: "!!!",
+      3: "??!?",
+    });
+  });
+
+  it("converts to a JS set", () => {
+    const seq = LazySeq.ofRange(1, 5).concat(LazySeq.ofRange(1, 5));
+    const set = seq.toRSet((x) => x * 2);
+    const mset = seq.toMutableSet((x) => x * 3);
+    mset.add(100);
+
+    expect(seq.toRArray()).to.deep.equal([1, 2, 3, 4, 1, 2, 3, 4]);
+    expect(set).to.deep.equal(new Set([2, 4, 6, 8]));
+    expect(mset).to.deep.equal(new Set([100, 3, 6, 9, 12]));
+  });
 
   it("builds a lookup in an IMap");
 
-  it("builds a lookup in a ReadonlyMap");
+  it("builds a lookup in a ReadonlyMap", () => {
+    const seq = LazySeq.ofIterable([
+      {
+        foo: 1,
+        bar: "hello",
+      },
+      {
+        foo: 1,
+        bar: "world",
+      },
+      {
+        foo: 2,
+        bar: "!!!",
+      },
+      {
+        foo: 3,
+        bar: "??!?",
+      },
+    ]);
+
+    const look = seq.toRLookup((s) => s.foo);
+    // chai's deep equality doesn't work with Maps containing objects
+    // https://github.com/chaijs/deep-eql/issues/46
+    assert.deepEqual(
+      look,
+      new Map([
+        [
+          1,
+          [
+            { foo: 1, bar: "hello" },
+            { foo: 1, bar: "world" },
+          ],
+        ],
+        [2, [{ foo: 2, bar: "!!!" }]],
+        [3, [{ foo: 3, bar: "??!?" }]],
+      ])
+    );
+
+    const look2 = seq.toRLookup(
+      (s) => s.foo,
+      (s) => s.bar
+    );
+    assert.deepEqual(
+      look2,
+      new Map([
+        [1, ["hello", "world"]],
+        [2, ["!!!"]],
+        [3, ["??!?"]],
+      ])
+    );
+  });
 
   it("transforms to something else", () => {
     const seq = LazySeq.ofRange(1, 10);
