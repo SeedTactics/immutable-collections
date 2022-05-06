@@ -41,17 +41,17 @@ function fullIndex(hash: number, shift: number): number {
   return (hash >>> shift) & subkeyMask;
 }
 
-// create a new collision node from two leafs
-function mkCollision<K, V>(hash: number, leaf1: { key: K; val: V }, leaf2: { key: K; val: V }): CollisionNode<K, V> {
-  return { hash, collision: [leaf1, leaf2] };
-}
+type BitmapNodeBeforeChildren<K, V> = {
+  bitmap: number;
+  children?: Array<BitmapNodeBeforeChildren<K, V> | LeafNode<K, V>>;
+};
 
-// create a new node consisting of two children whose keys and hashes are not equal
+// create a new node consisting of two children. Requires that the keys and hashes of the keys are not equal
 function two<K, V>(shift: number, leaf1: LeafNode<K, V>, leaf2: LeafNode<K, V>): HamtNode<K, V> {
   const hash1 = leaf1.hash;
   const hash2 = leaf2.hash;
-  let root: BitmapIndexedNode<K, V> | undefined;
-  let parent: BitmapIndexedNode<K, V> | undefined;
+  let root: BitmapNodeBeforeChildren<K, V> | undefined;
+  let parent: BitmapNodeBeforeChildren<K, V> | undefined;
 
   do {
     const mask1 = mask(hash1, shift);
@@ -59,7 +59,7 @@ function two<K, V>(shift: number, leaf1: LeafNode<K, V>, leaf2: LeafNode<K, V>):
 
     if (mask1 === mask2) {
       // need to recurse
-      const newNode = { bitmap: mask1, children: [] };
+      const newNode = { bitmap: mask1 };
       if (root === undefined) {
         root = newNode;
       }
@@ -70,22 +70,18 @@ function two<K, V>(shift: number, leaf1: LeafNode<K, V>, leaf2: LeafNode<K, V>):
 
       shift = shift + bitsPerSubkey;
     } else {
-      // we can insert directly
+      // we can insert
       const newNode = { bitmap: mask1 | mask2, children: mask1 < mask2 ? [leaf1, leaf2] : [leaf2, leaf1] };
       if (parent !== undefined) {
         parent.children = [newNode];
       }
-      return root ?? newNode;
+      // typescript doesn't know that we are guaranteed to have set children because if root has a value,
+      // root was also the parent at some point and had it's children set.  Therefore, cast root to BitmapIndexedNode<K, V>
+      return (root as BitmapIndexedNode<K, V>) ?? newNode;
     }
   } while (shift <= maxShift);
 
-  if (process.env.NODE_ENV === "development") {
-    if (shift > maxShift) {
-      throw new Error("Internal violation: shift > maxShift for two " + JSON.stringify({ shift, leaf1, leaf2 }));
-    }
-  }
-
-  return root;
+  throw new Error("Internal violation: shift > maxShift for two " + JSON.stringify({ shift, leaf1, leaf2 }));
 }
 
 // create a new bitmap indexed or full node
@@ -119,15 +115,13 @@ export function lookup<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V>)
         return undefined;
       } else {
         // recurse
-        const i = sparseIndex(node.bitmap, m);
         shift += bitsPerSubkey;
-        node = node.children[i];
+        node = node.children[sparseIndex(node.bitmap, m)];
       }
     } else if ("full" in node) {
       // recurse
-      const i = fullIndex(hash, shift);
       shift += bitsPerSubkey;
-      node = node.full[i];
+      node = node.full[fullIndex(hash, shift)];
     } else if ("key" in node) {
       if (hash === node.hash && cfg.keyEq(k, node.key)) {
         return node.val;
@@ -205,7 +199,13 @@ export function insert<K, V>(
             return { hash, key: k, val: newVal };
           }
         } else {
-          return mkCollision(hash, { key: k, val: getVal(undefined) }, { key: node.key, val: node.val });
+          return {
+            hash,
+            collision: [
+              { key: k, val: getVal(undefined) },
+              { key: node.key, val: node.val },
+            ],
+          };
         }
       } else {
         return two(shift, { hash, key: k, val: getVal(undefined) }, node);
@@ -280,7 +280,13 @@ export function mutateInsert<K, V>(
           node.val = merge ? merge(node.val, v) : v;
           return node;
         } else {
-          return mkCollision(hash, { key: k, val: v }, { key: node.key, val: node.val });
+          return {
+            hash,
+            collision: [
+              { key: k, val: v },
+              { key: node.key, val: node.val },
+            ],
+          };
         }
       } else {
         return two(shift, { hash, key: k, val: v }, node);
