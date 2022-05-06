@@ -26,9 +26,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
-      - name: Install client deps
+      - name: Install deps
         run: pnpm install --frozen-lockfile
-      - name: Client Test Suite
+
+      - name: Test Suite
         run: pnpm run test
 
       - name: Cleanup pnpm cache
