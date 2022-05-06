@@ -17,6 +17,7 @@ export const empty: HamtNode<unknown, unknown> = { empty: null };
 const bitsPerSubkey = 5;
 const subkeyMask = (1 << bitsPerSubkey) - 1;
 const maxChildren = 1 << bitsPerSubkey; // 2^bitsPerSubKey
+const maxShift = Math.floor(32 / bitsPerSubkey);
 
 // given the hash and the shift (the tree level), returns a bitmap with a 1 in the position of the index of the hash at this level
 function mask(hash: number, shift: number): number {
@@ -45,23 +46,46 @@ function mkCollision<K, V>(hash: number, leaf1: { key: K; val: V }, leaf2: { key
   return { hash, collision: [leaf1, leaf2] };
 }
 
-// create a new node consisting of two children whose keys are not equal
-function two<K, V>(startShift: number, leaf1: LeafNode<K, V>, leaf2: LeafNode<K, V>): HamtNode<K, V> {
+// create a new node consisting of two children whose keys and hashes are not equal
+function two<K, V>(shift: number, leaf1: LeafNode<K, V>, leaf2: LeafNode<K, V>): HamtNode<K, V> {
   const hash1 = leaf1.hash;
   const hash2 = leaf2.hash;
-  function loop(shift: number): HamtNode<K, V> {
+  let root: BitmapIndexedNode<K, V> | undefined;
+  let parent: BitmapIndexedNode<K, V> | undefined;
+
+  do {
     const mask1 = mask(hash1, shift);
     const mask2 = mask(hash2, shift);
+
     if (mask1 === mask2) {
       // need to recurse
-      const newChild = loop(shift + bitsPerSubkey);
-      return { bitmap: mask1, children: [newChild] };
+      const newNode = { bitmap: mask1, children: [] };
+      if (root === undefined) {
+        root = newNode;
+      }
+      if (parent !== undefined) {
+        parent.children = [newNode];
+      }
+      parent = newNode;
+
+      shift = shift + bitsPerSubkey;
     } else {
-      return { bitmap: mask1 | mask2, children: mask1 < mask2 ? [leaf1, leaf2] : [leaf2, leaf1] };
+      // we can insert directly
+      const newNode = { bitmap: mask1 | mask2, children: mask1 < mask2 ? [leaf1, leaf2] : [leaf2, leaf1] };
+      if (parent !== undefined) {
+        parent.children = [newNode];
+      }
+      return root ?? newNode;
+    }
+  } while (shift <= maxShift);
+
+  if (process.env.NODE_ENV === "development") {
+    if (shift > maxShift) {
+      throw new Error("Internal violation: shift > maxShift for two " + JSON.stringify({ shift, leaf1, leaf2 }));
     }
   }
 
-  return loop(startShift);
+  return root;
 }
 
 // create a new bitmap indexed or full node
