@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    tags-ignore:
+      - "v*"
+
+jobs:
+  client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "17"
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install client deps
+        run: pnpm install --frozen-lockfile
+      - name: Client Test Suite
+        run: pnpm run test
+
+      - name: Cleanup pnpm cache
+        run: pnpm store prune
