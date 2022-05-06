@@ -3,9 +3,10 @@
     "module": "es2020",
     "target": "es2021",
     "lib": ["es2021", "dom"],
+    "declaration": true,
+    "outDir": "./dist",
 
     "allowJs": false,
-    "jsx": "react",
     "moduleResolution": "node",
     "downlevelIteration": true,
     "allowSyntheticDefaultImports": true,

@@ -12,7 +12,7 @@ export type HamtNode<K, V> =
   | BitmapIndexedNode<K, V>
   | FullNode<K, V>;
 
-export const empty: HamtNode<any, any> = { empty: null };
+export const empty: HamtNode<unknown, unknown> = { empty: null };
 
 const bitsPerSubkey = 5;
 const subkeyMask = (1 << bitsPerSubkey) - 1;
@@ -73,11 +73,11 @@ function bitmapIndexedOrFull<K, V>(bitmap: number, children: Array<HamtNode<K, V
   }
 }
 
-function copyAndSpliceArray<T>(arr: Array<T>, at: number, t: T) {
+function copyAndSpliceArray<T>(arr: Array<T>, at: number, t: T): Array<T> {
   const len = arr.length;
   let i = 0;
   let g = 0;
-  const out = new Array(len + 1);
+  const out = new Array<T>(len + 1);
   while (i < at) out[g++] = arr[i++];
   out[at] = t;
   while (i < len) out[++g] = arr[i++];
