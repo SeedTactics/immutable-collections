@@ -1,29 +1,6 @@
 import { IMap, HashKey, buildIMap, iterableToIMap } from "./imap.js";
 import { ISet } from "./iset.js";
 
-declare global {
-  interface Array<T> {
-    toLazySeq(): LazySeq<T>;
-  }
-  interface ReadonlyArray<T> {
-    toLazySeq(): LazySeq<T>;
-  }
-  interface Map<K, V> {
-    toLazySeq(): LazySeq<readonly [K, V]>;
-  }
-  interface ReadonlyMap<K, V> {
-    toLazySeq(): LazySeq<readonly [K, V]>;
-  }
-  interface Set<T> {
-    toLazySeq(): LazySeq<T>;
-    setEquals(other: ReadonlySet<T>): boolean;
-  }
-  interface ReadonlySet<T> {
-    toLazySeq(): LazySeq<T>;
-    setEquals(other: ReadonlySet<T>): boolean;
-  }
-}
-
 export type PrimitiveOrd = number | string | boolean;
 
 export type ToPrimitiveOrd<T> = ((t: T) => number) | ((t: T) => string) | ((t: T) => boolean);
@@ -598,40 +575,4 @@ export class LazySeq<T> {
   }
 
   private constructor(private iter: Iterable<T>) {}
-}
-
-/* eslint-disable @typescript-eslint/unbound-method */
-if (!Array.prototype.toLazySeq) {
-  Array.prototype.toLazySeq = function () {
-    // don't set iterIsNewArray to true, because we don't want to copy the array
-    return LazySeq.ofIterable(this);
-  };
-}
-if (!Map.prototype.toLazySeq) {
-  Map.prototype.toLazySeq = function () {
-    return LazySeq.ofIterable(this);
-  };
-}
-if (!Set.prototype.toLazySeq) {
-  Set.prototype.toLazySeq = function () {
-    return LazySeq.ofIterable(this);
-  };
-}
-
-if (!Set.prototype.setEquals) {
-  Set.prototype.setEquals = function setEquals<T>(other: ReadonlySet<T>): boolean {
-    if (this.size !== other.size) return false;
-    for (const t of this) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      if (!other.has(t)) return false;
-    }
-    return true;
-  };
-}
-
-export function setUnion<T>(s1: ReadonlySet<T>, s2: ReadonlySet<T>): ReadonlySet<T> {
-  const s = new Set<T>();
-  for (const x of s1) s.add(x);
-  for (const x of s2) s.add(x);
-  return s;
 }
