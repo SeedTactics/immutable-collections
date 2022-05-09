@@ -238,7 +238,30 @@ describe("LazySeq", () => {
     ]);
   });
 
-  it("groups by a tuple");
+  it("groups by a tuple", () => {
+    const seq = LazySeq.ofIterable([
+      { foo: 1, bar: "a", baz: true },
+      { foo: 2, bar: "a", baz: true },
+      { foo: 3, bar: "b", baz: true },
+      { foo: 4, bar: "b", baz: false },
+      { foo: 5, bar: "c", baz: true },
+    ]);
+
+    const groups = seq.groupByTuple((i) => [i.bar, i.baz]);
+
+    expect(groups.toRArray()).to.deep.equal([
+      [
+        ["a", true],
+        [
+          { foo: 1, bar: "a", baz: true },
+          { foo: 2, bar: "a", baz: true },
+        ],
+      ],
+      [["b", true], [{ foo: 3, bar: "b", baz: true }]],
+      [["b", false], [{ foo: 4, bar: "b", baz: false }]],
+      [["c", true], [{ foo: 5, bar: "c", baz: true }]],
+    ]);
+  });
 
   it("returns the head of a list", () => {
     const seq = LazySeq.ofRange(1, 10);
@@ -327,7 +350,60 @@ describe("LazySeq", () => {
     expect(sorted.toRArray()).to.deep.equal([9, 8, 7, 6, 5, 4, 3, 2, 1]);
   });
 
-  it("sorts by custom keys");
+  it("sorts by custom keys", () => {
+    const seq = LazySeq.ofIterable([
+      { foo: 1, bar: "z" },
+      { foo: 2, bar: "yA" },
+      { foo: 2, bar: "yB" },
+      { foo: 3, bar: "xB" },
+      { foo: 3, bar: "xA" },
+      { foo: 4, bar: "w" },
+      { foo: 5, bar: "v" },
+      { foo: 6, bar: "u" },
+    ]);
+
+    expect(
+      seq
+        .sort(
+          (x) => x.foo,
+          (x) => x.bar
+        )
+        .toRArray()
+    ).to.deep.equal([
+      { foo: 1, bar: "z" },
+      { foo: 2, bar: "yA" },
+      { foo: 2, bar: "yB" },
+      { foo: 3, bar: "xA" },
+      { foo: 3, bar: "xB" },
+      { foo: 4, bar: "w" },
+      { foo: 5, bar: "v" },
+      { foo: 6, bar: "u" },
+    ]);
+
+    // try desc
+    expect(seq.sort({ desc: (x) => x.foo }, (x) => x.bar).toRArray()).to.deep.equal([
+      { foo: 6, bar: "u" },
+      { foo: 5, bar: "v" },
+      { foo: 4, bar: "w" },
+      { foo: 3, bar: "xA" },
+      { foo: 3, bar: "xB" },
+      { foo: 2, bar: "yA" },
+      { foo: 2, bar: "yB" },
+      { foo: 1, bar: "z" },
+    ]);
+
+    // bar first
+    expect(seq.sort({ asc: (x) => x.bar }).toRArray()).to.deep.equal([
+      { foo: 6, bar: "u" },
+      { foo: 5, bar: "v" },
+      { foo: 4, bar: "w" },
+      { foo: 3, bar: "xA" },
+      { foo: 3, bar: "xB" },
+      { foo: 2, bar: "yA" },
+      { foo: 2, bar: "yB" },
+      { foo: 1, bar: "z" },
+    ]);
+  });
 
   it("sums a sequence", () => {
     const seq = LazySeq.ofRange(1, 10);
@@ -399,7 +475,12 @@ describe("LazySeq", () => {
     expect(arr).to.deep.equal([1, 2, 3, 4, 5, 100]);
   });
 
-  it("converts to a sorted array");
+  it("converts to a sorted array", () => {
+    const seq = LazySeq.ofIterable([1, 2, 3, 4, 5]);
+    const sorted = seq.toSortedArray({ desc: (x) => x });
+
+    expect(sorted).to.deep.equal([5, 4, 3, 2, 1]);
+  });
 
   it("converts to a IMap");
 
