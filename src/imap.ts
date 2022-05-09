@@ -297,3 +297,14 @@ if (hamtProto.toLazySeq === undefined) {
   hamtProto.mapValues = mapValuesIMap;
   hamtProto.collectValues = collectValuesIMap;
 }
+
+export function unionMaps<K, V>(merge: (v1: V, v2: V) => V, ...maps: readonly IMap<K & HashKey, V>[]): IMap<K, V> {
+  let m = maps[0];
+  for (let i = 1; i < maps.length; i++) {
+    m = maps[i].fold(
+      (leftVals, rightVals, k) => leftVals.modify((old) => (old === undefined ? rightVals : merge(old, rightVals)), k),
+      m
+    );
+  }
+  return m;
+}
