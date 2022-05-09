@@ -595,6 +595,8 @@ describe("LazySeq", () => {
 
   it("builds a lookup in an IMap");
 
+  it("builds a lookupMap in an IMap");
+
   it("builds a lookup in a ReadonlyMap", () => {
     const seq = LazySeq.ofIterable([
       {
