@@ -28,7 +28,7 @@ export interface IMap<K, V> {
   set(k: K & HashKey, v: V): IMap<K, V>;
   modify(f: (v: V | undefined) => V, k: K & HashKey): IMap<K, V>;
   delete(k: K & HashKey): IMap<K, V>;
-  append(items: Iterable<readonly [K & HashKey, V]>, merge: (v1: V, v2: V) => V): IMap<K, V>;
+  append(items: Iterable<readonly [K & HashKey, V]>, merge?: (v1: V, v2: V) => V): IMap<K, V>;
   bulkDelete(shouldDelete: (k: K, v: V) => boolean): IMap<K, V>; // TODO: remove once collectValues is efficient
   mapValues<U>(f: (v: V, k: K) => U): IMap<K, U>;
   collectValues(f: (v: V, k: K) => V | null | undefined): IMap<K, V>;
@@ -244,12 +244,12 @@ function imapToValuesLazySeq<K, V>(this: IMap<K, V>): LazySeq<V> {
 function appendIMap<K, V>(
   this: IMap<K, V>,
   items: Iterable<readonly [K & HashKey, V]>,
-  merge: (v1: V, v2: V) => V
+  merge?: (v1: V, v2: V) => V
 ): IMap<K, V> {
   // eslint-disable-next-line @typescript-eslint/no-this-alias
   let imap = this;
   for (const [k, v] of items) {
-    imap = imap.modify((old) => (old === undefined ? v : merge(old, v)), k);
+    imap = imap.modify((old) => (old === undefined || merge === undefined ? v : merge(old, v)), k);
   }
   return imap;
 }
