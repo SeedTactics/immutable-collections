@@ -26,7 +26,7 @@ export interface IMap<K, V> {
   valuesToLazySeq(): LazySeq<V>;
 
   set(k: K & HashKey, v: V): IMap<K, V>;
-  modify(f: (v: V | undefined) => V, k: K & HashKey): IMap<K, V>;
+  modify(k: K & HashKey, f: (v: V | undefined) => V): IMap<K, V>;
   delete(k: K & HashKey): IMap<K, V>;
   append(items: Iterable<readonly [K & HashKey, V]>, merge?: (v1: V, v2: V) => V): IMap<K, V>;
   bulkDelete(shouldDelete: (k: K, v: V) => boolean): IMap<K, V>; // TODO: remove once collectValues is efficient
@@ -205,7 +205,7 @@ export function iterableToIMap<K, V>(
   const m = makeWithDynamicConfig<K, V>().beginMutation();
   if (merge !== undefined) {
     for (const [k, v] of items) {
-      m.modify((old) => (old === undefined ? v : merge(old, v)), k);
+      m.modify(k, (old) => (old === undefined ? v : merge(old, v)));
     }
   } else {
     for (const [k, v] of items) {
@@ -222,7 +222,7 @@ export function buildIMap<K, V, T>(
 ): IMap<K, V> {
   const m = makeWithDynamicConfig<K, V>().beginMutation();
   for (const t of items) {
-    m.modify((old) => getVal(old, t), getKey(t));
+    m.modify(getKey(t), (old) => getVal(old, t));
   }
   return m.endMutation();
 }
@@ -249,7 +249,7 @@ function appendIMap<K, V>(
   // eslint-disable-next-line @typescript-eslint/no-this-alias
   let imap = this;
   for (const [k, v] of items) {
-    imap = imap.modify((old) => (old === undefined || merge === undefined ? v : merge(old, v)), k);
+    imap = imap.modify(k, (old) => (old === undefined || merge === undefined ? v : merge(old, v)));
   }
   return imap;
 }
@@ -296,13 +296,14 @@ if (hamtProto.toLazySeq === undefined) {
   hamtProto.bulkDelete = bulkDeleteIMap;
   hamtProto.mapValues = mapValuesIMap;
   hamtProto.collectValues = collectValuesIMap;
+  hamtProto["@@__IMMUTABLE_KEYED__@@"] = true;
 }
 
 export function unionMaps<K, V>(merge: (v1: V, v2: V) => V, ...maps: readonly IMap<K & HashKey, V>[]): IMap<K, V> {
   let m = maps[0];
   for (let i = 1; i < maps.length; i++) {
     m = maps[i].fold(
-      (leftVals, rightVals, k) => leftVals.modify((old) => (old === undefined ? rightVals : merge(old, rightVals)), k),
+      (leftVals, rightVals, k) => leftVals.modify(k, (old) => (old === undefined ? rightVals : merge(old, rightVals))),
       m
     );
   }
