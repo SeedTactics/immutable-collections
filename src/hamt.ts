@@ -137,18 +137,15 @@ export function lookup<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V>)
   return undefined;
 }
 
-// a MutableBitmapNode but children property is not yet set so is undefined
-type MutableBitmapNodeBeforeChildren<K, V> = {
-  bitmap: number;
-  children?: Array<MutableBitmapNodeBeforeChildren<K, V> | LeafNode<K, V>>;
-};
-
 // create a new node consisting of two children. Requires that the keys and hashes of the keys are not equal
 function two<K, V>(shift: number, leaf1: LeafNode<K, V>, leaf2: LeafNode<K, V>): MutableHamtNode<K, V> {
   const hash1 = leaf1.hash;
   const hash2 = leaf2.hash;
-  let root: MutableBitmapNodeBeforeChildren<K, V> | undefined;
-  let parent: MutableBitmapNodeBeforeChildren<K, V> | undefined;
+  let root: MutableBitmapIndexedNode<K, V> | undefined;
+
+  // as we descend through the masks, newly created nodes are set at the zero index in the
+  // parent array.
+  let parent: Array<MutableHamtNode<K, V>> | undefined;
 
   do {
     const mask1 = mask(hash1, shift);
@@ -156,25 +153,24 @@ function two<K, V>(shift: number, leaf1: LeafNode<K, V>, leaf2: LeafNode<K, V>):
 
     if (mask1 === mask2) {
       // need to recurse
-      const newNode = { bitmap: mask1 };
+      const newArr = new Array(1);
+      const newNode = { bitmap: mask1, children: newArr };
       if (root === undefined) {
         root = newNode;
       }
       if (parent !== undefined) {
-        parent.children = [newNode];
+        parent[0] = newNode;
       }
-      parent = newNode;
+      parent = newArr;
 
       shift = shift + bitsPerSubkey;
     } else {
       // we can insert
       const newNode = { bitmap: mask1 | mask2, children: mask1 < mask2 ? [leaf1, leaf2] : [leaf2, leaf1] };
       if (parent !== undefined) {
-        parent.children = [newNode];
+        parent[0] = newNode;
       }
-      // typescript doesn't know that we are guaranteed to have set children because if root has a value,
-      // root was also the parent at some point and had it's children set.  Therefore, cast root to MutableBitmapIndexedNode<K, V>
-      return (root as MutableBitmapIndexedNode<K, V>) ?? newNode;
+      return root ?? newNode;
     }
   } while (shift <= maxShift);
 
@@ -183,23 +179,17 @@ function two<K, V>(shift: number, leaf1: LeafNode<K, V>, leaf2: LeafNode<K, V>):
   );
 }
 
-// create a new bitmap indexed or full node
-function bitmapIndexedOrFull<K, V>(bitmap: number, children: ReadonlyArray<HamtNode<K, V>>): HamtNode<K, V> {
-  if (children.length === maxChildren) {
-    return { full: children };
-  } else {
-    return { bitmap, children };
-  }
-}
-
-function copyAndSpliceArray<T>(arr: ReadonlyArray<T>, at: number, t: T): Array<T> {
+// Copy the array and splice a single element in at the given index
+function copyAndInsertToArray<T>(arr: ReadonlyArray<T>, newIdx: number, newT: T): Array<T> {
   const len = arr.length;
-  let i = 0;
-  let g = 0;
   const out = new Array<T>(len + 1);
-  while (i < at) out[g++] = arr[i++];
-  out[at] = t;
-  while (i < len) out[++g] = arr[i++];
+  for (let i = 0; i < newIdx; i++) {
+    out[i] = arr[i];
+  }
+  out[newIdx] = newT;
+  for (let i = newIdx; i < len; i++) {
+    out[i + 1] = arr[i];
+  }
   return out;
 }
 
@@ -210,72 +200,128 @@ export function insert<K, V>(
   rootNode: HamtNode<K, V>
 ): readonly [HamtNode<K, V>, boolean] {
   const hash = cfg.hash(k);
-  let existing = false;
-  function loop(shift: number, node: HamtNode<K, V>): HamtNode<K, V> {
-    if ("bitmap" in node) {
+  let newRoot: HamtNode<K, V> | undefined;
+
+  // we will descend through the tree, leaving a trail of newly created nodes behind us.
+  // each newly created internal node will have an new array of children, and this
+  // new array will be set in the parent variable.
+  // Thus each time we create a new node, it must be set into the parent array at the given index.
+  let parent: Array<HamtNode<K, V>> | undefined;
+  let parentIdx = 0;
+
+  let shift = 0;
+  let curNode = rootNode;
+
+  do {
+    if ("bitmap" in curNode) {
       const m = mask(hash, shift);
-      const idx = sparseIndex(node.bitmap, m);
-      if ((node.bitmap & m) === 0) {
+      const idx = sparseIndex(curNode.bitmap, m);
+
+      if ((curNode.bitmap & m) === 0) {
         // child is not present in the bitmap so can be added as a leaf
+
+        // create the new node
         const leaf = { hash, key: k, val: getVal(undefined) };
-        return bitmapIndexedOrFull(node.bitmap | m, copyAndSpliceArray(node.children, idx, leaf));
-      } else {
-        // child is present in the bitmap so must recurse
-        const child = node.children[idx];
-        const newChild = loop(shift + bitsPerSubkey, child);
-        if (newChild === child) {
-          return node;
+        const newArr = copyAndInsertToArray(curNode.children, idx, leaf);
+        let newNode: HamtNode<K, V>;
+        if (newArr.length === maxChildren) {
+          newNode = { full: newArr };
         } else {
-          return bitmapIndexedOrFull(node.bitmap, copyAndSpliceArray(node.children, idx, newChild));
+          newNode = { bitmap: curNode.bitmap | m, children: newArr };
         }
-      }
-    } else if ("full" in node) {
-      const idx = fullIndex(hash, shift);
-      const child = node.full[idx];
-      const newChild = loop(shift + bitsPerSubkey, child);
-      if (newChild === child) {
-        return node;
+
+        // set it in the parent and return
+        if (parent !== undefined) {
+          parent[parentIdx] = newNode;
+        }
+        return [newRoot ?? newNode, false];
       } else {
-        return { full: copyAndSpliceArray(node.full, idx, newChild) };
+        // need to recurse
+
+        // first, create a new node
+        const newArr = [...curNode.children];
+        const newNode = { bitmap: curNode.bitmap, children: newArr };
+        if (newRoot !== undefined) {
+          newRoot = newNode;
+        }
+        if (parent !== undefined) {
+          parent[parentIdx] = newNode;
+        }
+
+        // recurse
+        parent = newArr;
+        parentIdx = idx;
+        shift = shift + bitsPerSubkey;
+        curNode = curNode.children[idx];
       }
-    } else if ("key" in node) {
-      // node is leaf
-      if (hash === node.hash) {
-        // either the key is equal or there is a collision
-        if (cfg.keyEq(k, node.key)) {
-          existing = true;
-          const newVal = getVal(node.val);
-          if (newVal === node.val) {
-            return node;
+    } else if ("full" in curNode) {
+      const idx = fullIndex(hash, shift);
+
+      // make a copy of the curNode
+      const newArr = [...curNode.full];
+      const newNode = { full: newArr };
+      if (newRoot === undefined) {
+        newRoot = newNode;
+      }
+      if (parent !== undefined) {
+        parent[parentIdx] = newNode;
+      }
+
+      //recurse
+      parent = newArr;
+      parentIdx = idx;
+      shift = shift + bitsPerSubkey;
+      curNode = curNode.full[idx];
+    } else if ("key" in curNode) {
+      // node is a leaf, check if key is equal or there is a collision
+      let newNode: HamtNode<K, V>;
+      let existing = false;
+      if (hash === curNode.hash) {
+        if (cfg.keyEq(k, curNode.key)) {
+          const newVal = getVal(curNode.val);
+          if (newVal === curNode.val) {
+            // return the original root node because nothing changed
+            return [rootNode, true];
           } else {
-            // replace the value
-            return { hash, key: k, val: newVal };
+            // replace the value in a new leaf
+            newNode = { hash, key: k, val: newVal };
+            existing = true;
           }
         } else {
-          return {
+          // a collision
+          newNode = {
             hash,
             collision: [
               { key: k, val: getVal(undefined) },
-              { key: node.key, val: node.val },
+              { key: curNode.key, val: curNode.val },
             ],
           };
         }
       } else {
-        return two(shift, { hash, key: k, val: getVal(undefined) }, node);
+        // hashes are different
+        newNode = two(shift, { hash, key: k, val: getVal(undefined) }, curNode);
       }
-    } else if ("collision" in node) {
-      return { hash, collision: [{ key: k, val: getVal(undefined) }, ...node.collision] };
-    } else {
-      // node is empty
-      return { hash, key: k, val: getVal(undefined) };
-    }
-  }
 
-  const newRoot = loop(0, rootNode);
-  return [newRoot, existing];
+      // set the new node and return
+      if (parent !== undefined) {
+        parent[parentIdx] = newNode;
+      }
+      return [newRoot ?? newNode, existing];
+    } else if ("collision" in curNode) {
+      const newNode = { hash, collision: [{ key: k, val: getVal(undefined) }, ...curNode.collision] };
+      if (parent !== undefined) {
+        parent[parentIdx] = newNode;
+      }
+      return [newRoot ?? newNode, false];
+    } else {
+      // curNode (and rootNode) is empty, create a leaf
+      return [{ hash, key: k, val: getVal(undefined) }, false];
+    }
+  } while (curNode);
+
+  throw new Error("Internal immutable-collections violation: hamt insert reached null");
 }
 
-// a version of insert which mutates instead of copying nodes
 export function mutateInsert<K, V>(
   cfg: HashConfig<K>,
   k: K,
@@ -284,77 +330,91 @@ export function mutateInsert<K, V>(
   merge: ((v1: V, v2: V) => V) | undefined
 ): readonly [MutableHamtNode<K, V>, boolean] {
   const hash = cfg.hash(k);
-  let existing = false;
-  function loop(shift: number, node: MutableHamtNode<K, V>): MutableHamtNode<K, V> {
-    if ("bitmap" in node) {
+
+  // we descend through the tree, keeping track of the parent and the parent index
+  let parent: Array<MutableHamtNode<K, V>> | undefined;
+  let parentIdx = 0;
+
+  let shift = 0;
+  let curNode = rootNode;
+
+  do {
+    if ("bitmap" in curNode) {
       const m = mask(hash, shift);
-      const idx = sparseIndex(node.bitmap, m);
-      if ((node.bitmap & m) === 0) {
+      const idx = sparseIndex(curNode.bitmap, m);
+
+      if ((curNode.bitmap & m) === 0) {
         // child is not present in the bitmap so can be added as a leaf
+
         const leaf = { hash, key: k, val: v };
-        const arr = node.children;
+        const arr = curNode.children;
         arr.splice(idx, 0, leaf);
         if (arr.length === maxChildren) {
-          return { full: arr };
-        } else {
-          node.bitmap |= m;
-          return node;
-        }
-      } else {
-        // child is present in the bitmap so must recurse
-        const arr = node.children;
-        const child = arr[idx];
-        const newChild = loop(shift + bitsPerSubkey, child);
-        if (newChild === child) {
-          return node;
-        } else {
-          arr.splice(idx, 0, newChild);
-          if (arr.length === maxChildren) {
-            return { full: arr };
+          // need to switch to a full node
+          if (parent !== undefined) {
+            parent[parentIdx] = { full: arr };
           } else {
-            return node;
+            // parent is undefined means the current node is the root
+            rootNode = { full: arr };
           }
-        }
-      }
-    } else if ("full" in node) {
-      // recurse and adjust full node if needed
-      const idx = fullIndex(hash, shift);
-      const arr = node.full;
-      const child = arr[idx];
-      const newChild = loop(shift + bitsPerSubkey, child);
-      if (newChild !== child) {
-        arr[idx] = newChild;
-      }
-      return node;
-    } else if ("key" in node) {
-      if (hash === node.hash) {
-        if (cfg.keyEq(k, node.key)) {
-          existing = true;
-          node.val = merge ? merge(node.val, v) : v;
-          return node;
         } else {
-          return {
+          curNode.bitmap |= m;
+        }
+        return [rootNode, false];
+      } else {
+        // recurse
+        parent = curNode.children;
+        parentIdx = idx;
+        shift = shift + bitsPerSubkey;
+        curNode = parent[idx];
+      }
+    } else if ("full" in curNode) {
+      //recurse
+      const idx = fullIndex(hash, shift);
+      parent = curNode.full;
+      parentIdx = idx;
+      shift = shift + bitsPerSubkey;
+      curNode = parent[idx];
+    } else if ("key" in curNode) {
+      // node is a leaf, check if key is equal or there is a collision
+      let newNode: MutableHamtNode<K, V>;
+      if (hash === curNode.hash) {
+        if (cfg.keyEq(k, curNode.key)) {
+          // replace the value
+          curNode.val = merge ? merge(curNode.val, v) : v;
+          return [rootNode, true];
+        } else {
+          // a collision
+          newNode = {
             hash,
             collision: [
               { key: k, val: v },
-              { key: node.key, val: node.val },
+              { key: curNode.key, val: curNode.val },
             ],
           };
         }
       } else {
-        return two(shift, { hash, key: k, val: v }, node);
+        // hashes are different
+        newNode = two(shift, { hash, key: k, val: v }, curNode);
       }
-    } else if ("collision" in node) {
-      node.collision.push({ key: k, val: v });
-      return node;
-    } else {
-      // empty node
-      return { hash, key: k, val: v };
-    }
-  }
 
-  const newRoot = loop(0, rootNode);
-  return [newRoot, existing];
+      if (parent !== undefined) {
+        parent[parentIdx] = newNode;
+      } else {
+        // parent is undefined means the current node is the root
+        rootNode = newNode;
+      }
+      return [rootNode, false];
+    } else if ("collision" in curNode) {
+      curNode.collision.push({ key: k, val: v });
+      return [rootNode, false];
+    } else {
+      // curNode (and rootNode) is empty, return a leaf
+      return [{ hash, key: k, val: v }, false];
+    }
+  } while (curNode);
+
+  throw new Error("Internal immutable-collections violation: hamt mutate insert reached null");
 }
 
 // TODO: delete
