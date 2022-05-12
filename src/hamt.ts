@@ -580,5 +580,33 @@ export function* iterate<K, V, R>(root: HamtNode<K, V> | null, f: (k: K, v: V) =
   }
 }
 
+export function fold<K, V, T>(root: HamtNode<K, V> | null, f: (acc: T, val: V, key: K) => T, zero: T): T {
+  let acc = zero;
+  if (root === null) return acc;
+
+  const stack: Array<HamtNode<K, V>> = [root];
+
+  let node: HamtNode<K, V> | undefined;
+  while ((node = stack.pop())) {
+    if ("bitmap" in node) {
+      for (let i = 0; i < node.children.length; i++) {
+        stack.push(node.children[i]);
+      }
+    } else if ("full" in node) {
+      for (let i = 0; i < node.full.length; i++) {
+        stack.push(node.full[i]);
+      }
+    } else if ("key" in node) {
+      acc = f(acc, node.val, node.key);
+    } else {
+      for (let i = 0; i < node.collision.length; i++) {
+        const x = node.collision[i];
+        acc = f(acc, x.val, x.key);
+      }
+    }
+  }
+  return acc;
+}
+
 // TODO: mapValues
 // TODO: collectValues
