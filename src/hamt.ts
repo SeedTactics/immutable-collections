@@ -143,7 +143,7 @@ function two<K, V>(shift: number, leaf1: LeafNode<K, V>, leaf2: LeafNode<K, V>):
   const hash2 = leaf2.hash;
   let root: MutableBitmapIndexedNode<K, V> | undefined;
 
-  // as we descend through the masks, newly created nodes are set at the zero index in the
+  // as we descend through the shifts, newly created nodes are set at the zero index in the
   // parent array.
   let parent: Array<MutableHamtNode<K, V>> | undefined;
 
@@ -203,7 +203,7 @@ export function insert<K, V>(
   let newRoot: HamtNode<K, V> | undefined;
 
   // we will descend through the tree, leaving a trail of newly created nodes behind us.
-  // each newly created internal node will have an new array of children, and this
+  // Each newly created internal node will have an new array of children, and this
   // new array will be set in the parent variable.
   // Thus each time we create a new node, it must be set into the parent array at the given index.
   let parent: Array<HamtNode<K, V>> | undefined;
