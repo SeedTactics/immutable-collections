@@ -1,6 +1,6 @@
 import { HashKey } from "./hashing.js";
 import { ImMap } from "./immap.js";
-import { ISet } from "./iset.js";
+import { ImSet } from "./imset.js";
 
 export type PrimitiveOrd = number | string | boolean;
 
@@ -170,7 +170,7 @@ export class LazySeq<T> {
   distinct(this: LazySeq<T & HashKey>): LazySeq<T> {
     const iter = this.iter;
     return LazySeq.ofIterator(function* () {
-      let s = ISet.empty<T>();
+      let s = ImSet.empty<T & HashKey>();
       for (const x of iter) {
         if (!s.has(x)) {
           s = s.add(x);
