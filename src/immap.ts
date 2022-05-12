@@ -123,11 +123,47 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
     let root: MutableHamtNode<K, V> | null = null;
     let size = 0;
     const cfg = mkHashConfig<K>();
-    for (const [k, v] of items) {
+    let val: (old: V | undefined, v: V) => V;
+    if (merge) {
+      val = function val(old: V | undefined, v: V): V {
+        return old ? merge(old, v) : v;
+      };
+    } else {
+      val = function (_old, v: V): V {
+        return v;
+      };
+    }
+    for (const [k, t] of items) {
       // https://github.com/microsoft/TypeScript/issues/43047
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       const rootAlias = root as MutableHamtNode<K, V> | null;
-      const [r, inserted] = mutateInsert(cfg, k, v, rootAlias, merge);
+      const [r, inserted] = mutateInsert(cfg, k, t, val, rootAlias);
+      if (inserted) size++;
+      root = r;
+    }
+    return new ImMap(cfg, root, size);
+  }
+
+  public static build<K extends HashKey, V>(items: Iterable<V>, key: (v: V) => K): ImMap<K, V>;
+  public static build<T, K extends HashKey, V>(
+    items: Iterable<T>,
+    key: (v: T) => K,
+    val: (old: V | undefined, t: T) => V
+  ): ImMap<K, V>;
+  public static build<T, K extends HashKey, V>(
+    items: Iterable<T>,
+    key: (t: T) => K,
+    val?: (old: V | undefined, t: T) => V
+  ): ImMap<K, V> {
+    let root: MutableHamtNode<K, V> | null = null;
+    let size = 0;
+    const cfg = mkHashConfig<K>();
+    const getVal = val ?? ((_, t) => t as unknown as V);
+    for (const t of items) {
+      // https://github.com/microsoft/TypeScript/issues/43047
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      const rootAlias = root as MutableHamtNode<K, V> | null;
+      const [r, inserted] = mutateInsert(cfg, key(t), t, getVal, rootAlias);
       if (inserted) size++;
       root = r;
     }

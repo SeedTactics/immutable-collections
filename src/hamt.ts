@@ -314,17 +314,17 @@ export function insert<K, V>(
   throw new Error("Internal immutable-collections violation: hamt insert reached null");
 }
 
-export function mutateInsert<K, V>(
+export function mutateInsert<K, T, V>(
   cfg: HashConfig<K>,
   k: K,
-  v: V,
-  rootNode: MutableHamtNode<K, V> | null,
-  merge: ((v1: V, v2: V) => V) | undefined
+  t: T,
+  getVal: (old: V | undefined, t: T) => V,
+  rootNode: MutableHamtNode<K, V> | null
 ): readonly [MutableHamtNode<K, V>, boolean] {
   const hash = cfg.hash(k);
 
   if (rootNode === null) {
-    return [{ hash, key: k, val: v }, true];
+    return [{ hash, key: k, val: getVal(undefined, t) }, true];
   }
 
   // we descend through the tree, keeping track of the parent and the parent index
@@ -342,7 +342,7 @@ export function mutateInsert<K, V>(
       if ((curNode.bitmap & m) === 0) {
         // child is not present in the bitmap so can be added as a leaf
 
-        const leaf = { hash, key: k, val: v };
+        const leaf = { hash, key: k, val: getVal(undefined, t) };
         const arr = curNode.children;
         arr.splice(idx, 0, leaf);
         if (arr.length === maxChildren) {
@@ -377,21 +377,21 @@ export function mutateInsert<K, V>(
       if (hash === curNode.hash) {
         if (cfg.keyEq(k, curNode.key)) {
           // replace the value
-          curNode.val = merge ? merge(curNode.val, v) : v;
+          curNode.val = getVal(curNode.val, t);
           return [rootNode, false];
         } else {
           // a collision
           newNode = {
             hash,
             collision: [
-              { key: k, val: v },
+              { key: k, val: getVal(undefined, t) },
               { key: curNode.key, val: curNode.val },
             ],
           };
         }
       } else {
         // hashes are different
-        newNode = two(shift, { hash, key: k, val: v }, curNode);
+        newNode = two(shift, { hash, key: k, val: getVal(undefined, t) }, curNode);
       }
 
       if (parent !== undefined) {
@@ -402,7 +402,7 @@ export function mutateInsert<K, V>(
       }
       return [rootNode, true];
     } else {
-      curNode.collision.push({ key: k, val: v });
+      curNode.collision.push({ key: k, val: getVal(undefined, t) });
       return [rootNode, true];
     }
   } while (curNode);

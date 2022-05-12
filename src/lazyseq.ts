@@ -1,4 +1,5 @@
-import { IMap, HashKey, buildIMap, iterableToIMap, emptyIMap } from "./imap.js";
+import { HashKey } from "./hashing.js";
+import { ImMap } from "./immap.js";
 import { ISet } from "./iset.js";
 
 export type PrimitiveOrd = number | string | boolean;
@@ -481,8 +482,14 @@ export class LazySeq<T> {
     return Array.from(this.iter).sort(sortByProp(getKey, ...getKeys));
   }
 
-  toIMap<K, S>(f: (x: T) => readonly [K & HashKey, S], merge?: (v1: S, v2: S) => S): IMap<K, S> {
-    return iterableToIMap(this.map(f), merge);
+  toImMap<K, S>(f: (x: T) => readonly [K & HashKey, S], merge?: (v1: S, v2: S) => S): ImMap<K & HashKey, S> {
+    return ImMap.from(this.map(f), merge);
+  }
+
+  buildImMap<K>(key: (x: T) => K & HashKey): ImMap<K & HashKey, T>;
+  buildImMap<K, S>(key: (x: T) => K & HashKey, val: (old: S | undefined, t: T) => S): ImMap<K & HashKey, S>;
+  buildImMap<K, S>(key: (x: T) => K & HashKey, val?: (old: S | undefined, t: T) => S): ImMap<K & HashKey, S> {
+    return ImMap.build(this.iter, key, val as (old: S | undefined, t: T) => S);
   }
 
   toMutableMap<K, S>(f: (x: T) => readonly [K & PrimitiveOrd, S], merge?: (v1: S, v2: S) => S): Map<K, S> {
@@ -539,46 +546,49 @@ export class LazySeq<T> {
     return this.toMutableSet(converter);
   }
 
-  toLookup<K>(key: (x: T) => K & HashKey): IMap<K, ReadonlyArray<T>>;
-  toLookup<K, S>(key: (x: T) => K & HashKey, val: (x: T) => S): IMap<K, ReadonlyArray<S>>;
-  toLookup<K, S>(key: (x: T) => K & HashKey, val?: (x: T) => S): IMap<K, ReadonlyArray<T | S>> {
-    function merge(old: Array<T | S> | undefined, t: T): Array<T | S> {
+  toLookup<K>(key: (x: T) => K & HashKey): ImMap<K & HashKey, ReadonlyArray<T>>;
+  toLookup<K, S>(key: (x: T) => K & HashKey, val: (x: T) => S): ImMap<K & HashKey, ReadonlyArray<S>>;
+  toLookup<K, S>(key: (x: T) => K & HashKey, val?: (x: T) => S): ImMap<K & HashKey, ReadonlyArray<S>> {
+    function merge(old: Array<S> | undefined, t: T): Array<S> {
       if (old) {
-        old.push(val === undefined ? t : val(t));
+        old.push(val === undefined ? (t as unknown as S) : val(t));
         return old;
       } else {
-        return [val === undefined ? t : val(t)];
+        return [val === undefined ? (t as unknown as S) : val(t)];
       }
     }
-    return buildIMap<K, Array<T | S>, T>(this.iter, key, merge);
+    return ImMap.build(this.iter, key, merge);
   }
 
-  toLookupMap<K1, K2>(key1: (x: T) => K1 & HashKey, key2: (x: T) => K2 & HashKey): IMap<K1, IMap<K2, T>>;
+  toLookupMap<K1, K2>(
+    key1: (x: T) => K1 & HashKey,
+    key2: (x: T) => K2 & HashKey
+  ): ImMap<K1 & HashKey, ImMap<K2 & HashKey, T>>;
   toLookupMap<K1, K2, S>(
     key1: (x: T) => K1 & HashKey,
     key2: (x: T) => K2 & HashKey,
     val: (x: T) => S,
     mergeVals?: (v1: S, v2: S) => S
-  ): IMap<K1, IMap<K2, S>>;
+  ): ImMap<K1, ImMap<K2, S>>;
   toLookupMap<K1, K2, S>(
     key1: (x: T) => K1 & HashKey,
     key2: (x: T) => K2 & HashKey,
     val?: (x: T) => S,
     mergeVals?: (v1: S, v2: S) => S
-  ): IMap<K1, IMap<K2, T | S>> {
-    function merge(old: IMap<K2, T | S> | undefined, t: T): IMap<K2, T | S> {
+  ): ImMap<K1 & HashKey, ImMap<K2 & HashKey, T | S>> {
+    function merge(old: ImMap<K2 & HashKey, T | S> | undefined, t: T): ImMap<K2 & HashKey, T | S> {
       if (old === undefined) {
-        old = emptyIMap<K2, T | S>();
+        old = ImMap.empty<K2 & HashKey, T | S>();
       }
       if (val === undefined) {
         return old.set(key2(t), t);
       } else if (mergeVals === undefined) {
         return old.set(key2(t), val(t));
       } else {
-        return old.modify((oldV) => (oldV === undefined ? val(t) : mergeVals(oldV as S, val(t))), key2(t));
+        return old.modify(key2(t), (oldV) => (oldV === undefined ? val(t) : mergeVals(oldV as S, val(t))));
       }
     }
-    return buildIMap<K1, IMap<K2, T | S>, T>(this.iter, key1, merge);
+    return ImMap.build(this.iter, key1, merge);
   }
 
   toRLookup<K>(key: (x: T) => K): ReadonlyMap<K, ReadonlyArray<T>>;
