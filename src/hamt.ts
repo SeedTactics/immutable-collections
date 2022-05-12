@@ -320,11 +320,11 @@ export function mutateInsert<K, T, V>(
   t: T,
   getVal: (old: V | undefined, t: T) => V,
   rootNode: MutableHamtNode<K, V> | null
-): readonly [MutableHamtNode<K, V>, boolean] {
+): MutableHamtNode<K, V> {
   const hash = cfg.hash(k);
 
   if (rootNode === null) {
-    return [{ hash, key: k, val: getVal(undefined, t) }, true];
+    return { hash, key: k, val: getVal(undefined, t) };
   }
 
   // we descend through the tree, keeping track of the parent and the parent index
@@ -356,7 +356,7 @@ export function mutateInsert<K, T, V>(
         } else {
           curNode.bitmap |= m;
         }
-        return [rootNode, true];
+        return rootNode;
       } else {
         // recurse
         parent = curNode.children;
@@ -378,7 +378,7 @@ export function mutateInsert<K, T, V>(
         if (cfg.keyEq(k, curNode.key)) {
           // replace the value
           curNode.val = getVal(curNode.val, t);
-          return [rootNode, false];
+          return rootNode;
         } else {
           // a collision
           newNode = {
@@ -400,10 +400,10 @@ export function mutateInsert<K, T, V>(
         // parent is undefined means the current node is the root
         rootNode = newNode;
       }
-      return [rootNode, true];
+      return rootNode;
     } else {
       curNode.collision.push({ key: k, val: getVal(undefined, t) });
-      return [rootNode, true];
+      return rootNode;
     }
   } while (curNode);
 

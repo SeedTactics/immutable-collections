@@ -123,23 +123,28 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
     let root: MutableHamtNode<K, V> | null = null;
     let size = 0;
     const cfg = mkHashConfig<K>();
+
     let val: (old: V | undefined, v: V) => V;
     if (merge) {
       val = function val(old: V | undefined, v: V): V {
-        return old ? merge(old, v) : v;
+        if (old === undefined) {
+          size++;
+          return v;
+        } else {
+          return merge(old, v);
+        }
       };
     } else {
-      val = function (_old, v: V): V {
+      val = function (old, v: V): V {
+        if (old === undefined) {
+          size++;
+        }
         return v;
       };
     }
+
     for (const [k, t] of items) {
-      // https://github.com/microsoft/TypeScript/issues/43047
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-      const rootAlias = root as MutableHamtNode<K, V> | null;
-      const [r, inserted] = mutateInsert(cfg, k, t, val, rootAlias);
-      if (inserted) size++;
-      root = r;
+      root = mutateInsert(cfg, k, t, val, root);
     }
     return new ImMap(cfg, root, size);
   }
@@ -158,14 +163,28 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
     let root: MutableHamtNode<K, V> | null = null;
     let size = 0;
     const cfg = mkHashConfig<K>();
-    const getVal = val ?? ((_, t) => t as unknown as V);
+
+    let getVal: (old: V | undefined, t: T) => V;
+    if (val) {
+      getVal = function getVal(old: V | undefined, t: T): V {
+        if (old === undefined) {
+          size++;
+          return val(undefined, t);
+        } else {
+          return val(old, t);
+        }
+      };
+    } else {
+      getVal = function (old: V | undefined, t: T): V {
+        if (old === undefined) {
+          size++;
+        }
+        return t as unknown as V;
+      };
+    }
+
     for (const t of items) {
-      // https://github.com/microsoft/TypeScript/issues/43047
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-      const rootAlias = root as MutableHamtNode<K, V> | null;
-      const [r, inserted] = mutateInsert(cfg, key(t), t, getVal, rootAlias);
-      if (inserted) size++;
-      root = r;
+      root = mutateInsert(cfg, key(t), t, getVal, root);
     }
     return new ImMap(cfg, root, size);
   }
@@ -178,12 +197,20 @@ export function unionImMaps<K extends HashKey, V>(
   merge: (v1: V, v2: V) => V,
   ...maps: readonly ImMap<K, V>[]
 ): ImMap<K, V> {
-  let m = maps[0];
-  for (let i = 1; i < maps.length; i++) {
-    m = maps[i].fold(
-      (leftVals, rightVals, k) => leftVals.modify(k, (old) => (old === undefined ? rightVals : merge(old, rightVals))),
-      m
+  if (maps.length === 0) {
+    return ImMap.empty();
+  } else if (maps.length === 1) {
+    return maps[0];
+  } else {
+    return ImMap.from(
+      {
+        [Symbol.iterator]: function* () {
+          for (const map of maps) {
+            yield* map;
+          }
+        },
+      },
+      merge
     );
   }
-  return m;
 }
