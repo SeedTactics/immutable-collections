@@ -48,21 +48,13 @@ export type MutableBitmapIndexedNode<K, V> = {
 export type FullNode<K, V> = { readonly full: ReadonlyArray<HamtNode<K, V>> };
 export type MutableFullNode<K, V> = { readonly full: Array<MutableHamtNode<K, V>> };
 
-export type HamtNode<K, V> =
-  | { readonly empty: null }
-  | LeafNode<K, V>
-  | CollisionNode<K, V>
-  | BitmapIndexedNode<K, V>
-  | FullNode<K, V>;
+export type HamtNode<K, V> = LeafNode<K, V> | CollisionNode<K, V> | BitmapIndexedNode<K, V> | FullNode<K, V>;
 
 export type MutableHamtNode<K, V> =
-  | { readonly empty: null }
   | MutableLeafNode<K, V>
   | MutableCollisionNode<K, V>
   | MutableBitmapIndexedNode<K, V>
   | MutableFullNode<K, V>;
-
-export const empty: { readonly empty: null } = { empty: null };
 
 const bitsPerSubkey = 5;
 const subkeyMask = (1 << bitsPerSubkey) - 1;
@@ -115,7 +107,7 @@ export function lookup<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V>)
       } else {
         return undefined;
       }
-    } else if ("collision" in node) {
+    } else {
       if (hash === node.hash) {
         const arr = node.collision;
         for (let i = 0; i < arr.length; i++) {
@@ -128,9 +120,6 @@ export function lookup<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V>)
       } else {
         return undefined;
       }
-    } else {
-      // empty node
-      return undefined;
     }
   } while (node);
 
@@ -197,9 +186,14 @@ export function insert<K, V>(
   cfg: HashConfig<K>,
   k: K,
   getVal: (v: V | undefined) => V,
-  rootNode: HamtNode<K, V>
+  rootNode: HamtNode<K, V> | null
 ): readonly [HamtNode<K, V>, boolean] {
   const hash = cfg.hash(k);
+
+  if (rootNode === null) {
+    return [{ hash, key: k, val: getVal(undefined) }, true];
+  }
+
   let newRoot: HamtNode<K, V> | undefined;
 
   // we will descend through the tree, leaving a trail of newly created nodes behind us.
@@ -234,7 +228,7 @@ export function insert<K, V>(
         if (parent !== undefined) {
           parent[parentIdx] = newNode;
         }
-        return [newRoot ?? newNode, false];
+        return [newRoot ?? newNode, true];
       } else {
         // need to recurse
 
@@ -271,21 +265,21 @@ export function insert<K, V>(
       parent = newArr;
       parentIdx = idx;
       shift = shift + bitsPerSubkey;
-      curNode = curNode.full[idx];
+      curNode = newArr[idx];
     } else if ("key" in curNode) {
       // node is a leaf, check if key is equal or there is a collision
       let newNode: HamtNode<K, V>;
-      let existing = false;
+      let inserted = true;
       if (hash === curNode.hash) {
         if (cfg.keyEq(k, curNode.key)) {
           const newVal = getVal(curNode.val);
           if (newVal === curNode.val) {
             // return the original root node because nothing changed
-            return [rootNode, true];
+            return [rootNode, false];
           } else {
             // replace the value in a new leaf
             newNode = { hash, key: k, val: newVal };
-            existing = true;
+            inserted = false;
           }
         } else {
           // a collision
@@ -306,16 +300,14 @@ export function insert<K, V>(
       if (parent !== undefined) {
         parent[parentIdx] = newNode;
       }
-      return [newRoot ?? newNode, existing];
-    } else if ("collision" in curNode) {
+      return [newRoot ?? newNode, inserted];
+    } else {
+      // collision node
       const newNode = { hash, collision: [{ key: k, val: getVal(undefined) }, ...curNode.collision] };
       if (parent !== undefined) {
         parent[parentIdx] = newNode;
       }
-      return [newRoot ?? newNode, false];
-    } else {
-      // curNode (and rootNode) is empty, create a leaf
-      return [{ hash, key: k, val: getVal(undefined) }, false];
+      return [newRoot ?? newNode, true];
     }
   } while (curNode);
 
@@ -326,10 +318,14 @@ export function mutateInsert<K, V>(
   cfg: HashConfig<K>,
   k: K,
   v: V,
-  rootNode: MutableHamtNode<K, V>,
+  rootNode: MutableHamtNode<K, V> | null,
   merge: ((v1: V, v2: V) => V) | undefined
 ): readonly [MutableHamtNode<K, V>, boolean] {
   const hash = cfg.hash(k);
+
+  if (rootNode === null) {
+    return [{ hash, key: k, val: v }, true];
+  }
 
   // we descend through the tree, keeping track of the parent and the parent index
   let parent: Array<MutableHamtNode<K, V>> | undefined;
@@ -360,7 +356,7 @@ export function mutateInsert<K, V>(
         } else {
           curNode.bitmap |= m;
         }
-        return [rootNode, false];
+        return [rootNode, true];
       } else {
         // recurse
         parent = curNode.children;
@@ -382,7 +378,7 @@ export function mutateInsert<K, V>(
         if (cfg.keyEq(k, curNode.key)) {
           // replace the value
           curNode.val = merge ? merge(curNode.val, v) : v;
-          return [rootNode, true];
+          return [rootNode, false];
         } else {
           // a collision
           newNode = {
@@ -404,13 +400,10 @@ export function mutateInsert<K, V>(
         // parent is undefined means the current node is the root
         rootNode = newNode;
       }
-      return [rootNode, false];
-    } else if ("collision" in curNode) {
-      curNode.collision.push({ key: k, val: v });
-      return [rootNode, false];
+      return [rootNode, true];
     } else {
-      // curNode (and rootNode) is empty, return a leaf
-      return [{ hash, key: k, val: v }, false];
+      curNode.collision.push({ key: k, val: v });
+      return [rootNode, true];
     }
   } while (curNode);
 
