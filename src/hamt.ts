@@ -410,6 +410,149 @@ export function mutateInsert<K, V>(
   throw new Error("Internal immutable-collections violation: hamt mutate insert reached null");
 }
 
-// TODO: delete
+type InternalHamtNodeWithMutableChildArray<K, V> =
+  | {
+      bitmap: number;
+      children: Array<HamtNode<K, V>>;
+    }
+  | { full: Array<HamtNode<K, V>> };
+
+function removeChild<K, V>(node: InternalHamtNodeWithMutableChildArray<K, V>, idx: number) {
+  if ("bitmap" in node) {
+    node.bitmap &= ~(1 << idx);
+    node.children.splice(idx, 1);
+  } else {
+    const arr = node.full;
+    // transform the full node into a bitmap node, which typescript does not like at all
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+    (node as any).children = arr.splice(idx, 1);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+    (node as any).bitmap = ~(1 << idx);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+    delete (node as any).full;
+  }
+}
+
+function updateChild<K, V>(
+  node: InternalHamtNodeWithMutableChildArray<K, V>,
+  idx: number,
+  newNode: HamtNode<K, V>
+): void {
+  if ("bitmap" in node) {
+    node.children[idx] = newNode;
+  } else {
+    node.full[idx] = newNode;
+  }
+}
+
+function copyAndRemoveFromArray<T>(arr: ReadonlyArray<T>, idx: number): Array<T> {
+  return [...arr.slice(0, idx), ...arr.slice(idx + 1)];
+}
+
+export function remove<K, V>(
+  cfg: HashConfig<K>,
+  k: K,
+  rootNode: HamtNode<K, V> | null
+): readonly [HamtNode<K, V> | null, boolean] {
+  if (rootNode === null) {
+    return [null, false];
+  }
+
+  const hash = cfg.hash(k);
+
+  let newRoot: HamtNode<K, V> | undefined;
+
+  // we will descend through the tree, leaving a trail of newly created nodes behind us.
+  // Each newly created internal node will have an new array of children, and this
+  // new array will be set in the parent variable.
+  // Thus each time we create a new node, it must be set into the parent array at the given index.
+  let parent: InternalHamtNodeWithMutableChildArray<K, V> | undefined;
+  let parentIdx = 0;
+
+  let shift = 0;
+  let curNode = rootNode;
+
+  do {
+    if ("bitmap" in curNode) {
+      const m = mask(hash, shift);
+      if ((curNode.bitmap & m) === 0) {
+        // element is not present
+        return [rootNode, false];
+      } else {
+        // recurse
+        const idx = sparseIndex(curNode.bitmap, m);
+
+        // create a new node
+        const newNode = { bitmap: curNode.bitmap, children: [...curNode.children] };
+        if (newRoot === undefined) {
+          newRoot = newNode;
+        }
+        if (parent !== undefined) {
+          updateChild(parent, parentIdx, newNode);
+        }
+
+        parent = newNode;
+        parentIdx = idx;
+        shift += bitsPerSubkey;
+        curNode = curNode.children[idx];
+      }
+    } else if ("full" in curNode) {
+      const idx = fullIndex(hash, shift);
+
+      // create a new node
+      const newNode = { full: [...curNode.full] };
+      if (newRoot === undefined) {
+        newRoot = newNode;
+      }
+      if (parent !== undefined) {
+        updateChild(parent, parentIdx, newNode);
+      }
+
+      //recurse
+      parent = newNode;
+      parentIdx = idx;
+      shift = shift + bitsPerSubkey;
+      curNode = newNode.full[idx];
+    } else if ("key" in curNode) {
+      if (hash === curNode.hash) {
+        if (cfg.keyEq(k, curNode.key)) {
+          if (parent === undefined || newRoot === undefined) {
+            // this leaf is the root, so removing it will make the tree empty
+            return [null, true];
+          } else {
+            removeChild(parent, parentIdx);
+            return [newRoot, true];
+          }
+        } else {
+          // keys are not equal, no match
+          return [rootNode, false];
+        }
+      } else {
+        // hashes are different, no match
+        return [rootNode, false];
+      }
+    } else {
+      // collision
+      if (hash === curNode.hash) {
+        for (let i = 0; i < curNode.collision.length; i++) {
+          if (cfg.keyEq(k, curNode.collision[i].key)) {
+            const newNode = { hash, collision: copyAndRemoveFromArray(curNode.collision, i) };
+            if (parent !== undefined) {
+              updateChild(parent, parentIdx, newNode);
+            }
+            return [newRoot ?? newNode, true];
+          }
+        }
+        return [rootNode, false];
+      } else {
+        // hashes are different, no match
+        return [rootNode, false];
+      }
+    }
+  } while (curNode);
+
+  throw new Error("Internal immutable-collections violation: hamt remove reached null");
+}
+
 // TODO: mapValues
 // TODO: collectValues
