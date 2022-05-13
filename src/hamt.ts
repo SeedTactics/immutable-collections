@@ -235,7 +235,7 @@ export function insert<K, V>(
         // first, create a new node
         const newArr = [...curNode.children];
         const newNode = { bitmap: curNode.bitmap, children: newArr };
-        if (newRoot !== undefined) {
+        if (newRoot === undefined) {
           newRoot = newNode;
         }
         if (parent !== undefined) {
