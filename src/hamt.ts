@@ -155,7 +155,10 @@ function two<K, V>(shift: number, leaf1: LeafNode<K, V>, leaf2: LeafNode<K, V>):
       shift = shift + bitsPerSubkey;
     } else {
       // we can insert
-      const newNode = { bitmap: mask1 | mask2, children: mask1 < mask2 ? [leaf1, leaf2] : [leaf2, leaf1] };
+      const newNode = {
+        bitmap: mask1 | mask2,
+        children: fullIndex(hash1, shift) < fullIndex(hash2, shift) ? [leaf1, leaf2] : [leaf2, leaf1],
+      };
       if (parent !== undefined) {
         parent[0] = newNode;
       }
