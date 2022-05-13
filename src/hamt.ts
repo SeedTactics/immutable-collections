@@ -402,7 +402,7 @@ export function mutateInsert<K, T, V>(
       }
       return rootNode;
     } else {
-      curNode.collision.push({ key: k, val: getVal(undefined, t) });
+      curNode.collision.unshift({ key: k, val: getVal(undefined, t) });
       return rootNode;
     }
   } while (curNode);

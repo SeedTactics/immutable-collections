@@ -58,7 +58,7 @@ describe("HAMT insert and lookup", () => {
     expect(lookup(cfg, k2, node2)).to.equal(200);
   });
 
-  it("creates two nodes deep in the tree", () => {
+  it("creates nodes deep in the tree", () => {
     const k1 = new Key(0b10101_10010_11011, 20);
     const k2 = new Key(0b10000_10010_11011, 25);
     const k3 = new Key(0b00000_10110_11011, 20);
