@@ -1,6 +1,5 @@
 import { HashKey } from "./hashing.js";
 import { ImMap } from "./immap.js";
-import { ImSet } from "./imset.js";
 
 export type PrimitiveOrd = number | string | boolean;
 
@@ -167,13 +166,13 @@ export class LazySeq<T> {
     });
   }
 
-  distinct(this: LazySeq<T & HashKey>): LazySeq<T> {
+  distinct(this: LazySeq<T & (string | number | null | undefined)>): LazySeq<T> {
     const iter = this.iter;
     return LazySeq.ofIterator(function* () {
-      let s = ImSet.empty<T & HashKey>();
+      const s = new Set<T>();
       for (const x of iter) {
         if (!s.has(x)) {
-          s = s.add(x);
+          s.add(x);
           yield x;
         }
       }

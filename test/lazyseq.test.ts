@@ -4,7 +4,6 @@ import { faker } from "@faker-js/faker";
 import assert from "assert";
 
 import { LazySeq } from "../src/lazyseq.js";
-import { IntStrKey } from "./hashing.test.js";
 
 describe("LazySeq", () => {
   it("constructs from an iterable", () => {
@@ -126,19 +125,6 @@ describe("LazySeq", () => {
     const seq = LazySeq.ofIterable([1, 2, 3, 4, 1, 5, 2, 6]).distinct();
 
     expect(seq.toRArray()).to.deep.equal([1, 2, 3, 4, 5, 6]);
-  });
-
-  it("returns a distinct seq using custom keys", () => {
-    const [i1, i2] = faker.helpers.uniqueArray(faker.datatype.number, 2);
-    const [s1, s2] = faker.helpers.uniqueArray(faker.datatype.string, 2);
-    const k1 = new IntStrKey(i1, s1);
-    const k1a = new IntStrKey(i1, s1);
-    const k2 = new IntStrKey(i1, s2);
-    const k3 = new IntStrKey(i2, s1);
-
-    const seq = LazySeq.ofIterable([k1, k2, k1a, k3, k2, k1]).distinct();
-
-    expect(seq.toRArray()).to.deep.equal([k1, k2, k3]);
   });
 
   it("drops a number of elements", () => {
