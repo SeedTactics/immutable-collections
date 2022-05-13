@@ -19,7 +19,7 @@ children and they are the positions of the 1s.  Only the four non-null children 
 stored and some fancy bit operations are used to determine which ones they are.
 
 The leaves are either a single leaf node with the key and the value or, if two
-keys hash to the same value, we store an collision array.
+keys hash to the same value, we store a collision array.
 */
 
 // A leaf with the hash, key, and value.
@@ -36,15 +36,15 @@ export type MutableCollisionNode<K, V> = {
   readonly collision: Array<{ readonly key: K; val: V }>;
 };
 
-// A internal node with some null children.  Which children are non-null is specified in the bitmap and then
-// all non-null children are stored in an array.
+// A internal node with some missing children.  Which children are present is specified in the bitmap and then
+// all present children are stored in an array.
 export type BitmapIndexedNode<K, V> = { readonly bitmap: number; readonly children: ReadonlyArray<HamtNode<K, V>> };
 export type MutableBitmapIndexedNode<K, V> = {
   bitmap: number;
   readonly children: Array<MutableHamtNode<K, V>>;
 };
 
-// A full node in which all 32 children are non-null
+// A full node in which all 32 children are present
 export type FullNode<K, V> = { readonly full: ReadonlyArray<HamtNode<K, V>> };
 export type MutableFullNode<K, V> = { readonly full: Array<MutableHamtNode<K, V>> };
 
@@ -59,7 +59,7 @@ export type MutableHamtNode<K, V> =
 const bitsPerSubkey = 5;
 const subkeyMask = (1 << bitsPerSubkey) - 1;
 const maxChildren = 1 << bitsPerSubkey; // 2^bitsPerSubKey
-const maxShift = 35;
+const maxShift = 30; // 2^5 rounded down
 
 // given the hash and the shift (the tree level), returns a bitmap with a 1 in the position of the index of the hash at this level
 function mask(hash: number, shift: number): number {
