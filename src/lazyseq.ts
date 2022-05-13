@@ -568,7 +568,7 @@ export class LazySeq<T> {
     key2: (x: T) => K2 & HashKey,
     val: (x: T) => S,
     mergeVals?: (v1: S, v2: S) => S
-  ): ImMap<K1, ImMap<K2, S>>;
+  ): ImMap<K1 & HashKey, ImMap<K2 & HashKey, S>>;
   toLookupMap<K1, K2, S>(
     key1: (x: T) => K1 & HashKey,
     key2: (x: T) => K2 & HashKey,

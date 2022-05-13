@@ -2,7 +2,7 @@ import { fold, HamtNode, insert, iterate, lookup, MutableHamtNode, mutateInsert,
 import { HashConfig, HashKey, mkHashConfig } from "./hashing.js";
 import { LazySeq } from "./lazyseq.js";
 
-export class ImMap<K, V> implements ReadonlyMap<K, V> {
+export class ImMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   private cfg: HashConfig<K>;
   private root: HamtNode<K, V> | null;
 
@@ -71,16 +71,11 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
 
   // Methods modifying the map
 
-  set(k: K & HashKey, v: V): ImMap<K, V> {
-    const [newRoot, inserted] = insert(this.cfg, k, () => v, this.root);
-    if (newRoot === this.root) {
-      return this;
-    } else {
-      return new ImMap(this.cfg, newRoot, this.size + (inserted ? 1 : 0));
-    }
+  set(k: K, v: V): ImMap<K, V> {
+    return this.modify(k, () => v);
   }
 
-  modify(k: K & HashKey, f: (v: V | undefined) => V): ImMap<K, V> {
+  modify(k: K, f: (existing: V | undefined) => V): ImMap<K, V> {
     const [newRoot, inserted] = insert(this.cfg, k, f, this.root);
     if (newRoot === this.root) {
       return this;
@@ -89,7 +84,7 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
     }
   }
 
-  delete(k: K & HashKey): ImMap<K, V> {
+  delete(k: K): ImMap<K, V> {
     const [newRoot, deleted] = remove(this.cfg, k, this.root);
     if (newRoot === this.root) {
       return this;
@@ -98,7 +93,7 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
     }
   }
 
-  append(items: Iterable<readonly [K & HashKey, V]>, merge?: (v1: V, v2: V) => V): ImMap<K, V> {
+  append(items: Iterable<readonly [K, V]>, merge?: (v1: V, v2: V) => V): ImMap<K, V> {
     let newRoot = this.root;
     let newSize = this.size;
     for (const [k, v] of items) {
@@ -116,7 +111,7 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
   // Creating new maps
 
   public static empty<K extends HashKey, V>(): ImMap<K, V> {
-    return new ImMap(mkHashConfig<K & HashKey>(), null, 0);
+    return new ImMap(mkHashConfig<K>(), null, 0);
   }
 
   public static from<K extends HashKey, V>(items: Iterable<readonly [K, V]>, merge?: (v1: V, v2: V) => V): ImMap<K, V> {
@@ -191,6 +186,8 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
 
   //mapValues<U>(f: (v: V, k: K) => U): ImMap<K, U>;
   //collectValues(f: (v: V, k: K) => V | null | undefined): IMap<K, V>;
+
+  protected static ["@@__IMMUTABLE_KEYED__@@"]: true;
 }
 
 export function unionImMaps<K extends HashKey, V>(
