@@ -122,8 +122,8 @@ export function lookup<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V>)
       }
     }
   } while (node);
-
-  return undefined;
+  /* c8 ignore next 2 */
+  throw new Error("Internal immutable-collections violation: node undefined during lookup " + JSON.stringify(rootNode));
 }
 
 // create a new node consisting of two children. Requires that the keys and hashes of the keys are not equal
@@ -162,7 +162,7 @@ function two<K, V>(shift: number, leaf1: LeafNode<K, V>, leaf2: LeafNode<K, V>):
       return root ?? newNode;
     }
   } while (shift <= maxShift);
-
+  /* c8 ignore next 4 */
   throw new Error(
     "Internal immutable-collections violation: shift > maxShift for two " + JSON.stringify({ shift, leaf1, leaf2 })
   );
@@ -310,7 +310,7 @@ export function insert<K, V>(
       return [newRoot ?? newNode, true];
     }
   } while (curNode);
-
+  /* c8 ignore next 2 */
   throw new Error("Internal immutable-collections violation: hamt insert reached null");
 }
 
@@ -406,7 +406,7 @@ export function mutateInsert<K, T, V>(
       return rootNode;
     }
   } while (curNode);
-
+  /* c8 ignore next 2 */
   throw new Error("Internal immutable-collections violation: hamt mutate insert reached null");
 }
 
