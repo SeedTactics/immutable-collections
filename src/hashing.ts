@@ -89,7 +89,11 @@ function objHash(a: HashKeyObj): number {
       }
     }
   }
-  return hash2Ints(hash, prims.length);
+  if (prims.length === 1) {
+    return hash;
+  } else {
+    return hash2Ints(hash, prims.length);
+  }
 }
 
 // We have a small hack here.  At the time of creation, we don't know the

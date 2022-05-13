@@ -59,7 +59,7 @@ export type MutableHamtNode<K, V> =
 const bitsPerSubkey = 5;
 const subkeyMask = (1 << bitsPerSubkey) - 1;
 const maxChildren = 1 << bitsPerSubkey; // 2^bitsPerSubKey
-const maxShift = Math.floor(32 / bitsPerSubkey);
+const maxShift = 35;
 
 // given the hash and the shift (the tree level), returns a bitmap with a 1 in the position of the index of the hash at this level
 function mask(hash: number, shift: number): number {
@@ -94,13 +94,13 @@ export function lookup<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V>)
         return undefined;
       } else {
         // recurse
-        shift += bitsPerSubkey;
         node = node.children[sparseIndex(node.bitmap, m)];
+        shift += bitsPerSubkey;
       }
     } else if ("full" in node) {
       // recurse
-      shift += bitsPerSubkey;
       node = node.full[fullIndex(hash, shift)];
+      shift += bitsPerSubkey;
     } else if ("key" in node) {
       if (hash === node.hash && cfg.keyEq(k, node.key)) {
         return node.val;

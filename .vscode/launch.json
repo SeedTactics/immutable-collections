@@ -1,0 +1,11 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Mocha Tests",
+      "type": "pwa-node",
+      "request": "launch",
+      "runtimeArgs": ["${workspaceRoot}/node_modules/mocha/bin/mocha.js", "${relativeFile}"]
+    }
+  ]
+}
