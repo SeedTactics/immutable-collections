@@ -184,30 +184,27 @@ export class ImMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     return new ImMap(cfg, root, size);
   }
 
+  public static union<K extends HashKey, V>(merge: (v1: V, v2: V) => V, ...maps: readonly ImMap<K, V>[]): ImMap<K, V> {
+    if (maps.length === 0) {
+      return ImMap.empty();
+    } else if (maps.length === 1) {
+      return maps[0];
+    } else {
+      return ImMap.from(
+        {
+          [Symbol.iterator]: function* () {
+            for (const map of maps) {
+              yield* map;
+            }
+          },
+        },
+        merge
+      );
+    }
+  }
+
   //mapValues<U>(f: (v: V, k: K) => U): ImMap<K, U>;
   //collectValues(f: (v: V, k: K) => V | null | undefined): IMap<K, V>;
 
   protected static ["@@__IMMUTABLE_KEYED__@@"]: true;
-}
-
-export function unionImMaps<K extends HashKey, V>(
-  merge: (v1: V, v2: V) => V,
-  ...maps: readonly ImMap<K, V>[]
-): ImMap<K, V> {
-  if (maps.length === 0) {
-    return ImMap.empty();
-  } else if (maps.length === 1) {
-    return maps[0];
-  } else {
-    return ImMap.from(
-      {
-        [Symbol.iterator]: function* () {
-          for (const map of maps) {
-            yield* map;
-          }
-        },
-      },
-      merge
-    );
-  }
 }
