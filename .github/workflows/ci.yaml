@@ -30,7 +30,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Test Suite
-        run: pnpm run test
+        run: pnpm run coverage
+
+      - name: Upload Code Coverage
+        uses: codecov/codecov-action@v2
+        with:
+          directory: coverage
 
       - name: Cleanup pnpm cache
         run: pnpm store prune
