@@ -17,4 +17,8 @@ export class CollidingKey {
     // only include this.hash so that we can generate collisions
     return [this.hash];
   }
+
+  public toString(): string {
+    return `${this.hash}-${this.x}`;
+  }
 }
