@@ -2,7 +2,7 @@ import { fold, HamtNode, insert, iterate, lookup, MutableHamtNode, mutateInsert,
 import { HashConfig, HashKey, mkHashConfig } from "./hashing.js";
 import { LazySeq } from "./lazyseq.js";
 
-export class ImMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
+export class ImMap<K, V> implements ReadonlyMap<K, V> {
   private cfg: HashConfig<K>;
   private root: HamtNode<K, V> | null;
 
