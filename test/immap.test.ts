@@ -6,10 +6,11 @@ import { sortByProp } from "../src/lazyseq.js";
 
 interface ImMapAndJsMap<K extends HashKey, V> {
   readonly imMap: ImMap<K, V>;
-  readonly entries: ReadonlyArray<readonly [K, V]>;
+  readonly jsMap: Map<string, readonly [K, V]>;
 }
 
-function sortEntries<K extends HashKey, V>(entries: Array<readonly [K, V]>): Array<readonly [K, V]> {
+function sortEntries<K extends HashKey, V>(e: Iterable<readonly [K, V]>): Array<readonly [K, V]> {
+  const entries = Array.from(e);
   return entries.sort(sortByProp(([k]) => k.toString()));
 }
 
@@ -24,10 +25,11 @@ function createViaSet<K extends HashKey, V>(size: number, key: () => K, val: () 
     jsMap.set(k.toString(), [k, v]);
   }
 
-  return { imMap, entries: sortEntries(Array.from(jsMap.values())) };
+  return { imMap, jsMap };
 }
 
-function expectEqual<K extends HashKey, V>({ imMap, entries }: ImMapAndJsMap<K, V>): void {
+function expectEqual<K extends HashKey, V>({ imMap, jsMap }: ImMapAndJsMap<K, V>): void {
+  const entries = sortEntries(jsMap.values());
   expect(imMap.size).to.equal(entries.length);
   expect(imMap.size).to.equal(imMap.fold((cnt) => cnt + 1, 0));
 
@@ -66,7 +68,7 @@ describe("ImMap", () => {
 
   it("creates a string key map", () => {
     const maps = createViaSet(
-      1000,
+      10000,
       () => faker.datatype.string(),
       () => faker.datatype.number()
     );
@@ -76,7 +78,7 @@ describe("ImMap", () => {
   it("creates a number key map", () => {
     const maps = createViaSet(
       10000,
-      () => faker.datatype.number({ min: 0, max: 10000 }),
+      () => faker.datatype.number({ min: 0, max: 80000 }),
       () => faker.datatype.string()
     );
     expectEqual(maps);
