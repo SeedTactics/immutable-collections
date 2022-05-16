@@ -3,6 +3,7 @@ import { faker } from "@faker-js/faker";
 import { HashKey } from "../src/hashing.js";
 import { ImMap } from "../src/immap.js";
 import { sortByProp } from "../src/lazyseq.js";
+import { CollidingKey, randomCollidingKey } from "./collision-key.js";
 
 interface ImMapAndJsMap<K extends HashKey, V> {
   readonly imMap: ImMap<K, V>;
@@ -122,6 +123,14 @@ describe("ImMap", () => {
     expectEqual(maps);
   });
 
+  it("creates a object keyed map", () => {
+    const maps = extendMap(1000, randomCollidingKey, {
+      imMap: ImMap.empty<CollidingKey, string>(),
+      jsMap: new Map(),
+    });
+    expectEqual(maps);
+  });
+
   it("leaves map unchanged when setting the same value", () => {
     const maps = extendMap(500, () => faker.datatype.string(), {
       imMap: ImMap.empty<string, string>(),
@@ -165,15 +174,15 @@ describe("ImMap", () => {
 
   it("creates via from and merge", () => {
     const size = 1000;
-    const entries = new Array<[number, string]>(size);
+    const entries = new Array<[CollidingKey, string]>(size);
     for (let i = 0; i < size; i++) {
-      const k = faker.datatype.number({ min: 0, max: 5000 });
+      const k = randomCollidingKey();
       const v = faker.datatype.string();
       entries[i] = [k, v];
     }
     const imMap = ImMap.from(entries, (a, b) => a + b);
 
-    const jsMap = new Map<string, [number, string]>();
+    const jsMap = new Map<string, [CollidingKey, string]>();
     for (const [k, v] of entries) {
       const oldV = jsMap.get(k.toString());
       jsMap.set(k.toString(), [k, oldV === undefined ? v : oldV[1] + v]);
@@ -202,15 +211,16 @@ describe("ImMap", () => {
       ts[i] = faker.datatype.number({ min: 0, max: 5000 });
     }
 
-    const imMap = ImMap.build<number, number, string>(
+    const imMap = ImMap.build<number, CollidingKey, string>(
       ts,
-      (t) => t + 40_000,
+      (t) => new CollidingKey(t % 100, t + 40_000),
       (old, t) => (old ?? "") + t.toString()
     );
-    const jsMap = new Map<string, [number, string]>();
+    const jsMap = new Map<string, [CollidingKey, string]>();
     for (const t of ts) {
-      const oldV = jsMap.get((t + 40_000).toString());
-      jsMap.set((t + 40_000).toString(), [t + 40_000, oldV === undefined ? t.toString() : oldV[1] + t.toString()]);
+      const k = new CollidingKey(t % 100, t + 40_000);
+      const oldV = jsMap.get(k.toString());
+      jsMap.set(k.toString(), [k, oldV === undefined ? t.toString() : oldV[1] + t.toString()]);
     }
 
     expectEqual({ imMap, jsMap });
@@ -308,7 +318,5 @@ describe("ImMap", () => {
     expectEqual({ imMap: newImMap, jsMap: newJsMap });
   });
 
-  //  const k = new Key(faker.datatype.number({ min: -20, max: 20 }), faker.datatype.number({ min: 0, max: 100 })));
-
-  //todo: delete, union
+  it("deletes from ImMap");
 });

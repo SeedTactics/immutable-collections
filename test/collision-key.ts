@@ -1,5 +1,6 @@
-// a key type that can generate hash collisions
+import { faker } from "@faker-js/faker";
 
+// a key type that can generate hash collisions
 export class CollidingKey {
   readonly hash: number;
   readonly x: number;
@@ -19,6 +20,10 @@ export class CollidingKey {
   }
 
   public toString(): string {
-    return `${this.hash}-${this.x}`;
+    return `${this.hash}::${this.x}`;
   }
+}
+
+export function randomCollidingKey(): CollidingKey {
+  return new CollidingKey(faker.datatype.number({ min: 0, max: 100 }), faker.datatype.number());
 }

@@ -126,15 +126,21 @@ export function lookup<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V>)
   throw new Error("Internal immutable-collections violation: node undefined during lookup " + JSON.stringify(rootNode));
 }
 
-// create a new node consisting of two children. Requires that the keys and hashes of the keys are not equal
-function two<K, V>(shift: number, leaf1: LeafNode<K, V>, leaf2: LeafNode<K, V>): MutableHamtNode<K, V> {
+// create a new node consisting of two children. Requires that the hashes are not equal
+function two<K, V>(
+  shift: number,
+  leaf1: MutableLeafNode<K, V> | MutableCollisionNode<K, V>,
+  leaf2: MutableLeafNode<K, V>
+): MutableHamtNode<K, V>;
+function two<K, V>(shift: number, leaf1: LeafNode<K, V> | CollisionNode<K, V>, leaf2: LeafNode<K, V>): HamtNode<K, V>;
+function two<K, V>(shift: number, leaf1: LeafNode<K, V> | CollisionNode<K, V>, leaf2: LeafNode<K, V>): HamtNode<K, V> {
   const hash1 = leaf1.hash;
   const hash2 = leaf2.hash;
-  let root: MutableBitmapIndexedNode<K, V> | undefined;
+  let root: BitmapIndexedNode<K, V> | undefined;
 
   // as we descend through the shifts, newly created nodes are set at the zero index in the
   // parent array.
-  let parent: Array<MutableHamtNode<K, V>> | undefined;
+  let parent: Array<HamtNode<K, V>> | undefined;
 
   do {
     const mask1 = mask(hash1, shift);
@@ -305,8 +311,33 @@ export function insert<K, V>(
       }
       return [newRoot ?? newNode, inserted];
     } else {
-      // collision node
-      const newNode = { hash, collision: [{ key: k, val: getVal(undefined) }, ...curNode.collision] };
+      // existing collision node
+      let newNode: HamtNode<K, V> | undefined = undefined;
+      if (hash === curNode.hash) {
+        // check and extend the existing collision node
+        for (let i = 0; i < curNode.collision.length; i++) {
+          const c = curNode.collision[i];
+          if (cfg.keyEq(k, c.key)) {
+            const newVal = getVal(c.val);
+            if (c.val === newVal) {
+              // return the original root node because nothing changed
+              return [rootNode, false];
+            }
+            // create a copy of the collision node
+            const newArr = [...curNode.collision];
+            newArr[i] = { key: k, val: newVal };
+            newNode = { hash, collision: newArr };
+            break;
+          }
+        }
+        if (newNode === undefined) {
+          // node not in the collision list, add it
+          newNode = { hash, collision: [{ key: k, val: getVal(undefined) }, ...curNode.collision] };
+        }
+      } else {
+        // create a new bitmap indexed node with a new leaf and the collision node as children
+        newNode = two(shift, curNode, { hash, key: k, val: getVal(undefined) });
+      }
       if (parent !== undefined) {
         parent[parentIdx] = newNode;
       }
@@ -405,8 +436,30 @@ export function mutateInsert<K, T, V>(
       }
       return rootNode;
     } else {
-      curNode.collision.unshift({ key: k, val: getVal(undefined, t) });
-      return rootNode;
+      if (hash === curNode.hash) {
+        // check if already in current collision node
+        for (let i = 0; i < curNode.collision.length; i++) {
+          const c = curNode.collision[i];
+          if (cfg.keyEq(k, c.key)) {
+            // replace the value
+            c.val = getVal(c.val, t);
+            return rootNode;
+          }
+        }
+        // need to extend the collision node
+        curNode.collision.unshift({ key: k, val: getVal(undefined, t) });
+        return rootNode;
+      } else {
+        // create a new bitmap indexed node with a new leaf and the collision node as children
+        const newNode = two(shift, curNode, { hash, key: k, val: getVal(undefined, t) });
+        if (parent !== undefined) {
+          parent[parentIdx] = newNode;
+        } else {
+          // parent is undefined means the current node is the root
+          rootNode = newNode;
+        }
+        return rootNode;
+      }
     }
   } while (curNode);
   /* c8 ignore next 2 */
