@@ -204,21 +204,16 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
   }
 
   public static union<K extends HashKey, V>(merge: (v1: V, v2: V) => V, ...maps: readonly ImMap<K, V>[]): ImMap<K, V> {
-    if (maps.length === 0) {
+    // TODO: add custom hamt method which optimizes this
+    const nonEmpty = maps.filter((m) => m.size > 0);
+    if (nonEmpty.length === 0) {
       return ImMap.empty();
-    } else if (maps.length === 1) {
-      return maps[0];
     } else {
-      return ImMap.from(
-        {
-          [Symbol.iterator]: function* () {
-            for (const map of maps) {
-              yield* map;
-            }
-          },
-        },
-        merge
-      );
+      const m = nonEmpty[0];
+      for (let i = 1; i < nonEmpty.length; i++) {
+        m.append(nonEmpty[i], merge);
+      }
+      return m;
     }
   }
 
