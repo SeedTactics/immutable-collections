@@ -443,7 +443,45 @@ describe("LazySeq", () => {
     expect(sorted).to.deep.equal([5, 4, 3, 2, 1]);
   });
 
-  it("converts to a IMap");
+  it("converts to a IMap", () => {
+    const seq = LazySeq.ofIterable([
+      {
+        foo: 1,
+        bar: "hello",
+      },
+      {
+        foo: 1,
+        bar: "world",
+      },
+      {
+        foo: 2,
+        bar: "!!!",
+      },
+      {
+        foo: 3,
+        bar: "??!?",
+      },
+    ]);
+
+    const m = seq.toImMap(
+      (x) => [x.foo, x.bar],
+      (x, y) => x + y
+    );
+
+    expect(Array.from(m).sort(([k1], [k2]) => k1 - k2)).to.deep.equal([
+      [1, "helloworld"],
+      [2, "!!!"],
+      [3, "??!?"],
+    ]);
+
+    // try without a merge function
+    const m3 = seq.toImMap((x) => [x.foo, x.bar]);
+    expect(Array.from(m3).sort(([k1], [k2]) => k1 - k2)).to.deep.equal([
+      [1, "world"],
+      [2, "!!!"],
+      [3, "??!?"],
+    ]);
+  });
 
   it("converts to a JS map", () => {
     const seq = LazySeq.ofIterable([
@@ -554,9 +592,121 @@ describe("LazySeq", () => {
     expect(mset).to.deep.equal(new Set([100, 3, 6, 9, 12]));
   });
 
-  it("builds a lookup in an IMap");
+  it("builds a lookup in an IMap", () => {
+    const seq = LazySeq.ofIterable([
+      { foo: 1, bar: "aa" },
+      { foo: 1, bar: "aaaa" },
+      { foo: 2, bar: "bb" },
+      { foo: 3, bar: "c" },
+      { foo: 2, bar: "bbbb" },
+    ]);
 
-  it("builds a lookupMap in an IMap");
+    const lookup = seq.toLookup(
+      (x) => x.foo,
+      (x) => x.bar
+    );
+
+    expect(Array.from(lookup).sort(([k1], [k2]) => k1 - k2)).to.deep.equal([
+      [1, ["aa", "aaaa"]],
+      [2, ["bb", "bbbb"]],
+      [3, ["c"]],
+    ]);
+
+    const lookupKey = seq.toLookup((x) => x.foo);
+
+    expect(Array.from(lookupKey).sort(([k1], [k2]) => k1 - k2)).to.deep.equal([
+      [
+        1,
+        [
+          { foo: 1, bar: "aa" },
+          { foo: 1, bar: "aaaa" },
+        ],
+      ],
+      [
+        2,
+        [
+          { foo: 2, bar: "bb" },
+          { foo: 2, bar: "bbbb" },
+        ],
+      ],
+      [3, [{ foo: 3, bar: "c" }]],
+    ]);
+  });
+
+  it("builds a lookupMap in an IMap", () => {
+    const seq = LazySeq.ofIterable([
+      { foo: 1, bar: "aa" },
+      { foo: 1, bar: "aaaa" },
+      { foo: 2, bar: "bb" },
+      { foo: 3, bar: "c" },
+      { foo: 2, bar: "bbbb" },
+    ]);
+
+    const lookup = seq.toLookupMap(
+      (x) => x.foo,
+      (x) => x.bar
+    );
+
+    expect(
+      Array.from(lookup)
+        .sort(([k1], [k2]) => k1 - k2)
+        .map(([k, vs]) => [k, Array.from(vs).sort(([k1], [k2]) => k1.localeCompare(k2))])
+    ).to.deep.equal([
+      [
+        1,
+        [
+          ["aa", { foo: 1, bar: "aa" }],
+          ["aaaa", { foo: 1, bar: "aaaa" }],
+        ],
+      ],
+      [
+        2,
+        [
+          ["bb", { foo: 2, bar: "bb" }],
+          ["bbbb", { foo: 2, bar: "bbbb" }],
+        ],
+      ],
+      [3, [["c", { foo: 3, bar: "c" }]]],
+    ]);
+  });
+
+  it("builds a lookupMap in an IMap and transforms the value", () => {
+    const seq = LazySeq.ofIterable([
+      { foo: 1, bar: "aa" },
+      { foo: 1, bar: "aaaa" },
+      { foo: 2, bar: "bb" },
+      { foo: 3, bar: "c" },
+      { foo: 2, bar: "bbbb" },
+    ]);
+
+    const lookup = seq.toLookupMap(
+      (x) => x.foo,
+      (x) => x.bar,
+      (x) => x.foo + x.bar.length
+    );
+
+    expect(
+      Array.from(lookup)
+        .sort(([k1], [k2]) => k1 - k2)
+        .map(([k, vs]) => [k, Array.from(vs).sort(([k1], [k2]) => k1.localeCompare(k2))])
+    ).to.deep.equal([
+      [
+        1,
+        [
+          ["aa", 1 + 2],
+          ["aaaa", 1 + 4],
+        ],
+      ],
+      [
+        2,
+        [
+          ["bb", 2 + 2],
+          ["bbbb", 2 + 4],
+        ],
+      ],
+      [3, [["c", 3 + 1]]],
+    ]);
+  });
 
   it("builds a lookup in a ReadonlyMap", () => {
     const seq = LazySeq.ofIterable([

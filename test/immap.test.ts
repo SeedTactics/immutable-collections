@@ -307,12 +307,40 @@ describe("ImMap", () => {
       jsMap: new Map(),
     });
 
-    const newImMap = ImMap.union<number, string>((a, b) => a + b, m1.imMap, m2.imMap);
+    const newImMap = m1.imMap.union(m2.imMap);
 
     const newJsMap = new Map(m1.jsMap);
     for (const [kS, [k, v]] of m2.jsMap) {
-      const oldV = newJsMap.get(kS);
-      newJsMap.set(kS, [k, oldV === undefined ? v : oldV[1] + v]);
+      newJsMap.set(kS, [k, v]);
+    }
+
+    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+  });
+
+  it("unions three maps", () => {
+    const maps = Array<ImMapAndJsMap<number, string>>();
+    for (let i = 0; i < 3; i++) {
+      maps.push(
+        extendMap(500, () => faker.datatype.number({ min: 0, max: 5000 }), {
+          imMap: ImMap.empty<number, string>(),
+          jsMap: new Map(),
+        })
+      );
+      // add an empty map, which should be filtered out
+      maps.push({
+        imMap: ImMap.empty<number, string>(),
+        jsMap: new Map(),
+      });
+    }
+
+    const newImMap = ImMap.union<number, string>((a, b) => a + b, ...maps.map((i) => i.imMap));
+
+    const newJsMap = new Map<string, [number, string]>();
+    for (const { jsMap } of maps) {
+      for (const [kS, [k, v]] of jsMap) {
+        const oldV = newJsMap.get(kS);
+        newJsMap.set(kS, [k, oldV === undefined ? v : oldV[1] + v]);
+      }
     }
 
     expectEqual({ imMap: newImMap, jsMap: newJsMap });
