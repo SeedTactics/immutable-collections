@@ -224,31 +224,6 @@ describe("LazySeq", () => {
     ]);
   });
 
-  it("groups by a tuple", () => {
-    const seq = LazySeq.ofIterable([
-      { foo: 1, bar: "a", baz: true },
-      { foo: 2, bar: "a", baz: true },
-      { foo: 3, bar: "b", baz: true },
-      { foo: 4, bar: "b", baz: false },
-      { foo: 5, bar: "c", baz: true },
-    ]);
-
-    const groups = seq.groupByTuple((i) => [i.bar, i.baz]);
-
-    expect(groups.toRArray()).to.deep.equal([
-      [
-        ["a", true],
-        [
-          { foo: 1, bar: "a", baz: true },
-          { foo: 2, bar: "a", baz: true },
-        ],
-      ],
-      [["b", true], [{ foo: 3, bar: "b", baz: true }]],
-      [["b", false], [{ foo: 4, bar: "b", baz: false }]],
-      [["c", true], [{ foo: 5, bar: "c", baz: true }]],
-    ]);
-  });
-
   it("returns the head of a list", () => {
     const seq = LazySeq.ofRange(1, 10);
     const empty = LazySeq.ofIterable([]);
