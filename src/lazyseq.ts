@@ -550,6 +550,7 @@ export class LazySeq<T> {
     val?: (x: T) => S,
     mergeVals?: (v1: S, v2: S) => S
   ): ImMap<K1 & HashKey, ImMap<K2 & HashKey, T | S>> {
+    // TODO: add dedicated function to ImMap to make this efficient
     function merge(old: ImMap<K2 & HashKey, T | S> | undefined, t: T): ImMap<K2 & HashKey, T | S> {
       if (old === undefined) {
         old = ImMap.empty<K2 & HashKey, T | S>();

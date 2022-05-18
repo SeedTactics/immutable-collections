@@ -110,14 +110,26 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
 
   // Creating new maps
 
-  public static empty<K extends HashKey, V>(): ImMap<K, V> {
-    return new ImMap(mkHashConfig<K>(), null, 0);
+  public static empty<K extends HashKey, V>(): ImMap<K, V>;
+  public static empty<K, V>(cfg: HashConfig<K>): ImMap<K, V>;
+  public static empty<K, V>(cfg?: HashConfig<K>): ImMap<K, V> {
+    return new ImMap(cfg ?? (mkHashConfig<K & HashKey>() as HashConfig<K>), null, 0);
   }
 
-  public static from<K extends HashKey, V>(items: Iterable<readonly [K, V]>, merge?: (v1: V, v2: V) => V): ImMap<K, V> {
+  public static from<K extends HashKey, V>(items: Iterable<readonly [K, V]>, merge?: (v1: V, v2: V) => V): ImMap<K, V>;
+  public static from<K, V>(
+    items: Iterable<readonly [K, V]>,
+    merge: (v1: V, v2: V) => V,
+    cfg: HashConfig<K>
+  ): ImMap<K, V>;
+  public static from<K, V>(
+    items: Iterable<readonly [K, V]>,
+    merge?: (v1: V, v2: V) => V,
+    cfg?: HashConfig<K>
+  ): ImMap<K, V> {
     let root: MutableHamtNode<K, V> | null = null;
     let size = 0;
-    const cfg = mkHashConfig<K>();
+    cfg = cfg ?? (mkHashConfig<K & HashKey>() as HashConfig<K>);
 
     let val: (old: V | undefined, v: V) => V;
     if (merge) {
@@ -150,14 +162,21 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
     key: (v: T) => K,
     val: (old: V | undefined, t: T) => V
   ): ImMap<K, V>;
-  public static build<T, K extends HashKey, V>(
+  public static build<T, K, V>(
+    items: Iterable<T>,
+    key: (v: T) => K,
+    val: (old: V | undefined, t: T) => V,
+    cfg: HashConfig<K>
+  ): ImMap<K, V>;
+  public static build<T, K, V>(
     items: Iterable<T>,
     key: (t: T) => K,
-    val?: (old: V | undefined, t: T) => V
+    val?: (old: V | undefined, t: T) => V,
+    cfg?: HashConfig<K>
   ): ImMap<K, V> {
     let root: MutableHamtNode<K, V> | null = null;
     let size = 0;
-    const cfg = mkHashConfig<K>();
+    cfg = cfg ?? (mkHashConfig<K & HashKey>() as HashConfig<K>);
 
     let getVal: (old: V | undefined, t: T) => V;
     if (val) {
