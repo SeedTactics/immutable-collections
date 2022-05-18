@@ -89,7 +89,7 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
     if (newRoot === this.root) {
       return this;
     } else {
-      return new ImMap(this.cfg, newRoot, this.size + (deleted ? -1 : 0));
+      return new ImMap(this.cfg, newRoot, deleted ? this.size - 1 : this.size);
     }
   }
 
