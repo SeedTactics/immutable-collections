@@ -108,6 +108,10 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
     }
   }
 
+  union(other: ImMap<K, V>, merge?: (v1: V, v2: V) => V): ImMap<K, V> {
+    return ImMap.union(merge ?? ((_, s) => s), this, other);
+  }
+
   // Creating new maps
 
   public static empty<K extends HashKey, V>(): ImMap<K, V>;
@@ -203,11 +207,11 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
     return new ImMap(cfg, root, size);
   }
 
-  public static union<K extends HashKey, V>(merge: (v1: V, v2: V) => V, ...maps: readonly ImMap<K, V>[]): ImMap<K, V> {
+  public static union<K, V>(merge: (v1: V, v2: V) => V, ...maps: readonly ImMap<K, V>[]): ImMap<K, V> {
     // TODO: add custom hamt method which optimizes this
-    const nonEmpty = maps.filter((m) => m.size > 0);
+    const nonEmpty = maps.filter((m) => m.size > 0).sort((a, b) => b.size - a.size); // sort largest first
     if (nonEmpty.length === 0) {
-      return ImMap.empty();
+      return ImMap.empty(maps[0].cfg);
     } else {
       const m = nonEmpty[0];
       for (let i = 1; i < nonEmpty.length; i++) {
