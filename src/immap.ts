@@ -206,7 +206,7 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
       let m = nonEmpty[0];
       for (let i = 1; i < nonEmpty.length; i++) {
         for (const [k, v] of nonEmpty[i]) {
-          m = m.modify(k, (old) => merge(old ?? v, v));
+          m = m.modify(k, (old) => (old === undefined ? v : merge(old, v)));
         }
       }
       return m;
