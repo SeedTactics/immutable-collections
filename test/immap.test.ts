@@ -247,28 +247,6 @@ describe("ImMap", () => {
     expectEqual({ imMap: newImMap, jsMap: newJsMap });
   });
 
-  it("appends to a map with merge", () => {
-    const initial = extendMap(1000, () => faker.datatype.number({ min: 0, max: 5000 }), {
-      imMap: ImMap.empty<number, string>(),
-      jsMap: new Map(),
-    });
-
-    const newEntries = new Array<[number, string]>(500);
-    for (let i = 0; i < 500; i++) {
-      newEntries[i] = [faker.datatype.number({ min: 0, max: 5000 }), faker.datatype.string()];
-    }
-    const newImMap = initial.imMap.append(newEntries, (a, b) => a + b);
-
-    const newJsMap = new Map(initial.jsMap);
-    for (const [k, v] of newEntries) {
-      const oldV = newJsMap.get(k.toString());
-      newJsMap.set(k.toString(), [k, oldV === undefined ? v : oldV[1] + v]);
-    }
-
-    expectEqual(initial);
-    expectEqual({ imMap: newImMap, jsMap: newJsMap });
-  });
-
   it("leaves map unchanged when appending existing entries", () => {
     const initial = extendMap(1000, () => faker.datatype.number({ min: 0, max: 5000 }), {
       imMap: ImMap.empty<number, string>(),

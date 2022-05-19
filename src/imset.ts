@@ -1,43 +1,156 @@
-import { HashKey } from "./hashing.js";
-import { ImMap } from "./immap.js";
+import { HashConfig, HashKey } from "./hashing.js";
 import { LazySeq } from "./lazyseq.js";
+import { mkHashConfig } from "./hashing.js";
+import { fold, HamtNode, insert, iterate, lookup, MutableHamtNode, mutateInsert, remove } from "./hamt.js";
 
-export class ImSet<T> {
-  imap: ImMap<T, undefined>;
+function constTrue() {
+  return true;
+}
 
-  private constructor(imap: ImMap<T, undefined>) {
-    this.imap = imap;
+export class ImSet<T> implements ReadonlySet<T> {
+  private cfg: HashConfig<T>;
+  private root: HamtNode<T, boolean> | null;
+
+  private constructor(cfg: HashConfig<T>, root: HamtNode<T, boolean> | null, size: number) {
+    this.cfg = cfg;
+    this.root = root;
+    this.size = size;
   }
 
-  public static empty<T extends HashKey>(): ImSet<T> {
-    return new ImSet<T>(ImMap.empty<T, undefined>());
+  // ReadonlySet interface
+
+  readonly size: number;
+
+  has(t: T): boolean {
+    if (this.root === null) return false;
+    return lookup(this.cfg, t, this.root) === true;
   }
 
-  public static from<T extends HashKey>(items: Iterable<T>): ImSet<T> {
-    return new ImSet<T>(ImMap.from(LazySeq.ofIterable(items).map((i) => [i, undefined])));
+  [Symbol.iterator](): IterableIterator<T> {
+    return iterate(this.root, (t) => t);
   }
 
-  public has(item: T & HashKey): boolean {
-    return this.imap.has(item);
+  entries(): IterableIterator<[T, T]> {
+    return iterate(this.root, (t) => [t, t]);
   }
 
-  public get size(): number {
-    return this.imap.size;
+  keys(): IterableIterator<T> {
+    return iterate(this.root, (t) => t);
   }
 
-  public add(item: T & HashKey): ImSet<T> {
-    return new ImSet<T>(this.imap.set(item, undefined));
+  values(): IterableIterator<T> {
+    return iterate(this.root, (t) => t);
   }
 
-  public delete(item: T & HashKey): ImSet<T> {
-    return new ImSet<T>(this.imap.delete(item));
+  forEach(f: (val: T, val2: T, set: ImSet<T>) => void): void {
+    fold(
+      this.root,
+      (_acc, _v, t) => {
+        f(t, t, this);
+        return undefined;
+      },
+      undefined
+    );
   }
 
-  [Symbol.iterator](): Iterator<T> {
-    return this.imap.keys()[Symbol.iterator]();
+  fold<R>(f: (acc: R, val: T) => R, zero: R): R {
+    return fold(this.root, (acc, _v, t) => f(acc, t), zero);
   }
 
-  public toLazySeq(): LazySeq<T> {
-    return LazySeq.ofIterable(this.imap.keys());
+  toLazySeq(): LazySeq<T> {
+    return LazySeq.ofIterable(this.keys());
+  }
+
+  // Methods modifying the map
+
+  add(t: T): ImSet<T> {
+    const [newRoot, inserted] = insert(this.cfg, t, constTrue, this.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new ImSet(this.cfg, newRoot, this.size + (inserted ? 1 : 0));
+    }
+  }
+
+  delete(t: T): ImSet<T> {
+    const newRoot = remove(this.cfg, t, this.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new ImSet(this.cfg, newRoot, this.size - 1);
+    }
+  }
+
+  append(items: Iterable<T>) {
+    return ImSet.union(this, ImSet.from(items, this.cfg));
+  }
+
+  union(other: ImSet<T>): ImSet<T> {
+    return ImSet.union(this, other);
+  }
+
+  // Creating new sets
+
+  public static empty<T extends HashKey>(): ImSet<T>;
+  public static empty<T>(cfg: HashConfig<T>): ImSet<T>;
+  public static empty<T>(cfg?: HashConfig<T>): ImSet<T> {
+    return new ImSet<T>(cfg ?? (mkHashConfig<T & HashKey>() as HashConfig<T>), null, 0);
+  }
+
+  public static from<T extends HashKey>(items: Iterable<T>): ImSet<T>;
+  public static from<T>(items: Iterable<T>, cfg: HashConfig<T>): ImSet<T>;
+  public static from<T extends HashKey>(items: Iterable<T>, cfg?: HashConfig<T>): ImSet<T> {
+    let root: MutableHamtNode<T, boolean> | null = null;
+    let size = 0;
+    cfg = cfg ?? (mkHashConfig<T & HashKey>() as HashConfig<T>);
+
+    function val(old: boolean | undefined) {
+      if (old === undefined) {
+        size++;
+      }
+      return true;
+    }
+
+    for (const t of items) {
+      root = mutateInsert(cfg, t, undefined, val, root);
+    }
+    return new ImSet(cfg, root, size);
+  }
+
+  public static build<T extends HashKey, R>(items: Iterable<R>, key: (v: R) => T): ImSet<T>;
+  public static build<T, R>(items: Iterable<R>, key: (v: R) => T, cfg: HashConfig<T>): ImSet<T>;
+  public static build<T, R>(items: Iterable<R>, key: (v: R) => T, cfg?: HashConfig<T>): ImSet<T> {
+    let root: MutableHamtNode<T, boolean> | null = null;
+    let size = 0;
+    cfg = cfg ?? (mkHashConfig<T & HashKey>() as HashConfig<T>);
+
+    function val(old: boolean | undefined) {
+      if (old === undefined) {
+        size++;
+      }
+      return true;
+    }
+
+    for (const t of items) {
+      root = mutateInsert(cfg, key(t), undefined, val, root);
+    }
+
+    return new ImSet(cfg, root, size);
+  }
+
+  public static union<T>(...sets: ReadonlyArray<ImSet<T>>) {
+    // TODO: add custom hamt method which optimizes this
+    const nonEmpty = sets.filter((s) => s.size > 0);
+    if (nonEmpty.length === 0) {
+      return ImSet.empty(sets[0]?.cfg);
+    } else {
+      let m = nonEmpty[0];
+      for (let i = 1; i < nonEmpty.length; i++) {
+        for (const t of nonEmpty[i]) {
+          m = m.add(t);
+        }
+      }
+      return m;
+    }
   }
 }

@@ -93,19 +93,9 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
     }
   }
 
-  append(items: Iterable<readonly [K, V]>, merge?: (v1: V, v2: V) => V): ImMap<K, V> {
-    let newRoot = this.root;
-    let newSize = this.size;
-    for (const [k, v] of items) {
-      const [r, inserted] = insert(this.cfg, k, (old) => (old && merge ? merge(old, v) : v), newRoot);
-      newRoot = r;
-      if (inserted) newSize++;
-    }
-    if (newRoot === this.root) {
-      return this;
-    } else {
-      return new ImMap(this.cfg, newRoot, newSize);
-    }
+  append(items: Iterable<readonly [K, V]>) {
+    const snd: <T>(a: unknown, s: T) => T = (_, s) => s;
+    return ImMap.union(snd, this, ImMap.from(items, snd, this.cfg));
   }
 
   union(other: ImMap<K, V>, merge?: (v1: V, v2: V) => V): ImMap<K, V> {
@@ -215,7 +205,9 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
     } else {
       let m = nonEmpty[0];
       for (let i = 1; i < nonEmpty.length; i++) {
-        m = m.append(nonEmpty[i], merge);
+        for (const [k, v] of nonEmpty[i]) {
+          m = m.modify(k, (old) => merge(old ?? v, v));
+        }
       }
       return m;
     }
