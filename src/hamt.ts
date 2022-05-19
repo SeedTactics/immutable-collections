@@ -43,10 +43,17 @@ export type MutableBitmapIndexedNode<K, V> = {
   bitmap: number;
   readonly children: Array<MutableHamtNode<K, V>>;
 };
+type MutableSpineBitmapIndexedNode<K, V> = {
+  bitmap: number;
+  readonly children: Array<HamtNode<K, V>>;
+};
 
 // A full node in which all 32 children are present
 export type FullNode<K, V> = { readonly full: ReadonlyArray<HamtNode<K, V>> };
 export type MutableFullNode<K, V> = { readonly full: Array<MutableHamtNode<K, V>> };
+type MutableSpineFullNode<K, V> = {
+  readonly full: Array<HamtNode<K, V>>;
+};
 
 export type HamtNode<K, V> = LeafNode<K, V> | CollisionNode<K, V> | BitmapIndexedNode<K, V> | FullNode<K, V>;
 
@@ -55,6 +62,9 @@ export type MutableHamtNode<K, V> =
   | MutableCollisionNode<K, V>
   | MutableBitmapIndexedNode<K, V>
   | MutableFullNode<K, V>;
+
+type MutableSpineNode<K, V> = MutableSpineBitmapIndexedNode<K, V> | MutableSpineFullNode<K, V>;
+type MutableSpine<K, V> = Array<{ readonly node: MutableSpineNode<K, V>; readonly childIdx: number }>;
 
 const bitsPerSubkey = 5;
 const subkeyMask = (1 << bitsPerSubkey) - 1;
@@ -462,64 +472,106 @@ export function mutateInsert<K, T, V>(
   throw new Error("Internal immutable-collections violation: hamt mutate insert reached null");
 }
 
-type InternalHamtNodeWithMutableChildArray<K, V> =
-  | {
-      bitmap: number;
-      children: Array<HamtNode<K, V>>;
+function hasSingleLeafOrCollision<K, V>(node: HamtNode<K, V>): LeafNode<K, V> | CollisionNode<K, V> | null {
+  while (node) {
+    if ("bitmap" in node) {
+      if (node.children.length === 1) {
+        // loop
+        node = node.children[0];
+      } else {
+        return null;
+      }
+    } else if ("full" in node) {
+      return null;
+    } else {
+      return node;
     }
-  | { full: Array<HamtNode<K, V>> };
-
-function removeChild<K, V>(node: InternalHamtNodeWithMutableChildArray<K, V>, idx: number) {
-  if ("bitmap" in node) {
-    node.bitmap &= ~(1 << idx);
-    node.children.splice(idx, 1);
-  } else {
-    const arr = node.full;
-    // transform the full node into a bitmap node, which typescript does not like at all
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-    (node as any).children = arr.splice(idx, 1);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-    (node as any).bitmap = ~(1 << idx);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-    delete (node as any).full;
   }
+  return null;
 }
 
+// updates the child pointed to by the MutableSpineNode to the given node
 function updateChild<K, V>(
-  node: InternalHamtNodeWithMutableChildArray<K, V>,
-  idx: number,
+  { node, childIdx }: { node: MutableSpineNode<K, V>; childIdx: number },
   newNode: HamtNode<K, V>
 ): void {
   if ("bitmap" in node) {
-    node.children[idx] = newNode;
+    node.children[childIdx] = newNode;
   } else {
-    node.full[idx] = newNode;
+    node.full[childIdx] = newNode;
   }
+}
+
+function removeChildFromEndOfSpine<K, V>(spine: MutableSpine<K, V>, hash: number): HamtNode<K, V> {
+  // remove the node pointed to by the last spine entry
+  // there are three cases:
+  // - a full node is transitioned to a bitmap indexed node
+  // - the opposite of the two function above: if the removal results in a chain of single-child
+  //   bitmap-indexed nodes ending at a single leaf, the whole chain of nodes is removed
+  //  - a bitmap-indexed node which is not in such a chain just has the child removed
+  // Returns the new root node for the whole tree
+
+  const last = spine[spine.length - 1];
+  if ("full" in last.node) {
+    // transform the full node into a bitmap node
+    const arr = last.node.full;
+    arr.splice(last.childIdx, 1);
+    const bitmap = ~(1 << last.childIdx);
+    if (spine.length === 1) {
+      return { bitmap, children: arr };
+    } else {
+      updateChild(spine[spine.length - 2], { bitmap, children: arr });
+      return spine[0].node;
+    }
+  } else if ("bitmap" in last.node && last.node.children.length === 2) {
+    // removing might potentially result in a chain of single-child bitmap-indexed nodes
+    const other = last.node.children[1 - last.childIdx];
+    const otherLeaf = hasSingleLeafOrCollision(other);
+    if (otherLeaf) {
+      // walk back up the spine, checking for single-child bitmap-indexed nodes
+      for (let i = spine.length - 2; i >= 0; i--) {
+        const cur = spine[i];
+        if ("full" in cur.node) {
+          // found the end of the chain
+          cur.node.full[cur.childIdx] = otherLeaf;
+          return spine[0].node;
+        } else if (cur.node.children.length !== 1) {
+          // found the end of the chain
+          cur.node.children[cur.childIdx] = otherLeaf;
+          return spine[0].node;
+        }
+      }
+      // the entire spine is single-child bitmap-indexed nodes, so the whole tree reduces to just the leaf
+      return otherLeaf;
+    }
+    // other is not a chain, so fall through to just removing the child
+  }
+
+  // last is a bitmap indexed node which after removal will not be in a chain of single-child bitmap-indexed nodes
+  last.node.bitmap &= ~mask(hash, bitsPerSubkey * (spine.length - 1));
+  last.node.children.splice(last.childIdx, 1);
+  return spine[0].node;
+}
+
+function addToSpine<K, V>(spine: MutableSpine<K, V>, node: MutableSpineNode<K, V>, childIdx: number): void {
+  if (spine.length > 0) {
+    updateChild(spine[spine.length - 1], node);
+  }
+  spine.push({ node, childIdx });
 }
 
 function copyAndRemoveFromArray<T>(arr: ReadonlyArray<T>, idx: number): Array<T> {
   return [...arr.slice(0, idx), ...arr.slice(idx + 1)];
 }
 
-export function remove<K, V>(
-  cfg: HashConfig<K>,
-  k: K,
-  rootNode: HamtNode<K, V> | null
-): readonly [HamtNode<K, V> | null, boolean] {
+export function remove<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V> | null): HamtNode<K, V> | null {
   if (rootNode === null) {
-    return [null, false];
+    return null;
   }
 
   const hash = cfg.hash(k);
 
-  let newRoot: HamtNode<K, V> | undefined;
-
-  // we will descend through the tree, leaving a trail of newly created nodes behind us.
-  // Each newly created internal node will have an new array of children, and this
-  // new array will be set in the parent variable.
-  // Thus each time we create a new node, it must be set into the parent array at the given index.
-  let parent: InternalHamtNodeWithMutableChildArray<K, V> | undefined;
-  let parentIdx = 0;
+  const spine: MutableSpine<K, V> = [];
 
   let shift = 0;
   let curNode = rootNode;
@@ -529,22 +581,14 @@ export function remove<K, V>(
       const m = mask(hash, shift);
       if ((curNode.bitmap & m) === 0) {
         // element is not present
-        return [rootNode, false];
+        return rootNode;
       } else {
         // recurse
         const idx = sparseIndex(curNode.bitmap, m);
 
         // create a new node
         const newNode = { bitmap: curNode.bitmap, children: [...curNode.children] };
-        if (newRoot === undefined) {
-          newRoot = newNode;
-        }
-        if (parent !== undefined) {
-          updateChild(parent, parentIdx, newNode);
-        }
-
-        parent = newNode;
-        parentIdx = idx;
+        addToSpine(spine, newNode, idx);
         shift += bitsPerSubkey;
         curNode = curNode.children[idx];
       }
@@ -553,52 +597,53 @@ export function remove<K, V>(
 
       // create a new node
       const newNode = { full: [...curNode.full] };
-      if (newRoot === undefined) {
-        newRoot = newNode;
-      }
-      if (parent !== undefined) {
-        updateChild(parent, parentIdx, newNode);
-      }
+      addToSpine(spine, newNode, idx);
 
       //recurse
-      parent = newNode;
-      parentIdx = idx;
       shift = shift + bitsPerSubkey;
       curNode = newNode.full[idx];
     } else if ("key" in curNode) {
       if (hash === curNode.hash) {
         if (cfg.keyEq(k, curNode.key)) {
-          if (parent === undefined || newRoot === undefined) {
+          if (spine.length === 0) {
             // this leaf is the root, so removing it will make the tree empty
-            return [null, true];
+            return null;
           } else {
-            removeChild(parent, parentIdx);
-            return [newRoot, true];
+            return removeChildFromEndOfSpine(spine, hash);
           }
         } else {
           // keys are not equal, no match
-          return [rootNode, false];
+          return rootNode;
         }
       } else {
         // hashes are different, no match
-        return [rootNode, false];
+        return rootNode;
       }
     } else {
       // collision
       if (hash === curNode.hash) {
         for (let i = 0; i < curNode.collision.length; i++) {
           if (cfg.keyEq(k, curNode.collision[i].key)) {
-            const newNode = { hash, collision: copyAndRemoveFromArray(curNode.collision, i) };
-            if (parent !== undefined) {
-              updateChild(parent, parentIdx, newNode);
+            let newNode: HamtNode<K, V>;
+            if (curNode.collision.length === 2) {
+              // switch back to a leaf node
+              const other = i === 0 ? 1 : 0;
+              newNode = { hash, key: curNode.collision[other].key, val: curNode.collision[other].val };
+            } else {
+              newNode = { hash, collision: copyAndRemoveFromArray(curNode.collision, i) };
             }
-            return [newRoot ?? newNode, true];
+            if (spine.length > 0) {
+              updateChild(spine[spine.length - 1], newNode);
+              return spine[0].node;
+            } else {
+              return newNode;
+            }
           }
         }
-        return [rootNode, false];
+        return rootNode;
       } else {
         // hashes are different, no match
-        return [rootNode, false];
+        return rootNode;
       }
     }
   } while (curNode);

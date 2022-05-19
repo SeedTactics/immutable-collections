@@ -24,6 +24,6 @@ export class CollidingKey {
   }
 }
 
-export function randomCollidingKey(): CollidingKey {
-  return new CollidingKey(faker.datatype.number({ min: 0, max: 100 }), faker.datatype.number());
+export function randomCollidingKey(max: number): CollidingKey {
+  return new CollidingKey(faker.datatype.number({ min: 0, max }), faker.datatype.number());
 }

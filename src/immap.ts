@@ -85,11 +85,11 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
   }
 
   delete(k: K): ImMap<K, V> {
-    const [newRoot, deleted] = remove(this.cfg, k, this.root);
+    const newRoot = remove(this.cfg, k, this.root);
     if (newRoot === this.root) {
       return this;
     } else {
-      return new ImMap(this.cfg, newRoot, deleted ? this.size - 1 : this.size);
+      return new ImMap(this.cfg, newRoot, this.size - 1);
     }
   }
 

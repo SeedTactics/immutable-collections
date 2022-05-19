@@ -124,7 +124,7 @@ describe("ImMap", () => {
   });
 
   it("creates a object keyed map", () => {
-    const maps = extendMap(1000, randomCollidingKey, {
+    const maps = extendMap(1000, () => randomCollidingKey(100), {
       imMap: ImMap.empty<CollidingKey, string>(),
       jsMap: new Map(),
     });
@@ -176,7 +176,7 @@ describe("ImMap", () => {
     const size = 1000;
     const entries = new Array<[CollidingKey, string]>(size);
     for (let i = 0; i < size; i++) {
-      const k = randomCollidingKey();
+      const k = randomCollidingKey(100);
       const v = faker.datatype.string();
       entries[i] = [k, v];
     }
@@ -346,5 +346,21 @@ describe("ImMap", () => {
     expectEqual({ imMap: newImMap, jsMap: newJsMap });
   });
 
-  it("deletes from ImMap");
+  it("deletes from ImMap", () => {
+    const m = extendMap(5_000, () => randomCollidingKey(1000), {
+      imMap: ImMap.empty<CollidingKey, string>(),
+      jsMap: new Map(),
+    });
+
+    let newImMap = m.imMap;
+    const newJsMap = new Map(m.jsMap);
+    for (const [kS, [k]] of m.jsMap) {
+      if (Math.random() < 0.4) {
+        newImMap = newImMap.delete(k);
+        newJsMap.delete(kS);
+      }
+    }
+
+    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+  });
 });
