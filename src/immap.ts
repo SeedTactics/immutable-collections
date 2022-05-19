@@ -93,13 +93,13 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
     }
   }
 
-  append(items: Iterable<readonly [K, V]>) {
-    const snd: <T>(a: unknown, s: T) => T = (_, s) => s;
-    return ImMap.union(snd, this, ImMap.from(items, snd, this.cfg));
+  union(other: ImMap<K, V>, merge?: (vThis: V, vOther: V) => V): ImMap<K, V> {
+    return ImMap.union(merge ?? ((_, s) => s), this, other);
   }
 
-  union(other: ImMap<K, V>, merge?: (v1: V, v2: V) => V): ImMap<K, V> {
-    return ImMap.union(merge ?? ((_, s) => s), this, other);
+  append(items: Iterable<readonly [K, V]>): ImMap<K, V> {
+    const snd: <T>(a: unknown, s: T) => T = (_, s) => s;
+    return ImMap.union(snd, this, ImMap.from(items, snd, this.cfg));
   }
 
   // Creating new maps
