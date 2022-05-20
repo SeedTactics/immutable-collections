@@ -63,8 +63,11 @@ export type MutableHamtNode<K, V> =
   | MutableBitmapIndexedNode<K, V>
   | MutableFullNode<K, V>;
 
-type MutableSpineNode<K, V> = MutableSpineBitmapIndexedNode<K, V> | MutableSpineFullNode<K, V>;
-type MutableSpine<K, V> = Array<{ readonly node: MutableSpineNode<K, V>; readonly childIdx: number }>;
+type MutableSpineNode<K, V> = {
+  readonly node: MutableSpineBitmapIndexedNode<K, V> | MutableSpineFullNode<K, V>;
+  readonly childIdx: number;
+};
+type MutableSpine<K, V> = Array<MutableSpineNode<K, V>>;
 
 const bitsPerSubkey = 5;
 const subkeyMask = (1 << bitsPerSubkey) - 1;
@@ -120,7 +123,7 @@ export function lookup<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V>)
     } else {
       if (hash === node.hash) {
         const arr = node.collision;
-        for (let i = 0; i < arr.length; i++) {
+        for (let i = 0, len = arr.length; i < len; i++) {
           const n = arr[i];
           if (cfg.keyEq(k, n.key)) {
             return n.val;
@@ -323,7 +326,7 @@ export function insert<K, V>(
       let newNode: HamtNode<K, V> | undefined = undefined;
       if (hash === curNode.hash) {
         // check and extend the existing collision node
-        for (let i = 0; i < curNode.collision.length; i++) {
+        for (let i = 0, len = curNode.collision.length; i < len; i++) {
           const c = curNode.collision[i];
           if (cfg.keyEq(k, c.key)) {
             const newVal = getVal(c.val);
@@ -445,7 +448,7 @@ export function mutateInsert<K, T, V>(
     } else {
       if (hash === curNode.hash) {
         // check if already in current collision node
-        for (let i = 0; i < curNode.collision.length; i++) {
+        for (let i = 0, len = curNode.collision.length; i < len; i++) {
           const c = curNode.collision[i];
           if (cfg.keyEq(k, c.key)) {
             // replace the value
@@ -491,10 +494,7 @@ function hasSingleLeafOrCollision<K, V>(node: HamtNode<K, V>): LeafNode<K, V> | 
 }
 
 // updates the child pointed to by the MutableSpineNode to the given node
-function updateChild<K, V>(
-  { node, childIdx }: { node: MutableSpineNode<K, V>; childIdx: number },
-  newNode: HamtNode<K, V>
-): void {
+function updateChild<K, V>({ node, childIdx }: MutableSpineNode<K, V>, newNode: HamtNode<K, V>): void {
   if ("bitmap" in node) {
     node.children[childIdx] = newNode;
   } else {
@@ -553,7 +553,11 @@ function removeChildFromEndOfSpine<K, V>(spine: MutableSpine<K, V>, hash: number
   return spine[0].node;
 }
 
-function addToSpine<K, V>(spine: MutableSpine<K, V>, node: MutableSpineNode<K, V>, childIdx: number): void {
+function addToSpine<K, V>(
+  spine: MutableSpine<K, V>,
+  node: MutableSpineFullNode<K, V> | MutableSpineBitmapIndexedNode<K, V>,
+  childIdx: number
+): void {
   if (spine.length > 0) {
     updateChild(spine[spine.length - 1], node);
   }
@@ -622,7 +626,7 @@ export function remove<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V> 
     } else {
       // collision
       if (hash === curNode.hash) {
-        for (let i = 0; i < curNode.collision.length; i++) {
+        for (let i = 0, len = curNode.collision.length; i < len; i++) {
           if (cfg.keyEq(k, curNode.collision[i].key)) {
             let newNode: HamtNode<K, V>;
             if (curNode.collision.length === 2) {
@@ -659,17 +663,17 @@ export function* iterate<K, V, R>(root: HamtNode<K, V> | null, f: (k: K, v: V) =
   let node: HamtNode<K, V> | undefined;
   while ((node = stack.pop())) {
     if ("bitmap" in node) {
-      for (let i = 0; i < node.children.length; i++) {
+      for (let i = 0, len = node.children.length; i < len; i++) {
         stack.push(node.children[i]);
       }
     } else if ("full" in node) {
-      for (let i = 0; i < node.full.length; i++) {
+      for (let i = 0, len = node.full.length; i < len; i++) {
         stack.push(node.full[i]);
       }
     } else if ("key" in node) {
       yield f(node.key, node.val);
     } else {
-      for (let i = 0; i < node.collision.length; i++) {
+      for (let i = 0, len = node.collision.length; i < len; i++) {
         const x = node.collision[i];
         yield f(x.key, x.val);
       }
@@ -686,17 +690,17 @@ export function fold<K, V, T>(root: HamtNode<K, V> | null, f: (acc: T, val: V, k
   let node: HamtNode<K, V> | undefined;
   while ((node = stack.pop())) {
     if ("bitmap" in node) {
-      for (let i = 0; i < node.children.length; i++) {
+      for (let i = 0, len = node.children.length; i < len; i++) {
         stack.push(node.children[i]);
       }
     } else if ("full" in node) {
-      for (let i = 0; i < node.full.length; i++) {
+      for (let i = 0, len = node.full.length; i < len; i++) {
         stack.push(node.full[i]);
       }
     } else if ("key" in node) {
       acc = f(acc, node.val, node.key);
     } else {
-      for (let i = 0; i < node.collision.length; i++) {
+      for (let i = 0, len = node.collision.length; i < len; i++) {
         const x = node.collision[i];
         acc = f(acc, x.val, x.key);
       }
@@ -704,6 +708,3 @@ export function fold<K, V, T>(root: HamtNode<K, V> | null, f: (acc: T, val: V, k
   }
   return acc;
 }
-
-// TODO: mapValues
-// TODO: collectValues
