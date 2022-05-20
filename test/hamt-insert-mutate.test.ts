@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { CollidingKey as Key } from "./collision-key.js";
 import { mkHashConfig } from "../src/hashing.js";
-import { BitmapIndexedNode, FullNode, mutateInsert } from "../src/hamt.js";
+import { InternalNode, mutateInsert } from "../src/hamt.js";
 import { LazySeq } from "../src/lazyseq.js";
 
 function setNewVal(str: string, val: number): (old: number | undefined, t: string) => number {
@@ -111,10 +111,10 @@ describe("hamt mutate insert", () => {
     );
 
     // check array was re-used
-    expect((node1 as BitmapIndexedNode<Key, number>).children).to.equal((tree as FullNode<Key, number>).full);
+    expect((node1 as InternalNode<Key, number>).children).to.equal((tree as InternalNode<Key, number>).children);
 
     expect(tree).to.deep.equal({
-      full: LazySeq.ofRange(0, 32)
+      children: LazySeq.ofRange(0, 32)
         .map((i) => ({
           hash: i,
           key: new Key(i, i),
@@ -127,11 +127,11 @@ describe("hamt mutate insert", () => {
 
     // check node and array was re-used
     expect(tree).to.equal(after);
-    expect((after as FullNode<Key, number>).full).to.equal((tree as FullNode<Key, number>).full);
+    expect((after as InternalNode<Key, number>).children).to.equal((tree as InternalNode<Key, number>).children);
 
     // note, checking tree deep equals the result of inserting 32 since it should have been mutated
     expect(tree).to.deep.equal({
-      full: [
+      children: [
         // first child of the full node now as two leaves
         {
           bitmap: 0b11,

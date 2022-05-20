@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { CollidingKey as Key } from "./collision-key.js";
 import { mkHashConfig } from "../src/hashing.js";
-import { BitmapIndexedNode, HamtNode, insert, lookup } from "../src/hamt.js";
+import { InternalNode, HamtNode, insert, lookup } from "../src/hamt.js";
 import { LazySeq } from "../src/lazyseq.js";
 
 function setNewVal(val: number): (old: number | undefined) => number {
@@ -52,7 +52,7 @@ describe("HAMT insert and lookup", () => {
       ],
     });
     // check node reused, so no deep equal, just shallow ===
-    expect(node1).to.equal((node2 as BitmapIndexedNode<Key, number>).children[0]);
+    expect(node1).to.equal((node2 as InternalNode<Key, number>).children[0]);
 
     expect(lookup(cfg, k1, node2)).to.equal(100);
     expect(lookup(cfg, k2, node2)).to.equal(200);
@@ -136,7 +136,7 @@ describe("HAMT insert and lookup", () => {
     });
 
     expect(tree).to.deep.equal({
-      full: LazySeq.ofRange(0, 32)
+      children: LazySeq.ofRange(0, 32)
         .map((i) => ({
           hash: i,
           key: new Key(i, i),
@@ -149,7 +149,7 @@ describe("HAMT insert and lookup", () => {
 
     expect(inserted).to.be.true;
     expect(after).to.deep.equal({
-      full: [
+      children: [
         // first child of the full node now as two leaves
         {
           bitmap: 0b11,
@@ -174,7 +174,7 @@ describe("HAMT insert and lookup", () => {
       if (i > 1) {
         // check that the nodes were re-used so shallow equal
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-        expect((tree as any).full[i]).to.equal((after as any).full[i]);
+        expect((tree as any).children[i]).to.equal((after as any).children[i]);
       }
     }
   });
