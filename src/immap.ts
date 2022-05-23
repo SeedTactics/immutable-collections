@@ -1,4 +1,16 @@
-import { fold, HamtNode, insert, iterate, lookup, MutableHamtNode, mutateInsert, remove } from "./hamt.js";
+import {
+  collectValues,
+  fold,
+  HamtNode,
+  insert,
+  iterate,
+  lookup,
+  mapValues,
+  MutableHamtNode,
+  mutateInsert,
+  remove,
+  union,
+} from "./hamt.js";
 import { HashConfig, HashKey, mkHashConfig } from "./hashing.js";
 import { LazySeq } from "./lazyseq.js";
 
@@ -102,6 +114,28 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
     return ImMap.union(snd, this, ImMap.from(items, snd, this.cfg));
   }
 
+  mapValues(f: (v: V, k: K) => V): ImMap<K, V> {
+    const newRoot = mapValues(this.root, f);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new ImMap(this.cfg, newRoot, this.size);
+    }
+  }
+
+  collectValues(f: (v: V, k: K) => V | null | undefined): ImMap<K, V> {
+    const [newRoot, newSize] = collectValues(this.root, f);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new ImMap(this.cfg, newRoot, newSize);
+    }
+  }
+
+  filter(f: (v: V, k: K) => boolean): ImMap<K, V> {
+    return this.collectValues((v, k) => (f(v, k) ? v : undefined));
+  }
+
   // Creating new maps
 
   public static empty<K extends HashKey, V>(): ImMap<K, V>;
@@ -198,23 +232,21 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
   }
 
   public static union<K, V>(merge: (v1: V, v2: V) => V, ...maps: readonly ImMap<K, V>[]): ImMap<K, V> {
-    // TODO: add custom hamt method which optimizes this
     const nonEmpty = maps.filter((m) => m.size > 0);
     if (nonEmpty.length === 0) {
       return ImMap.empty(maps[0]?.cfg);
     } else {
-      let m = nonEmpty[0];
+      let root = nonEmpty[0].root;
+      let newSize = nonEmpty[0].size;
       for (let i = 1; i < nonEmpty.length; i++) {
-        for (const [k, v] of nonEmpty[i]) {
-          m = m.modify(k, (old) => (old === undefined ? v : merge(old, v)));
-        }
+        const m = nonEmpty[i];
+        const [r, intersectionSize] = union(m.cfg, merge, root, m.root);
+        root = r;
+        newSize += m.size - intersectionSize;
       }
-      return m;
+      return new ImMap(nonEmpty[0].cfg, root, newSize);
     }
   }
-
-  //mapValues<U>(f: (v: V, k: K) => U): ImMap<K, U>;
-  //collectValues(f: (v: V, k: K) => V | null | undefined): IMap<K, V>;
 
   protected static ["@@__IMMUTABLE_KEYED__@@"]: true;
 }

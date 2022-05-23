@@ -1,7 +1,7 @@
 import { HashConfig, HashKey } from "./hashing.js";
 import { LazySeq } from "./lazyseq.js";
 import { mkHashConfig } from "./hashing.js";
-import { fold, HamtNode, insert, iterate, lookup, MutableHamtNode, mutateInsert, remove } from "./hamt.js";
+import { fold, HamtNode, insert, iterate, lookup, MutableHamtNode, mutateInsert, remove, union } from "./hamt.js";
 
 function constTrue() {
   return true;
@@ -139,18 +139,19 @@ export class ImSet<T> implements ReadonlySet<T> {
   }
 
   public static union<T>(...sets: ReadonlyArray<ImSet<T>>) {
-    // TODO: add custom hamt method which optimizes this
     const nonEmpty = sets.filter((s) => s.size > 0);
     if (nonEmpty.length === 0) {
       return ImSet.empty(sets[0]?.cfg);
     } else {
-      let m = nonEmpty[0];
+      let root = nonEmpty[0].root;
+      let newSize = nonEmpty[0].size;
       for (let i = 1; i < nonEmpty.length; i++) {
-        for (const t of nonEmpty[i]) {
-          m = m.add(t);
-        }
+        const m = nonEmpty[i];
+        const [r, intersectionSize] = union(m.cfg, constTrue, root, m.root);
+        root = r;
+        newSize += m.size - intersectionSize;
       }
-      return m;
+      return new ImSet(nonEmpty[0].cfg, root, newSize);
     }
   }
 }

@@ -63,6 +63,7 @@ export type MutableHamtNode<K, V> = MutableLeafNode<K, V> | MutableCollisionNode
 const bitsPerSubkey = 5;
 const subkeyMask = (1 << bitsPerSubkey) - 1;
 const maxChildren = 1 << bitsPerSubkey; // 2^bitsPerSubKey
+const fullBitmap = ~0;
 
 // given the hash and the shift (the tree level), returns a bitmap with a 1 in the position of the index of the hash at this level
 function mask(hash: number, shift: number): number {
@@ -134,10 +135,18 @@ export function lookup<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V>)
 function two<K, V>(
   shift: number,
   leaf1: MutableLeafNode<K, V> | MutableCollisionNode<K, V>,
-  leaf2: MutableLeafNode<K, V>
+  leaf2: MutableLeafNode<K, V> | MutableCollisionNode<K, V>
 ): MutableHamtNode<K, V>;
-function two<K, V>(shift: number, leaf1: LeafNode<K, V> | CollisionNode<K, V>, leaf2: LeafNode<K, V>): HamtNode<K, V>;
-function two<K, V>(shift: number, leaf1: LeafNode<K, V> | CollisionNode<K, V>, leaf2: LeafNode<K, V>): HamtNode<K, V> {
+function two<K, V>(
+  shift: number,
+  leaf1: LeafNode<K, V> | CollisionNode<K, V>,
+  leaf2: LeafNode<K, V> | CollisionNode<K, V>
+): HamtNode<K, V>;
+function two<K, V>(
+  shift: number,
+  leaf1: LeafNode<K, V> | CollisionNode<K, V>,
+  leaf2: LeafNode<K, V> | CollisionNode<K, V>
+): HamtNode<K, V> {
   const hash1 = leaf1.hash;
   const hash2 = leaf2.hash;
   let root: HamtNode<K, V> | undefined;
@@ -659,4 +668,346 @@ export function fold<K, V, T>(root: HamtNode<K, V> | null, f: (acc: T, val: V, k
     }
   }
   return acc;
+}
+
+export function mapValues<K, V>(root: HamtNode<K, V> | null, f: (v: V, k: K) => V): HamtNode<K, V> | null {
+  if (root === null) return null;
+
+  function loop(node: HamtNode<K, V>): HamtNode<K, V> {
+    if ("children" in node) {
+      let newArr: Array<HamtNode<K, V>> | undefined = undefined;
+      for (let i = 0, arr = node.children, len = arr.length; i < len; i++) {
+        const n = arr[i];
+        const newN = loop(n);
+        if (!newArr) {
+          if (n !== newN) {
+            newArr = [...arr.slice(0, i), newN];
+          }
+        } else {
+          newArr.push(newN);
+        }
+      }
+      if (newArr) {
+        if (newArr.length === maxChildren) {
+          return { children: newArr };
+        } else {
+          return { bitmap: node.bitmap, children: newArr };
+        }
+      } else {
+        return node;
+      }
+    } else if ("key" in node) {
+      const newVal = f(node.val, node.key);
+      if (node.val !== newVal) {
+        return { hash: node.hash, key: node.key, val: newVal };
+      } else {
+        return node;
+      }
+    } else {
+      let newArr: Array<{ readonly key: K; readonly val: V }> | undefined = undefined;
+      for (let i = 0, arr = node.collision, len = arr.length; i < len; i++) {
+        const n = arr[i];
+        const newV = f(n.val, n.key);
+        if (!newArr) {
+          if (n.val !== newV) {
+            newArr = [...arr.slice(0, i), { key: n.key, val: newV }];
+          }
+        } else {
+          if (n.val !== newV) {
+            newArr.push({ key: n.key, val: newV });
+          } else {
+            newArr.push(n);
+          }
+        }
+      }
+      if (newArr) {
+        if (newArr.length === 1) {
+          return { hash: node.hash, key: newArr[0].key, val: newArr[0].val };
+        } else {
+          return { hash: node.hash, collision: newArr };
+        }
+      } else {
+        return node;
+      }
+    }
+  }
+
+  return loop(root);
+}
+
+export function collectValues<K, V>(
+  root: HamtNode<K, V> | null,
+  f: (v: V, k: K) => V | null | undefined
+): [HamtNode<K, V> | null, number] {
+  if (root === null) return [null, 0];
+
+  let newSize = 0;
+  function loop(node: HamtNode<K, V>): HamtNode<K, V> | null {
+    if ("children" in node) {
+      let newArr: Array<HamtNode<K, V>> | undefined = undefined;
+      let bitmap = node.bitmap ?? fullBitmap;
+      for (let i = 0, arr = node.children, len = arr.length; i < len; i++) {
+        const n = arr[i];
+        const newN = loop(n);
+        if (!newArr) {
+          // check if we need to create a copy of the node
+          if (newN) {
+            if (n !== newN) {
+              newArr = [...arr.slice(0, i), newN];
+            }
+          } else {
+            // filter out the value
+            bitmap &= ~(1 << i);
+            newArr = [...arr.slice(0, i)];
+          }
+        } else {
+          // an earlier node was modified so we copied the node, add or filter the new value
+          if (newN) {
+            newArr.push(newN);
+          } else {
+            bitmap &= ~(1 << i);
+          }
+        }
+      }
+      if (newArr) {
+        if (newArr.length === 0) {
+          return null;
+        } else if (newArr.length === maxChildren) {
+          return { children: newArr };
+        } else {
+          return { bitmap: bitmap, children: newArr };
+        }
+      } else {
+        return node;
+      }
+    } else if ("key" in node) {
+      const newVal = f(node.val, node.key);
+      if (newVal === undefined || newVal === null) {
+        return null;
+      } else if (node.val !== newVal) {
+        newSize++;
+        return { hash: node.hash, key: node.key, val: newVal };
+      } else {
+        newSize++;
+        return node;
+      }
+    } else {
+      let newArr: Array<{ readonly key: K; readonly val: V }> | undefined = undefined;
+      for (let i = 0, arr = node.collision, len = arr.length; i < len; i++) {
+        const n = arr[i];
+        const newV = f(n.val, n.key);
+        if (!newArr) {
+          // check if we need to create a copy of the node
+          if (newV !== undefined && newV !== null) {
+            newSize++;
+            if (n.val !== newV) {
+              newArr = [...arr.slice(0, i), { key: n.key, val: newV }];
+            }
+          } else {
+            // filter out the value
+            newArr = [...arr.slice(0, i)];
+          }
+        } else {
+          // an earlier node was modified so we copied the node, add or filter the new value
+          if (newV !== undefined && newV !== null) {
+            newSize++;
+            if (n.val !== newV) {
+              newArr.push({ key: n.key, val: newV });
+            } else {
+              newArr.push(n);
+            }
+          }
+        }
+      }
+      if (newArr) {
+        if (newArr.length === 0) {
+          return null;
+        } else if (newArr.length === 1) {
+          return { hash: node.hash, key: newArr[0].key, val: newArr[0].val };
+        } else {
+          return { hash: node.hash, collision: newArr };
+        }
+      } else {
+        return node;
+      }
+    }
+  }
+  const newRoot = loop(root);
+
+  return [newRoot, newSize];
+}
+
+export function union<K, V>(
+  cfg: HashConfig<K>,
+  f: (v1: V, v2: V, k: K) => V,
+  root1: HamtNode<K, V> | null,
+  root2: HamtNode<K, V> | null
+): [HamtNode<K, V> | null, number] {
+  if (root1 === null) return [root2, 0];
+  if (root2 === null) return [root1, 0];
+
+  let intersectionSize = 0;
+
+  function loop(shift: number, node1: HamtNode<K, V>, node2: HamtNode<K, V>): HamtNode<K, V> {
+    // Leaf vs Leaf
+    if ("key" in node1 && "key" in node2) {
+      if (node1.hash === node2.hash) {
+        if (cfg.keyEq(node1.key, node2.key)) {
+          intersectionSize++;
+          return { hash: node1.hash, key: node1.key, val: f(node1.val, node2.val, node1.key) };
+        } else {
+          // collision
+          return {
+            hash: node1.hash,
+            collision: [
+              { key: node1.key, val: node1.val },
+              { key: node2.key, val: node2.val },
+            ],
+          };
+        }
+      } else {
+        return two(shift, node1, node2);
+      }
+    } else if ("key" in node1 && "collision" in node2) {
+      if (node1.hash === node2.hash) {
+        for (let i = 0, arr = node2.collision, len = arr.length; i < len; i++) {
+          const n = arr[i];
+          if (cfg.keyEq(node1.key, n.key)) {
+            const newArr = [...arr];
+            intersectionSize++;
+            newArr[i] = { key: n.key, val: f(node1.val, n.val, n.key) };
+            return { hash: node1.hash, collision: newArr };
+          }
+        }
+        return { hash: node1.hash, collision: [{ key: node1.key, val: node1.val }, ...node2.collision] };
+      } else {
+        return two(shift, node1, node2);
+      }
+    } else if ("collision" in node1 && "key" in node2) {
+      if (node1.hash === node2.hash) {
+        for (let i = 0, arr = node1.collision, len = arr.length; i < len; i++) {
+          const n = arr[i];
+          if (cfg.keyEq(n.key, node2.key)) {
+            const newArr = [...arr];
+            newArr[i] = { key: n.key, val: f(n.val, node2.val, n.key) };
+            return { hash: node1.hash, collision: newArr };
+          }
+        }
+        return { hash: node1.hash, collision: [...node1.collision, { key: node2.key, val: node2.val }] };
+      } else {
+        return two(shift, node1, node2);
+      }
+    } else if ("collision" in node1 && "collision" in node2) {
+      if (node1.hash === node2.hash) {
+        const newArr = [...node1.collision];
+        for (let i = 0, node2col = node2.collision, node2len = node2col.length; i < node2len; i++) {
+          const e2 = node2col[i];
+          let found = false;
+          for (let j = 0, node1col = node1.collision, node1len = node1col.length; j < node1len; j++) {
+            const e1 = node1col[j];
+            if (cfg.keyEq(e1.key, e2.key)) {
+              intersectionSize++;
+              newArr[j] = { key: e2.key, val: f(e1.val, e2.val, e1.key) };
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            newArr.push(e2);
+          }
+        }
+        return { hash: node1.hash, collision: newArr };
+      } else {
+        return two(shift, node1, node2);
+      }
+    }
+
+    // Branch vs Branch
+    else if ("children" in node1 && "children" in node2) {
+      const node1bitmap = node1.bitmap ?? fullBitmap;
+      const node2bitmap = node2.bitmap ?? fullBitmap;
+      const newArr = new Array<HamtNode<K, V>>();
+      let node1Idx = 0;
+      let node2Idx = 0;
+      for (let childIdx = 0; childIdx < maxChildren; childIdx++) {
+        const mask = 1 << childIdx;
+
+        if (mask & (node1bitmap & node2bitmap)) {
+          const newNode = loop(shift + bitsPerSubkey, node1.children[node1Idx], node2.children[node2Idx]);
+          node1Idx++;
+          node2Idx++;
+          newArr.push(newNode);
+        } else if (mask & node1bitmap) {
+          newArr.push(node1);
+          node1Idx++;
+        } else if (mask & node2bitmap) {
+          newArr.push(node2);
+          node2Idx++;
+        }
+      }
+
+      if (newArr.length === maxChildren) {
+        return { children: newArr };
+      } else {
+        return { bitmap: node1bitmap | node2bitmap, children: newArr };
+      }
+    }
+
+    // Leaf vs Branch
+    else if ("children" in node1) {
+      const hash2: number = "key" in node2 ? node2.hash : "collision" in node2 ? node2.hash : 0;
+      const m = mask(shift, hash2);
+      if (node1.bitmap === undefined) {
+        const idx = fullIndex(hash2, shift);
+        const newNode = loop(shift + bitsPerSubkey, node1.children[idx], node2);
+        const newArr = [...node1.children];
+        newArr[idx] = newNode;
+        return { children: newArr };
+      } else if (node1.bitmap & m) {
+        const idx = sparseIndex(node1.bitmap, m);
+        const newNode = loop(shift + bitsPerSubkey, node1.children[idx], node2);
+        const newArr = [...node1.children];
+        newArr[idx] = newNode;
+        return { bitmap: node1.bitmap, children: newArr };
+      } else {
+        const idx = sparseIndex(node1.bitmap, m);
+        const newArr = copyAndInsertToArray(node1.children, idx, node2);
+        if (newArr.length === maxChildren) {
+          return { children: newArr };
+        } else {
+          return { bitmap: node1.bitmap | m, children: newArr };
+        }
+      }
+    } else if ("children" in node2) {
+      const hash1: number = node1.hash;
+      const m = mask(shift, hash1);
+      if (node2.bitmap === undefined) {
+        const idx = fullIndex(hash1, shift);
+        const newNode = loop(shift + bitsPerSubkey, node1, node2.children[idx]);
+        const newArr = [...node2.children];
+        newArr[idx] = newNode;
+        return { children: newArr };
+      } else if (node2.bitmap & m) {
+        const idx = sparseIndex(node2.bitmap, m);
+        const newNode = loop(shift + bitsPerSubkey, node1, node2.children[idx]);
+        const newArr = [...node2.children];
+        newArr[idx] = newNode;
+        return { bitmap: node2.bitmap, children: newArr };
+      } else {
+        const idx = sparseIndex(node2.bitmap, m);
+        const newArr = copyAndInsertToArray(node2.children, idx, node1);
+        if (newArr.length === maxChildren) {
+          return { children: newArr };
+        } else {
+          return { bitmap: node2.bitmap | m, children: newArr };
+        }
+      }
+    }
+
+    throw new Error("Internal immutable-collections error: union reached invalid node combination");
+  }
+
+  const newRoot = loop(0, root1, root2);
+
+  return [newRoot, intersectionSize];
 }
