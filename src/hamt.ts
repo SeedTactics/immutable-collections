@@ -62,7 +62,7 @@ export type MutableHamtNode<K, V> = MutableLeafNode<K, V> | MutableCollisionNode
 
 const bitsPerSubkey = 5;
 const subkeyMask = (1 << bitsPerSubkey) - 1;
-const maxChildren = 1 << bitsPerSubkey; // 2^bitsPerSubKey
+const maxChildren = 1 << bitsPerSubkey;
 const fullBitmap = ~0;
 
 // given the hash and the shift (the tree level), returns a bitmap with a 1 in the position of the index of the hash at this level
@@ -745,38 +745,53 @@ export function collectValues<K, V>(
   let newSize = 0;
   function loop(node: HamtNode<K, V>): HamtNode<K, V> | null {
     if ("children" in node) {
+      const origBitmap = node.bitmap ?? fullBitmap;
       let newArr: Array<HamtNode<K, V>> | undefined = undefined;
-      let bitmap = node.bitmap ?? fullBitmap;
-      for (let i = 0, arr = node.children, len = arr.length; i < len; i++) {
-        const n = arr[i];
-        const newN = loop(n);
-        if (!newArr) {
-          // check if we need to create a copy of the node
-          if (newN) {
-            if (n !== newN) {
-              newArr = [...arr.slice(0, i), newN];
+      let newBitmap = origBitmap;
+
+      for (
+        let mask = 1, idx = 0, remainingBitmap = origBitmap;
+        remainingBitmap !== 0;
+        remainingBitmap &= ~mask, mask <<= 1
+      ) {
+        if (origBitmap & mask) {
+          // recurse on the child
+          const n = node.children[idx];
+          const newN = loop(n);
+          if (!newArr) {
+            if (newN) {
+              if (n !== newN) {
+                newArr = [...node.children.slice(0, idx), newN];
+              }
+            } else {
+              // filter out the value
+              newBitmap = newBitmap & ~mask;
             }
           } else {
-            // filter out the value
-            bitmap &= ~(1 << i);
-            newArr = [...arr.slice(0, i)];
+            if (newN) {
+              newArr.push(newN);
+            } else {
+              // filter out the value
+              newBitmap = newBitmap & ~mask;
+            }
           }
-        } else {
-          // an earlier node was modified so we copied the node, add or filter the new value
-          if (newN) {
-            newArr.push(newN);
-          } else {
-            bitmap &= ~(1 << i);
-          }
+          idx++;
         }
       }
       if (newArr) {
         if (newArr.length === 0) {
           return null;
+        } else if (newArr.length === 1) {
+          const leaf = hasSingleLeafOrCollision(newArr[0]);
+          if (leaf) {
+            return leaf;
+          } else {
+            return { bitmap: newBitmap, children: newArr };
+          }
         } else if (newArr.length === maxChildren) {
           return { children: newArr };
         } else {
-          return { bitmap: bitmap, children: newArr };
+          return { bitmap: origBitmap, children: newArr };
         }
       } else {
         return node;
@@ -826,6 +841,7 @@ export function collectValues<K, V>(
         if (newArr.length === 0) {
           return null;
         } else if (newArr.length === 1) {
+          // switch from collision back to just a leaf
           return { hash: node.hash, key: newArr[0].key, val: newArr[0].val };
         } else {
           return { hash: node.hash, collision: newArr };
@@ -857,7 +873,14 @@ export function union<K, V>(
       if (node1.hash === node2.hash) {
         if (cfg.keyEq(node1.key, node2.key)) {
           intersectionSize++;
-          return { hash: node1.hash, key: node1.key, val: f(node1.val, node2.val, node1.key) };
+          const newVal = f(node1.val, node2.val, node1.key);
+          if (newVal === node1.val) {
+            return node1;
+          } else if (newVal === node2.val) {
+            return node2;
+          } else {
+            return { hash: node1.hash, key: node1.key, val: newVal };
+          }
         } else {
           // collision
           return {
@@ -876,12 +899,20 @@ export function union<K, V>(
         for (let i = 0, arr = node2.collision, len = arr.length; i < len; i++) {
           const n = arr[i];
           if (cfg.keyEq(node1.key, n.key)) {
-            const newArr = [...arr];
             intersectionSize++;
-            newArr[i] = { key: n.key, val: f(node1.val, n.val, n.key) };
-            return { hash: node1.hash, collision: newArr };
+            const newVal = f(node1.val, n.val, n.key);
+            if (newVal === n.val) {
+              // no change needed
+              return node2;
+            } else {
+              // replace the value in the collision array
+              const newArr = [...arr];
+              newArr[i] = { key: n.key, val: newVal };
+              return { hash: node1.hash, collision: newArr };
+            }
           }
         }
+        // not found, add node1 to collision
         return { hash: node1.hash, collision: [{ key: node1.key, val: node1.val }, ...node2.collision] };
       } else {
         return two(shift, node1, node2);
@@ -891,9 +922,16 @@ export function union<K, V>(
         for (let i = 0, arr = node1.collision, len = arr.length; i < len; i++) {
           const n = arr[i];
           if (cfg.keyEq(n.key, node2.key)) {
-            const newArr = [...arr];
-            newArr[i] = { key: n.key, val: f(n.val, node2.val, n.key) };
-            return { hash: node1.hash, collision: newArr };
+            intersectionSize++;
+            const newVal = f(n.val, node2.val, n.key);
+            if (newVal === n.val) {
+              // no change needed
+              return node1;
+            } else {
+              const newArr = [...arr];
+              newArr[i] = { key: n.key, val: newVal };
+              return { hash: node1.hash, collision: newArr };
+            }
           }
         }
         return { hash: node1.hash, collision: [...node1.collision, { key: node2.key, val: node2.val }] };
@@ -903,23 +941,36 @@ export function union<K, V>(
     } else if ("collision" in node1 && "collision" in node2) {
       if (node1.hash === node2.hash) {
         const newArr = [...node1.collision];
+        // when checking duplicates, only need to check newArr up to origNode1ColLength even
+        // if more collisions are added to to the array
+        const origNode1ColLength = newArr.length;
+        let modifiedNode1Col = false;
         for (let i = 0, node2col = node2.collision, node2len = node2col.length; i < node2len; i++) {
-          const e2 = node2col[i];
+          const node2entry = node2col[i];
           let found = false;
-          for (let j = 0, node1col = node1.collision, node1len = node1col.length; j < node1len; j++) {
-            const e1 = node1col[j];
-            if (cfg.keyEq(e1.key, e2.key)) {
+          for (let j = 0; j < origNode1ColLength; j++) {
+            const existing1 = newArr[j];
+            if (cfg.keyEq(existing1.key, node2entry.key)) {
               intersectionSize++;
-              newArr[j] = { key: e2.key, val: f(e1.val, e2.val, e1.key) };
+              const newVal = f(existing1.val, node2entry.val, node2entry.key);
+              if (newVal !== existing1.val) {
+                modifiedNode1Col = true;
+                newArr[j] = { key: node2entry.key, val: newVal };
+              }
               found = true;
               break;
             }
           }
           if (!found) {
-            newArr.push(e2);
+            modifiedNode1Col = true;
+            newArr.push(node2entry);
           }
         }
-        return { hash: node1.hash, collision: newArr };
+        if (modifiedNode1Col) {
+          return { hash: node1.hash, collision: newArr };
+        } else {
+          return node1;
+        }
       } else {
         return two(shift, node1, node2);
       }
@@ -929,27 +980,49 @@ export function union<K, V>(
     else if ("children" in node1 && "children" in node2) {
       const node1bitmap = node1.bitmap ?? fullBitmap;
       const node2bitmap = node2.bitmap ?? fullBitmap;
-      const newArr = new Array<HamtNode<K, V>>();
-      let node1Idx = 0;
-      let node2Idx = 0;
-      for (let childIdx = 0; childIdx < maxChildren; childIdx++) {
-        const mask = 1 << childIdx;
+      const intersectionBitmap = node1bitmap & node2bitmap;
 
-        if (mask & (node1bitmap & node2bitmap)) {
+      // merge the two nodes, but don't create a copy until we find something different between
+      // the two nodes.  That is, keep newArr undefined while the union is equal to just node1
+      // This is left-biased and will prefer the left-hand node (node1)
+      let newArr: Array<HamtNode<K, V>> | undefined = undefined;
+      for (
+        let mask = 1, node1Idx = 0, node2Idx = 0, remainingBitmap = node1bitmap | node2bitmap;
+        remainingBitmap !== 0;
+        remainingBitmap &= ~mask, mask <<= 1
+      ) {
+        if (mask & intersectionBitmap) {
           const newNode = loop(shift + bitsPerSubkey, node1.children[node1Idx], node2.children[node2Idx]);
+          if (newArr) {
+            // we already have a new array, so just add the new node
+            newArr.push(newNode);
+          } else if (newNode !== node1.children[node1Idx]) {
+            // we don't have a new array yet, but we found a difference, so create one
+            newArr = [...node1.children.slice(0, node1Idx), newNode];
+          }
+
           node1Idx++;
           node2Idx++;
-          newArr.push(newNode);
         } else if (mask & node1bitmap) {
-          newArr.push(node1);
+          if (newArr) {
+            newArr.push(node1.children[node1Idx]);
+          }
+          // if newArr is undefined, just keep it undefined since we haven't found a difference yet
           node1Idx++;
         } else if (mask & node2bitmap) {
-          newArr.push(node2);
+          if (newArr) {
+            newArr.push(node2.children[node2Idx]);
+          } else {
+            // copy all the node1 nodes so far and the new node2 node
+            newArr = [...node1.children.slice(0, node1Idx), node2.children[node2Idx]];
+          }
           node2Idx++;
         }
       }
 
-      if (newArr.length === maxChildren) {
+      if (!newArr) {
+        return node1;
+      } else if (newArr.length === maxChildren) {
         return { children: newArr };
       } else {
         return { bitmap: node1bitmap | node2bitmap, children: newArr };
@@ -958,21 +1031,36 @@ export function union<K, V>(
 
     // Leaf vs Branch
     else if ("children" in node1) {
-      const hash2: number = "key" in node2 ? node2.hash : "collision" in node2 ? node2.hash : 0;
-      const m = mask(shift, hash2);
+      // node2 is guaranteed to be leaf or collision, but typescript doesn't know that
+      const hash2: number = (node2 as LeafNode<K, V> | CollisionNode<K, V>).hash;
+
       if (node1.bitmap === undefined) {
+        // loop and replace in this full node
         const idx = fullIndex(hash2, shift);
         const newNode = loop(shift + bitsPerSubkey, node1.children[idx], node2);
-        const newArr = [...node1.children];
-        newArr[idx] = newNode;
-        return { children: newArr };
-      } else if (node1.bitmap & m) {
+        if (newNode === node1.children[idx]) {
+          return node1;
+        } else {
+          const newArr = [...node1.children];
+          newArr[idx] = newNode;
+          return { children: newArr };
+        }
+      }
+
+      const m = mask(hash2, shift);
+      if (node1.bitmap & m) {
+        // loop and replace in this bitmap-indexed node
         const idx = sparseIndex(node1.bitmap, m);
         const newNode = loop(shift + bitsPerSubkey, node1.children[idx], node2);
-        const newArr = [...node1.children];
-        newArr[idx] = newNode;
-        return { bitmap: node1.bitmap, children: newArr };
+        if (newNode === node1.children[idx]) {
+          return node1;
+        } else {
+          const newArr = [...node1.children];
+          newArr[idx] = newNode;
+          return { bitmap: node1.bitmap, children: newArr };
+        }
       } else {
+        // add the node into the bitmap-indexed node
         const idx = sparseIndex(node1.bitmap, m);
         const newArr = copyAndInsertToArray(node1.children, idx, node2);
         if (newArr.length === maxChildren) {
@@ -982,20 +1070,32 @@ export function union<K, V>(
         }
       }
     } else if ("children" in node2) {
+      // same as above but with node1 and node2 swapped
       const hash1: number = node1.hash;
-      const m = mask(shift, hash1);
+
       if (node2.bitmap === undefined) {
         const idx = fullIndex(hash1, shift);
         const newNode = loop(shift + bitsPerSubkey, node1, node2.children[idx]);
-        const newArr = [...node2.children];
-        newArr[idx] = newNode;
-        return { children: newArr };
-      } else if (node2.bitmap & m) {
+        if (newNode === node2.children[idx]) {
+          return node2;
+        } else {
+          const newArr = [...node2.children];
+          newArr[idx] = newNode;
+          return { children: newArr };
+        }
+      }
+
+      const m = mask(hash1, shift);
+      if (node2.bitmap & m) {
         const idx = sparseIndex(node2.bitmap, m);
         const newNode = loop(shift + bitsPerSubkey, node1, node2.children[idx]);
-        const newArr = [...node2.children];
-        newArr[idx] = newNode;
-        return { bitmap: node2.bitmap, children: newArr };
+        if (newNode === node2.children[idx]) {
+          return node2;
+        } else {
+          const newArr = [...node2.children];
+          newArr[idx] = newNode;
+          return { bitmap: node2.bitmap, children: newArr };
+        }
       } else {
         const idx = sparseIndex(node2.bitmap, m);
         const newArr = copyAndInsertToArray(node2.children, idx, node1);

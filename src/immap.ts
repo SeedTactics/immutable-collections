@@ -255,7 +255,11 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
         root = r;
         newSize += m.size - intersectionSize;
       }
-      return new ImMap(nonEmpty[0].cfg, root, newSize);
+      if (root === nonEmpty[0].root) {
+        return nonEmpty[0];
+      } else {
+        return new ImMap(nonEmpty[0].cfg, root, newSize);
+      }
     }
   }
 

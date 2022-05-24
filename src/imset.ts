@@ -151,7 +151,11 @@ export class ImSet<T> implements ReadonlySet<T> {
         root = r;
         newSize += m.size - intersectionSize;
       }
-      return new ImSet(nonEmpty[0].cfg, root, newSize);
+      if (root === nonEmpty[0].root) {
+        return nonEmpty[0];
+      } else {
+        return new ImSet(nonEmpty[0].cfg, root, newSize);
+      }
     }
   }
 }
