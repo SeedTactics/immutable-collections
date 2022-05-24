@@ -14,6 +14,9 @@ import {
 import { HashConfig, HashKey, mkHashConfig } from "./hashing.js";
 import { LazySeq } from "./lazyseq.js";
 
+// eslint-disable-next-line @typescript-eslint/ban-types
+type NotUndefined = {} | null;
+
 export class ImMap<K, V> implements ReadonlyMap<K, V> {
   private cfg: HashConfig<K>;
   private root: HamtNode<K, V> | null;
@@ -124,7 +127,7 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
   }
 
   collectValues(f: (v: V, k: K) => V | null | undefined): ImMap<K, V> {
-    const [newRoot, newSize] = collectValues(this.root, f);
+    const [newRoot, newSize] = collectValues(this.root, f as (v: V, k: K) => V | undefined, true);
     if (newRoot === this.root) {
       return this;
     } else {
@@ -133,24 +136,32 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
   }
 
   filter(f: (v: V, k: K) => boolean): ImMap<K, V> {
-    return this.collectValues((v, k) => (f(v, k) ? v : undefined));
+    const [newRoot, newSize] = collectValues(this.root, (v, k) => (f(v, k) ? v : undefined), false);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new ImMap(this.cfg, newRoot, newSize);
+    }
   }
 
   // Creating new maps
 
-  public static empty<K extends HashKey, V>(): ImMap<K, V>;
-  public static empty<K, V>(cfg: HashConfig<K>): ImMap<K, V>;
-  public static empty<K, V>(cfg?: HashConfig<K>): ImMap<K, V> {
+  public static empty<K extends HashKey, V extends NotUndefined>(): ImMap<K, V>;
+  public static empty<K, V extends NotUndefined>(cfg: HashConfig<K>): ImMap<K, V>;
+  public static empty<K, V extends NotUndefined>(cfg?: HashConfig<K>): ImMap<K, V> {
     return new ImMap(cfg ?? (mkHashConfig<K & HashKey>() as HashConfig<K>), null, 0);
   }
 
-  public static from<K extends HashKey, V>(items: Iterable<readonly [K, V]>, merge?: (v1: V, v2: V) => V): ImMap<K, V>;
-  public static from<K, V>(
+  public static from<K extends HashKey, V extends NotUndefined>(
+    items: Iterable<readonly [K, V]>,
+    merge?: (v1: V, v2: V) => V
+  ): ImMap<K, V>;
+  public static from<K, V extends NotUndefined>(
     items: Iterable<readonly [K, V]>,
     merge: (v1: V, v2: V) => V,
     cfg: HashConfig<K>
   ): ImMap<K, V>;
-  public static from<K, V>(
+  public static from<K, V extends NotUndefined>(
     items: Iterable<readonly [K, V]>,
     merge?: (v1: V, v2: V) => V,
     cfg?: HashConfig<K>
@@ -184,19 +195,19 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
     return new ImMap(cfg, root, size);
   }
 
-  public static build<K extends HashKey, V>(items: Iterable<V>, key: (v: V) => K): ImMap<K, V>;
-  public static build<T, K extends HashKey, V>(
+  public static build<K extends HashKey, V extends NotUndefined>(items: Iterable<V>, key: (v: V) => K): ImMap<K, V>;
+  public static build<T, K extends HashKey, V extends NotUndefined>(
     items: Iterable<T>,
     key: (v: T) => K,
     val: (old: V | undefined, t: T) => V
   ): ImMap<K, V>;
-  public static build<T, K, V>(
+  public static build<T, K, V extends NotUndefined>(
     items: Iterable<T>,
     key: (v: T) => K,
     val: (old: V | undefined, t: T) => V,
     cfg: HashConfig<K>
   ): ImMap<K, V>;
-  public static build<T, K, V>(
+  public static build<T, K, V extends NotUndefined>(
     items: Iterable<T>,
     key: (t: T) => K,
     val?: (old: V | undefined, t: T) => V,

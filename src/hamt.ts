@@ -737,7 +737,8 @@ export function mapValues<K, V>(root: HamtNode<K, V> | null, f: (v: V, k: K) => 
 
 export function collectValues<K, V>(
   root: HamtNode<K, V> | null,
-  f: (v: V, k: K) => V | null | undefined
+  f: (v: V, k: K) => V | undefined,
+  filterNull: boolean
 ): [HamtNode<K, V> | null, number] {
   if (root === null) return [null, 0];
 
@@ -782,7 +783,7 @@ export function collectValues<K, V>(
       }
     } else if ("key" in node) {
       const newVal = f(node.val, node.key);
-      if (newVal === undefined || newVal === null) {
+      if (newVal === undefined || (filterNull && newVal === null)) {
         return null;
       } else if (node.val !== newVal) {
         newSize++;
@@ -798,18 +799,20 @@ export function collectValues<K, V>(
         const newV = f(n.val, n.key);
         if (!newArr) {
           // check if we need to create a copy of the node
-          if (newV !== undefined && newV !== null) {
+          if (newV === undefined || (filterNull && newV === null)) {
+            // filter out the value
+            newArr = [...arr.slice(0, i)];
+          } else {
             newSize++;
             if (n.val !== newV) {
               newArr = [...arr.slice(0, i), { key: n.key, val: newV }];
             }
-          } else {
-            // filter out the value
-            newArr = [...arr.slice(0, i)];
           }
         } else {
           // an earlier node was modified so we copied the node, add or filter the new value
-          if (newV !== undefined && newV !== null) {
+          if (newV === undefined || (filterNull && newV !== null)) {
+            // do nothing, element will be filtered
+          } else {
             newSize++;
             if (n.val !== newV) {
               newArr.push({ key: n.key, val: newV });
