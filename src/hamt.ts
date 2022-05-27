@@ -313,6 +313,7 @@ export function insert<K, V>(
     } else {
       // existing collision node
       let newNode: HamtNode<K, V> | undefined = undefined;
+      let inserted = true;
       if (hash === curNode.hash) {
         // check and extend the existing collision node
         for (let i = 0, collision = curNode.collision, len = collision.length; i < len; i++) {
@@ -327,6 +328,7 @@ export function insert<K, V>(
             const newArr = [...collision];
             newArr[i] = { key: k, val: newVal };
             newNode = { hash, collision: newArr };
+            inserted = false;
             break;
           }
         }
@@ -341,7 +343,7 @@ export function insert<K, V>(
       if (parent !== undefined) {
         parent[parentIdx] = newNode;
       }
-      return [newRoot ?? newNode, true];
+      return [newRoot ?? newNode, inserted];
     }
   } while (curNode);
   throw new Error("Internal immutable-collections violation: hamt insert reached null");

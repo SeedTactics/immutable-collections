@@ -122,12 +122,41 @@ describe("ImMap", () => {
   });
 
   it("leaves map unchanged when setting the same value", () => {
-    const maps = createMap(500, () => faker.datatype.string());
+    const maps = createMap(5000, () => randomCollidingKey(200));
 
-    const [k, v] = maps.imMap.toLazySeq().drop(5).head() ?? ["a", "b"];
-    const newImMap = maps.imMap.set(k, v);
+    for (const [k, v] of maps.imMap.toLazySeq().drop(5).take(20)) {
+      const newImMap = maps.imMap.set(k, v);
+      expect(newImMap).to.equal(maps.imMap);
+    }
+  });
 
-    expect(newImMap).to.equal(maps.imMap);
+  it("overwrites some values", () => {
+    const maps = createMap(5000, () => randomCollidingKey(200));
+
+    let newImMap = maps.imMap;
+    const newJsMap = new Map(maps.jsMap);
+    for (const [k, v] of maps.imMap.toLazySeq().drop(5).take(20)) {
+      newImMap = newImMap.set(k, v + "!!!!");
+      newJsMap.set(k.toString(), [k, v + "!!!!"]);
+    }
+
+    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+  });
+
+  it("updates some values", () => {
+    const maps = createMap(5000, () => randomCollidingKey(200));
+
+    let newImMap = maps.imMap;
+    const newJsMap = new Map(maps.jsMap);
+    for (const [k, v] of maps.imMap.toLazySeq().drop(5).take(20)) {
+      newImMap = newImMap.modify(k, (oldV) => {
+        expect(oldV).to.equal(v);
+        return v + "!!!!";
+      });
+      newJsMap.set(k.toString(), [k, v + "!!!!"]);
+    }
+
+    expectEqual({ imMap: newImMap, jsMap: newJsMap });
   });
 
   it("leaves map unchanged when modifying the same value", () => {
