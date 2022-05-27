@@ -26,13 +26,9 @@ function sortValues<V>(e: Iterable<V>): Array<V> {
   return values.sort();
 }
 
-function extendMap<K extends HashKey>(
-  size: number,
-  key: () => K,
-  old: ImMapAndJsMap<K, string>
-): ImMapAndJsMap<K, string> {
-  let imMap = old.imMap;
-  const jsMap = new Map<string, [K, string]>(old.jsMap);
+function createMap<K extends HashKey>(size: number, key: () => K): ImMapAndJsMap<K, string> {
+  let imMap = ImMap.empty<K, string>();
+  const jsMap = new Map<string, [K, string]>();
 
   for (let i = 0; i < size; i++) {
     const k = key();
@@ -111,34 +107,22 @@ describe("ImMap", () => {
   });
 
   it("creates a string key map", () => {
-    const maps = extendMap(10000, () => faker.datatype.string(), {
-      imMap: ImMap.empty<string, string>(),
-      jsMap: new Map(),
-    });
+    const maps = createMap(10000, () => faker.datatype.string());
     expectEqual(maps);
   });
 
   it("creates a number key map", () => {
-    const maps = extendMap(10000, () => faker.datatype.number({ min: 0, max: 50000 }), {
-      imMap: ImMap.empty<number, string>(),
-      jsMap: new Map(),
-    });
+    const maps = createMap(10000, () => faker.datatype.number({ min: 0, max: 50000 }));
     expectEqual(maps);
   });
 
   it("creates a object keyed map", () => {
-    const maps = extendMap(1000, () => randomCollidingKey(100), {
-      imMap: ImMap.empty<CollidingKey, string>(),
-      jsMap: new Map(),
-    });
+    const maps = createMap(1000, () => randomCollidingKey(100));
     expectEqual(maps);
   });
 
   it("leaves map unchanged when setting the same value", () => {
-    const maps = extendMap(500, () => faker.datatype.string(), {
-      imMap: ImMap.empty<string, string>(),
-      jsMap: new Map(),
-    });
+    const maps = createMap(500, () => faker.datatype.string());
 
     const [k, v] = maps.imMap.toLazySeq().drop(5).head() ?? ["a", "b"];
     const newImMap = maps.imMap.set(k, v);
@@ -147,10 +131,7 @@ describe("ImMap", () => {
   });
 
   it("leaves map unchanged when modifying the same value", () => {
-    const maps = extendMap(500, () => faker.datatype.string(), {
-      imMap: ImMap.empty<string, string>(),
-      jsMap: new Map(),
-    });
+    const maps = createMap(500, () => faker.datatype.string());
 
     const [k, v] = maps.imMap.toLazySeq().drop(5).head() ?? ["a", "b"];
     const newImMap = maps.imMap.modify(k, (old) => {
@@ -230,10 +211,7 @@ describe("ImMap", () => {
   });
 
   it("appends to a map", () => {
-    const initial = extendMap(1000, () => faker.datatype.number({ min: 0, max: 5000 }), {
-      imMap: ImMap.empty<number, string>(),
-      jsMap: new Map(),
-    });
+    const initial = createMap(1000, () => faker.datatype.number({ min: 0, max: 5000 }));
 
     const newEntries = new Array<[number, string]>(500);
     for (let i = 0; i < 500; i++) {
@@ -251,10 +229,7 @@ describe("ImMap", () => {
   });
 
   it("leaves map unchanged when appending existing entries", () => {
-    const initial = extendMap(1000, () => faker.datatype.number({ min: 0, max: 5000 }), {
-      imMap: ImMap.empty<number, string>(),
-      jsMap: new Map(),
-    });
+    const initial = createMap(1000, () => faker.datatype.number({ min: 0, max: 5000 }));
 
     const someEntries = initial.imMap.toLazySeq().drop(5).take(10);
     const newImMap = initial.imMap.append(someEntries);
@@ -269,24 +244,15 @@ describe("ImMap", () => {
   });
 
   it("returns the map directly from a union", () => {
-    const maps = extendMap(1000, () => faker.datatype.number({ min: 0, max: 5000 }), {
-      imMap: ImMap.empty<number, string>(),
-      jsMap: new Map(),
-    });
+    const maps = createMap(1000, () => faker.datatype.number({ min: 0, max: 5000 }));
 
     const m = ImMap.union<number, string>((a, b) => a + b, maps.imMap);
     expect(m).to.equal(maps.imMap);
   });
 
   it("unions two maps", () => {
-    const m1 = extendMap(500, () => faker.datatype.number({ min: 0, max: 5000 }), {
-      imMap: ImMap.empty<number, string>(),
-      jsMap: new Map(),
-    });
-    const m2 = extendMap(500, () => faker.datatype.number({ min: 0, max: 5000 }), {
-      imMap: ImMap.empty<number, string>(),
-      jsMap: new Map(),
-    });
+    const m1 = createMap(500, () => faker.datatype.number({ min: 0, max: 5000 }));
+    const m2 = createMap(500, () => faker.datatype.number({ min: 0, max: 5000 }));
 
     const newImMap = m1.imMap.union(m2.imMap);
 
@@ -301,12 +267,7 @@ describe("ImMap", () => {
   it("unions three maps", () => {
     const maps = Array<ImMapAndJsMap<number, string>>();
     for (let i = 0; i < 3; i++) {
-      maps.push(
-        extendMap(500, () => faker.datatype.number({ min: 0, max: 5000 }), {
-          imMap: ImMap.empty<number, string>(),
-          jsMap: new Map(),
-        })
-      );
+      maps.push(createMap(500, () => faker.datatype.number({ min: 0, max: 5000 })));
       // add an empty map, which should be filtered out
       maps.push({
         imMap: ImMap.empty<number, string>(),
@@ -328,10 +289,7 @@ describe("ImMap", () => {
   });
 
   it("deletes from ImMap", () => {
-    const m = extendMap(5_000, () => randomCollidingKey(1000), {
-      imMap: ImMap.empty<CollidingKey, string>(),
-      jsMap: new Map(),
-    });
+    const m = createMap(5_000, () => randomCollidingKey(1000));
 
     let newImMap = m.imMap;
     const newJsMap = new Map(m.jsMap);
@@ -353,10 +311,7 @@ describe("ImMap", () => {
   });
 
   it("maps values in an ImMap", () => {
-    const m = extendMap(5000, () => randomCollidingKey(1000), {
-      imMap: ImMap.empty<CollidingKey, string>(),
-      jsMap: new Map(),
-    });
+    const m = createMap(5000, () => randomCollidingKey(1000));
 
     const newImMap = m.imMap.mapValues((v, k) => v + "!!!" + k.hash.toString() + "$$$" + k.x.toString());
     const newJsMap = new Map<string, [CollidingKey, string]>();
@@ -369,20 +324,14 @@ describe("ImMap", () => {
   });
 
   it("leaves map unchanged when mapping the same value", () => {
-    const m = extendMap(5_000, () => randomCollidingKey(1000), {
-      imMap: ImMap.empty<CollidingKey, string>(),
-      jsMap: new Map(),
-    });
+    const m = createMap(5_000, () => randomCollidingKey(1000));
 
     const newImMap = m.imMap.mapValues((v) => v);
     expect(newImMap).to.equal(m.imMap);
   });
 
   it("only maps some of the values", () => {
-    const m = extendMap(5000, () => randomCollidingKey(5000), {
-      imMap: ImMap.empty<CollidingKey, string>(),
-      jsMap: new Map(),
-    });
+    const m = createMap(5000, () => randomCollidingKey(5000));
 
     const newJsMap = new Map(m.jsMap);
     const newImMap = m.imMap.mapValues((v, k) => {
@@ -406,10 +355,7 @@ describe("ImMap", () => {
   });
 
   it("collects values in an ImMap", () => {
-    const m = extendMap(200, () => randomCollidingKey(1000), {
-      imMap: ImMap.empty<CollidingKey, string>(),
-      jsMap: new Map(),
-    });
+    const m = createMap(200, () => randomCollidingKey(1000));
 
     const newImMap = m.imMap.collectValues((v, k) => v + "!!!" + k.hash.toString() + "$$$" + k.x.toString());
     const newJsMap = new Map<string, [CollidingKey, string]>();
@@ -422,20 +368,14 @@ describe("ImMap", () => {
   });
 
   it("leaves map unchanged when collecting the same value", () => {
-    const m = extendMap(5_000, () => randomCollidingKey(1000), {
-      imMap: ImMap.empty<CollidingKey, string>(),
-      jsMap: new Map(),
-    });
+    const m = createMap(5_000, () => randomCollidingKey(1000));
 
     const newImMap = m.imMap.collectValues((v) => v);
     expect(newImMap).to.equal(m.imMap);
   });
 
   it("only collects some of the values", () => {
-    const m = extendMap(5000, () => randomCollidingKey(5000), {
-      imMap: ImMap.empty<CollidingKey, string>(),
-      jsMap: new Map(),
-    });
+    const m = createMap(5000, () => randomCollidingKey(5000));
 
     const newJsMap = new Map(m.jsMap);
     const newImMap = m.imMap.collectValues((v, k) => {
