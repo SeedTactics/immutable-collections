@@ -4,6 +4,7 @@ import { HashKey } from "../src/hashing.js";
 import { ImMap } from "../src/immap.js";
 import { sortByProp } from "../src/lazyseq.js";
 import { CollidingKey, randomCollidingKey } from "./collision-key.js";
+import { deepFreeze } from "./deepfreeze.js";
 
 interface ImMapAndJsMap<K extends HashKey, V> {
   readonly imMap: ImMap<K, V>;
@@ -45,6 +46,8 @@ function extendMap<K extends HashKey>(
       jsMap.set(k.toString(), [k, oldjV === undefined ? v : oldjV[1] + v]);
     }
   }
+
+  deepFreeze(imMap);
 
   return { imMap, jsMap };
 }
@@ -338,6 +341,118 @@ describe("ImMap", () => {
         newJsMap.delete(kS);
       }
     }
+
+    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+  });
+
+  it("maps the empty map", () => {
+    const m = ImMap.empty<number, string>();
+    const m2 = m.mapValues((v) => v + "!");
+    expect(m2.size).to.equal(0);
+    expect(m).to.equal(m2);
+  });
+
+  it("maps values in an ImMap", () => {
+    const m = extendMap(5000, () => randomCollidingKey(1000), {
+      imMap: ImMap.empty<CollidingKey, string>(),
+      jsMap: new Map(),
+    });
+
+    const newImMap = m.imMap.mapValues((v, k) => v + "!!!" + k.hash.toString() + "$$$" + k.x.toString());
+    const newJsMap = new Map<string, [CollidingKey, string]>();
+    for (const [kS, [k, v]] of m.jsMap) {
+      newJsMap.set(kS, [k, v + "!!!" + k.hash.toString() + "$$$" + k.x.toString()]);
+    }
+
+    expectEqual(m);
+    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+  });
+
+  it("leaves map unchanged when mapping the same value", () => {
+    const m = extendMap(5_000, () => randomCollidingKey(1000), {
+      imMap: ImMap.empty<CollidingKey, string>(),
+      jsMap: new Map(),
+    });
+
+    const newImMap = m.imMap.mapValues((v) => v);
+    expect(newImMap).to.equal(m.imMap);
+  });
+
+  it("only maps some of the values", () => {
+    const m = extendMap(5000, () => randomCollidingKey(5000), {
+      imMap: ImMap.empty<CollidingKey, string>(),
+      jsMap: new Map(),
+    });
+
+    const newJsMap = new Map(m.jsMap);
+    const newImMap = m.imMap.mapValues((v, k) => {
+      if (Math.random() < 0.2) {
+        const newV = v + "@@" + k.toString();
+        newJsMap.set(k.toString(), [k, newV]);
+        return newV;
+      } else {
+        return v;
+      }
+    });
+
+    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+  });
+
+  it("collects the empty map", () => {
+    const m = ImMap.empty<number, string>();
+    const m2 = m.collectValues((v) => v + "!");
+    expect(m2.size).to.equal(0);
+    expect(m).to.equal(m2);
+  });
+
+  it("collects values in an ImMap", () => {
+    const m = extendMap(200, () => randomCollidingKey(1000), {
+      imMap: ImMap.empty<CollidingKey, string>(),
+      jsMap: new Map(),
+    });
+
+    const newImMap = m.imMap.collectValues((v, k) => v + "!!!" + k.hash.toString() + "$$$" + k.x.toString());
+    const newJsMap = new Map<string, [CollidingKey, string]>();
+    for (const [kS, [k, v]] of m.jsMap) {
+      newJsMap.set(kS, [k, v + "!!!" + k.hash.toString() + "$$$" + k.x.toString()]);
+    }
+
+    expectEqual(m);
+    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+  });
+
+  it("leaves map unchanged when collecting the same value", () => {
+    const m = extendMap(5_000, () => randomCollidingKey(1000), {
+      imMap: ImMap.empty<CollidingKey, string>(),
+      jsMap: new Map(),
+    });
+
+    const newImMap = m.imMap.collectValues((v) => v);
+    expect(newImMap).to.equal(m.imMap);
+  });
+
+  it("only collects some of the values", () => {
+    const m = extendMap(5000, () => randomCollidingKey(5000), {
+      imMap: ImMap.empty<CollidingKey, string>(),
+      jsMap: new Map(),
+    });
+
+    const newJsMap = new Map(m.jsMap);
+    const newImMap = m.imMap.collectValues((v, k) => {
+      const r = Math.random();
+      if (r < 0.2) {
+        // modify
+        const newV = v + "@@" + k.toString();
+        newJsMap.set(k.toString(), [k, newV]);
+        return newV;
+      } else if (r < 0.5) {
+        // delete
+        newJsMap.delete(k.toString());
+        return r < 0.4 ? null : undefined;
+      } else {
+        return v;
+      }
+    });
 
     expectEqual({ imMap: newImMap, jsMap: newJsMap });
   });

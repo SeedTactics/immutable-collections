@@ -128,7 +128,7 @@ export function lookup<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V>)
       }
     }
   } while (node);
-  throw new Error("Internal immutable-collections violation: node undefined during lookup " + JSON.stringify(rootNode));
+  throw new Error("Internal immutable-collections violation: node undefined during lookup");
 }
 
 // create a new node consisting of two children. Requires that the hashes are not equal
@@ -765,6 +765,7 @@ export function collectValues<K, V>(
               }
             } else {
               // filter out the value
+              newArr = [...node.children.slice(0, idx)];
               newBitmap = newBitmap & ~mask;
             }
           } else {
@@ -791,7 +792,7 @@ export function collectValues<K, V>(
         } else if (newArr.length === maxChildren) {
           return { children: newArr };
         } else {
-          return { bitmap: origBitmap, children: newArr };
+          return { bitmap: newBitmap, children: newArr };
         }
       } else {
         return node;
@@ -825,7 +826,7 @@ export function collectValues<K, V>(
           }
         } else {
           // an earlier node was modified so we copied the node, add or filter the new value
-          if (newV === undefined || (filterNull && newV !== null)) {
+          if (newV === undefined || (filterNull && newV === null)) {
             // do nothing, element will be filtered
           } else {
             newSize++;
