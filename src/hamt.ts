@@ -1113,3 +1113,199 @@ export function union<K, V>(
 
   return [newRoot, intersectionSize];
 }
+
+export function intersection<K, V>(
+  cfg: HashConfig<K>,
+  f: (v1: V, v2: V, k: K) => V,
+  root1: HamtNode<K, V> | null,
+  root2: HamtNode<K, V> | null
+): [HamtNode<K, V> | null, number] {
+  if (root1 === null) return [null, 0];
+  if (root2 === null) return [null, 0];
+
+  let intersectionSize = 0;
+
+  function loop(shift: number, node1: HamtNode<K, V>, node2: HamtNode<K, V>): HamtNode<K, V> | null {
+    // Leaf vs anything
+    if ("key" in node1) {
+      const other = lookup(cfg, node1.key, node2);
+      if (other !== undefined) {
+        intersectionSize++;
+        const newVal = f(node1.val, other, node1.key);
+        if (newVal === node1.val) {
+          return node1;
+        } else {
+          return { hash: node1.hash, key: node1.key, val: newVal };
+        }
+      } else {
+        return null;
+      }
+    } else if ("key" in node2) {
+      const other = lookup(cfg, node2.key, node1);
+      if (other !== undefined) {
+        intersectionSize++;
+        const newVal = f(other, node2.val, node2.key);
+        if (newVal === node2.val) {
+          return node2;
+        } else {
+          return { hash: node2.hash, key: node2.key, val: newVal };
+        }
+      } else {
+        return null;
+      }
+    }
+
+    // Collision vs Collision
+    else if ("collision" in node1 && "collision" in node2) {
+      let newCol: Array<{ key: K; val: V }> | undefined;
+      for (let i = 0, col1 = node1.collision, len1 = col1.length; i < len1; i++) {
+        const x = col1[i];
+        for (let j = 0, col2 = node2.collision, len2 = col2.length; j < len2; j++) {
+          const y = col2[j];
+          if (cfg.keyEq(x.key, y.key)) {
+            intersectionSize++;
+            const newVal = f(x.val, y.val, x.key);
+            if (newCol) {
+              if (newVal === x.val) {
+                newCol.push(x);
+              } else if (newVal === y.val) {
+                newCol.push(y);
+              } else {
+                newCol.push({ key: x.key, val: newVal });
+              }
+            } else {
+              if (newVal !== x.val) {
+                newCol = [...col1.slice(0, i), { key: x.key, val: newVal }];
+              }
+            }
+            break;
+          }
+        }
+        if (!newCol) {
+          newCol = [...col1.slice(0, i)];
+        }
+      }
+
+      if (newCol === undefined || newCol.length === 0) {
+        return node1;
+      } else if (newCol.length === 1) {
+        return { hash: node1.hash, key: newCol[0].key, val: newCol[0].val };
+      } else {
+        return { hash: node1.hash, collision: newCol };
+      }
+    }
+
+    // Branch vs Branch
+    else if ("children" in node1 && "children" in node2) {
+      const node1bitmap = node1.bitmap ?? fullBitmap;
+      const node2bitmap = node2.bitmap ?? fullBitmap;
+      const intersectionBitmap = node1bitmap & node2bitmap;
+
+      // merge the two nodes, but don't create a copy until we find something different between
+      // the two nodes.  That is, keep newArr undefined while the intersection is equal to just node1
+      // This is left-biased and will prefer the left-hand node (node1)
+      let newArr: Array<HamtNode<K, V>> | undefined = undefined;
+      let newBitmap = intersectionBitmap;
+      for (
+        let mask = 1, node1Idx = 0, node2Idx = 0, remainingBitmap = node1bitmap | node2bitmap;
+        remainingBitmap !== 0;
+        remainingBitmap &= ~mask, mask <<= 1
+      ) {
+        if (mask & intersectionBitmap) {
+          const newNode = loop(shift + bitsPerSubkey, node1.children[node1Idx], node2.children[node2Idx]);
+          if (newArr) {
+            // we already have a new array
+            if (newNode === null) {
+              // take this subtree out of the new Array
+              newBitmap &= ~mask;
+            } else {
+              newArr.push(newNode);
+            }
+          } else if (newNode !== node1.children[node1Idx]) {
+            // we don't have a new array yet, but we found a difference, so create one
+            if (newNode === null) {
+              newArr = [...node1.children.slice(0, node1Idx)];
+              newBitmap &= ~mask;
+            } else {
+              newArr = [...node1.children.slice(0, node1Idx), newNode];
+            }
+          }
+
+          node1Idx++;
+          node2Idx++;
+        } else if (mask & node1bitmap) {
+          if (!newArr) {
+            // need to delete this node from the new array
+            newArr = [...node1.children.slice(0, node1Idx)];
+          }
+          // NOTE; newBitmap is already 0 at this mask since we are not in the intersection
+          node1Idx++;
+        } else if (mask & node2bitmap) {
+          // ignore this part of the tree, is not intersecting node1
+          node2Idx++;
+        }
+      }
+
+      if (!newArr) {
+        return node1;
+      } else if (newArr.length === 0) {
+        return null;
+      } else if (newArr.length === 1) {
+        return hasSingleLeafOrCollision(newArr[0]) ?? newArr[0];
+      } else if (newArr.length === maxChildren) {
+        return { children: newArr };
+      } else {
+        return { bitmap: newBitmap, children: newArr };
+      }
+    }
+
+    // Collision vs Branch
+    else if ("children" in node1) {
+      // node2 is guaranteed to be collision, but typescript doesn't know that
+      const hash2: number = (node2 as CollisionNode<K, V>).hash;
+
+      // find the index where hash2 will live (if any)
+      let idx: number;
+      if (node1.bitmap === undefined) {
+        idx = fullIndex(hash2, shift);
+      } else {
+        const m = mask(hash2, shift);
+        if (m & node1.bitmap) {
+          idx = sparseIndex(node1.bitmap, shift);
+        } else {
+          return null;
+        }
+      }
+
+      // whatever the intersection is, everything else in the children array is thrown away
+      return loop(shift + bitsPerSubkey, node1.children[idx], node2);
+    }
+
+    // Branch vs Collision
+    else if ("children" in node2) {
+      const hash1: number = node1.hash;
+
+      // find the index where hash2 will live (if any)
+      let idx: number;
+      if (node2.bitmap === undefined) {
+        idx = fullIndex(hash1, shift);
+      } else {
+        const m = mask(hash1, shift);
+        if (m & node2.bitmap) {
+          idx = sparseIndex(node2.bitmap, shift);
+        } else {
+          return null;
+        }
+      }
+
+      // whatever the intersection is, everything else in the children array is thrown away
+      return loop(shift + bitsPerSubkey, node1, node2.children[idx]);
+    }
+
+    throw new Error("Internal immutable-collections error: intersection reached invalid node combination");
+  }
+
+  const newRoot = loop(0, root1, root2);
+
+  return [newRoot, intersectionSize];
+}

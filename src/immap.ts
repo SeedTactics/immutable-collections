@@ -3,6 +3,7 @@ import {
   fold,
   HamtNode,
   insert,
+  intersection,
   iterate,
   lookup,
   mapValues,
@@ -254,6 +255,27 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
         const [r, intersectionSize] = union(m.cfg, merge, root, m.root);
         root = r;
         newSize += m.size - intersectionSize;
+      }
+      if (root === nonEmpty[0].root) {
+        return nonEmpty[0];
+      } else {
+        return new ImMap(nonEmpty[0].cfg, root, newSize);
+      }
+    }
+  }
+
+  public static intersection<K, V>(merge: (v1: V, v2: V) => V, ...maps: readonly ImMap<K, V>[]): ImMap<K, V> {
+    const nonEmpty = maps.filter((m) => m.size > 0);
+    if (nonEmpty.length === 0) {
+      return ImMap.empty(maps[0]?.cfg);
+    } else {
+      let root = nonEmpty[0].root;
+      let newSize = nonEmpty[0].size;
+      for (let i = 1; i < nonEmpty.length; i++) {
+        const m = nonEmpty[i];
+        const [r, intersectionSize] = intersection(m.cfg, merge, root, m.root);
+        root = r;
+        newSize += intersectionSize;
       }
       if (root === nonEmpty[0].root) {
         return nonEmpty[0];

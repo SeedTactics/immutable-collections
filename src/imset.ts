@@ -1,7 +1,18 @@
 import { HashConfig, HashKey } from "./hashing.js";
 import { LazySeq } from "./lazyseq.js";
 import { mkHashConfig } from "./hashing.js";
-import { fold, HamtNode, insert, iterate, lookup, MutableHamtNode, mutateInsert, remove, union } from "./hamt.js";
+import {
+  fold,
+  HamtNode,
+  insert,
+  intersection,
+  iterate,
+  lookup,
+  MutableHamtNode,
+  mutateInsert,
+  remove,
+  union,
+} from "./hamt.js";
 
 function constTrue() {
   return true;
@@ -9,9 +20,9 @@ function constTrue() {
 
 export class ImSet<T> implements ReadonlySet<T> {
   private cfg: HashConfig<T>;
-  private root: HamtNode<T, boolean> | null;
+  private root: HamtNode<T, unknown> | null;
 
-  private constructor(cfg: HashConfig<T>, root: HamtNode<T, boolean> | null, size: number) {
+  private constructor(cfg: HashConfig<T>, root: HamtNode<T, unknown> | null, size: number) {
     this.cfg = cfg;
     this.root = root;
     this.size = size;
@@ -150,6 +161,27 @@ export class ImSet<T> implements ReadonlySet<T> {
         const [r, intersectionSize] = union(m.cfg, constTrue, root, m.root);
         root = r;
         newSize += m.size - intersectionSize;
+      }
+      if (root === nonEmpty[0].root) {
+        return nonEmpty[0];
+      } else {
+        return new ImSet(nonEmpty[0].cfg, root, newSize);
+      }
+    }
+  }
+
+  public static intersection<T>(...sets: readonly ImSet<T>[]): ImSet<T> {
+    const nonEmpty = sets.filter((m) => m.size > 0);
+    if (nonEmpty.length === 0) {
+      return ImSet.empty(sets[0]?.cfg);
+    } else {
+      let root = nonEmpty[0].root;
+      let newSize = nonEmpty[0].size;
+      for (let i = 1; i < nonEmpty.length; i++) {
+        const m = nonEmpty[i];
+        const [r, intersectionSize] = intersection(m.cfg, constTrue, root, m.root);
+        root = r;
+        newSize += intersectionSize;
       }
       if (root === nonEmpty[0].root) {
         return nonEmpty[0];
