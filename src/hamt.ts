@@ -723,11 +723,7 @@ export function mapValues<K, V>(root: HamtNode<K, V> | null, f: (v: V, k: K) => 
         }
       }
       if (newArr) {
-        if (newArr.length === 1) {
-          return { hash: node.hash, key: newArr[0].key, val: newArr[0].val };
-        } else {
-          return { hash: node.hash, collision: newArr };
-        }
+        return { hash: node.hash, collision: newArr };
       } else {
         return node;
       }

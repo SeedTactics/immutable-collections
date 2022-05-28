@@ -3,7 +3,7 @@ import { faker } from "@faker-js/faker";
 import { HashKey } from "../src/hashing.js";
 import { ImMap } from "../src/immap.js";
 import { sortByProp } from "../src/lazyseq.js";
-import { CollidingKey, randomCollidingKey } from "./collision-key.js";
+import { CollidingKey, randomCollisionKey } from "./collision-key.js";
 import { deepFreeze } from "./deepfreeze.js";
 
 interface ImMapAndJsMap<K extends HashKey, V> {
@@ -117,25 +117,37 @@ describe("ImMap", () => {
   });
 
   it("creates a object keyed map", () => {
-    const maps = createMap(1000, () => randomCollidingKey(100));
+    const maps = createMap(1000, () => randomCollisionKey());
     expectEqual(maps);
   });
 
   it("leaves map unchanged when setting the same value", () => {
-    const maps = createMap(5000, () => randomCollidingKey(200));
+    const maps = createMap(5000, () => randomCollisionKey());
 
-    for (const [k, v] of maps.imMap.toLazySeq().drop(5).take(20)) {
+    for (const [k, v] of maps.imMap.toLazySeq().take(4000)) {
       const newImMap = maps.imMap.set(k, v);
       expect(newImMap).to.equal(maps.imMap);
     }
   });
 
-  it("overwrites some values", () => {
-    const maps = createMap(5000, () => randomCollidingKey(200));
+  it("leaves map unchanged when modifying the same value", () => {
+    const maps = createMap(500, () => faker.datatype.string());
+
+    for (const [k, v] of maps.imMap.toLazySeq().take(4000)) {
+      const newImMap = maps.imMap.modify(k, (old) => {
+        expect(old).to.equal(v);
+        return v;
+      });
+      expect(newImMap).to.equal(maps.imMap);
+    }
+  });
+
+  it("overwrites values", () => {
+    const maps = createMap(5000, () => randomCollisionKey());
 
     let newImMap = maps.imMap;
     const newJsMap = new Map(maps.jsMap);
-    for (const [k, v] of maps.imMap.toLazySeq().drop(5).take(20)) {
+    for (const [k, v] of maps.imMap.toLazySeq().take(4000)) {
       newImMap = newImMap.set(k, v + "!!!!");
       newJsMap.set(k.toString(), [k, v + "!!!!"]);
     }
@@ -143,12 +155,12 @@ describe("ImMap", () => {
     expectEqual({ imMap: newImMap, jsMap: newJsMap });
   });
 
-  it("updates some values", () => {
-    const maps = createMap(5000, () => randomCollidingKey(200));
+  it("updates values", () => {
+    const maps = createMap(5000, () => randomCollisionKey());
 
     let newImMap = maps.imMap;
     const newJsMap = new Map(maps.jsMap);
-    for (const [k, v] of maps.imMap.toLazySeq().drop(5).take(20)) {
+    for (const [k, v] of maps.imMap.toLazySeq().take(4000)) {
       newImMap = newImMap.modify(k, (oldV) => {
         expect(oldV).to.equal(v);
         return v + "!!!!";
@@ -157,18 +169,6 @@ describe("ImMap", () => {
     }
 
     expectEqual({ imMap: newImMap, jsMap: newJsMap });
-  });
-
-  it("leaves map unchanged when modifying the same value", () => {
-    const maps = createMap(500, () => faker.datatype.string());
-
-    const [k, v] = maps.imMap.toLazySeq().drop(5).head() ?? ["a", "b"];
-    const newImMap = maps.imMap.modify(k, (old) => {
-      expect(old).to.equal(v);
-      return v;
-    });
-
-    expect(newImMap).to.equal(maps.imMap);
   });
 
   it("creates via from", () => {
@@ -189,7 +189,7 @@ describe("ImMap", () => {
     const size = 1000;
     const entries = new Array<[CollidingKey, string]>(size);
     for (let i = 0; i < size; i++) {
-      const k = randomCollidingKey(100);
+      const k = randomCollisionKey();
       const v = faker.datatype.string();
       entries[i] = [k, v];
     }
@@ -318,7 +318,7 @@ describe("ImMap", () => {
   });
 
   it("deletes from ImMap", () => {
-    const m = createMap(5_000, () => randomCollidingKey(1000));
+    const m = createMap(5_000, () => randomCollisionKey());
 
     let newImMap = m.imMap;
     const newJsMap = new Map(m.jsMap);
@@ -326,6 +326,25 @@ describe("ImMap", () => {
       if (Math.random() < 0.4) {
         newImMap = newImMap.delete(k);
         newJsMap.delete(kS);
+      }
+    }
+
+    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+  });
+
+  it("deletes things that may not exist", () => {
+    const m = createMap(5000, () => randomCollisionKey());
+
+    let newImMap = m.imMap;
+    const newJsMap = new Map(m.jsMap);
+    for (let i = 0; i < 200; i++) {
+      const k = randomCollisionKey();
+      if (newJsMap.has(k.toString())) {
+        newImMap = newImMap.delete(k);
+        newJsMap.delete(k.toString());
+      } else {
+        const n = newImMap.delete(k);
+        expect(n).to.equal(newImMap);
       }
     }
 
@@ -340,7 +359,7 @@ describe("ImMap", () => {
   });
 
   it("maps values in an ImMap", () => {
-    const m = createMap(5000, () => randomCollidingKey(1000));
+    const m = createMap(5000, () => randomCollisionKey());
 
     const newImMap = m.imMap.mapValues((v, k) => v + "!!!" + k.hash.toString() + "$$$" + k.x.toString());
     const newJsMap = new Map<string, [CollidingKey, string]>();
@@ -353,14 +372,14 @@ describe("ImMap", () => {
   });
 
   it("leaves map unchanged when mapping the same value", () => {
-    const m = createMap(5_000, () => randomCollidingKey(1000));
+    const m = createMap(5_000, () => randomCollisionKey());
 
     const newImMap = m.imMap.mapValues((v) => v);
     expect(newImMap).to.equal(m.imMap);
   });
 
   it("only maps some of the values", () => {
-    const m = createMap(5000, () => randomCollidingKey(5000));
+    const m = createMap(5000, () => randomCollisionKey());
 
     const newJsMap = new Map(m.jsMap);
     const newImMap = m.imMap.mapValues((v, k) => {
@@ -384,7 +403,7 @@ describe("ImMap", () => {
   });
 
   it("collects values in an ImMap", () => {
-    const m = createMap(200, () => randomCollidingKey(1000));
+    const m = createMap(5000, () => randomCollisionKey());
 
     const newImMap = m.imMap.collectValues((v, k) => v + "!!!" + k.hash.toString() + "$$$" + k.x.toString());
     const newJsMap = new Map<string, [CollidingKey, string]>();
@@ -397,14 +416,14 @@ describe("ImMap", () => {
   });
 
   it("leaves map unchanged when collecting the same value", () => {
-    const m = createMap(5_000, () => randomCollidingKey(1000));
+    const m = createMap(5_000, () => randomCollisionKey());
 
     const newImMap = m.imMap.collectValues((v) => v);
     expect(newImMap).to.equal(m.imMap);
   });
 
   it("only collects some of the values", () => {
-    const m = createMap(5000, () => randomCollidingKey(5000));
+    const m = createMap(5000, () => randomCollisionKey());
 
     const newJsMap = new Map(m.jsMap);
     const newImMap = m.imMap.collectValues((v, k) => {
@@ -424,5 +443,14 @@ describe("ImMap", () => {
     });
 
     expectEqual({ imMap: newImMap, jsMap: newJsMap });
+  });
+
+  it("returns the empty tree when collecting everything", () => {
+    const m = createMap(5_000, () => randomCollisionKey());
+
+    const newImMap = m.imMap.collectValues(() => null);
+    expect(newImMap.size).to.equal(0);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+    expect((newImMap as any).root).to.be.null;
   });
 });
