@@ -37,9 +37,35 @@ export function randomCollisionKey(): CollidingKey {
     // in another part of the tree, we want it very sparse at the upper levels (so we get long chains of single-children bitmap-indexed nodes)
     h = (Math.floor(Math.random() * 2 ** 12) << 20) | sparseHashMid | Math.floor(Math.random() * 32);
   } else {
-    h = Math.floor(Math.random() * 2 ** 32);
+    h = (Math.random() * 2 ** 32) | 0;
   }
 
   lastX++;
   return new CollidingKey(h, lastX);
+}
+
+export function distinctKeyWithHash(hash: number): CollidingKey {
+  lastX++;
+  return new CollidingKey(hash, lastX);
+}
+
+export function createKeyWithSameHash(count: number): ReadonlyArray<CollidingKey> {
+  const h = (Math.random() * 2 ** 32) | 0;
+  const ret = [];
+  for (let i = 0; i < count; i++) {
+    lastX++;
+    ret.push(new CollidingKey(h, lastX));
+  }
+  return ret;
+}
+
+export function createKeyWithSamePrefix(count: number): ReadonlyArray<CollidingKey> {
+  const prefix = Math.floor(Math.random() * 2 ** 25);
+  const ret = [];
+  for (let i = 0; i < count; i++) {
+    const h = prefix | (Math.floor(Math.random() * 2 ** 4) << 25);
+    lastX++;
+    ret.push(new CollidingKey(h, lastX));
+  }
+  return ret;
 }
