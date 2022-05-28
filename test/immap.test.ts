@@ -563,4 +563,60 @@ describe("ImMap", () => {
     const newImMap = m.imMap.collectValues(() => null);
     expectEqual({ imMap: newImMap, jsMap: new Map() });
   });
+
+  it("filters a map", () => {
+    let imMap = ImMap.empty<CollidingKey, string | null>();
+    const jsMap = new Map<string, [CollidingKey, string | null]>();
+    for (let i = 0; i < 1000; i++) {
+      const k = randomCollisionKey();
+      const v = randomNullableStr();
+      imMap = imMap.set(k, v);
+      jsMap.set(k.toString(), [k, v]);
+    }
+
+    deepFreeze(imMap);
+
+    const jsAfterFilter = new Map(jsMap);
+    const newImMap = imMap.filter((v, k) => {
+      expect(jsMap.get(k.toString())).to.deep.equal([k, v]);
+      if (Math.random() < 0.2) {
+        jsAfterFilter.delete(k.toString());
+        return false;
+      } else {
+        return true;
+      }
+    });
+
+    expectEqual({ imMap: newImMap, jsMap: jsAfterFilter });
+  });
+
+  it("returns the map unchanged if nothing is filtered", () => {
+    let imMap = ImMap.empty<CollidingKey, string | null>();
+    for (let i = 0; i < 1000; i++) {
+      const k = randomCollisionKey();
+      const v = randomNullableStr();
+      imMap = imMap.set(k, v);
+    }
+
+    deepFreeze(imMap);
+
+    const filterNone = imMap.filter(() => true);
+
+    expect(filterNone).to.equal(imMap);
+  });
+
+  it("returns empty if everyhing filtered", () => {
+    let imMap = ImMap.empty<CollidingKey, string | null>();
+    for (let i = 0; i < 1000; i++) {
+      const k = randomCollisionKey();
+      const v = randomNullableStr();
+      imMap = imMap.set(k, v);
+    }
+
+    deepFreeze(imMap);
+
+    const empty = imMap.filter(() => false);
+
+    expectEqual({ imMap: empty, jsMap: new Map() });
+  });
 });
