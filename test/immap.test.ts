@@ -59,7 +59,7 @@ function createMap<K extends HashKey>(size: number, key: () => K): ImMapAndJsMap
   return { imMap, jsMap };
 }
 
-function expectEqual<K extends HashKey, V>({ imMap, jsMap }: ImMapAndJsMap<K, V>): void {
+function expectEqual<K extends HashKey, V>(imMap: ImMap<K, V>, jsMap: Map<string, [K, V]>): void {
   const entries = sortEntries(jsMap.values());
   expect(imMap.size).to.equal(jsMap.size);
 
@@ -118,18 +118,18 @@ describe("ImMap", () => {
   });
 
   it("creates a string key map", () => {
-    const maps = createMap(10000, () => faker.datatype.string());
-    expectEqual(maps);
+    const { imMap, jsMap } = createMap(10000, () => faker.datatype.string());
+    expectEqual(imMap, jsMap);
   });
 
   it("creates a number key map", () => {
-    const maps = createMap(10000, () => faker.datatype.number({ min: 0, max: 50000 }));
-    expectEqual(maps);
+    const { imMap, jsMap } = createMap(10000, () => faker.datatype.number({ min: 0, max: 50000 }));
+    expectEqual(imMap, jsMap);
   });
 
   it("creates a object keyed map", () => {
-    const maps = createMap(1000, () => randomCollisionKey());
-    expectEqual(maps);
+    const { imMap, jsMap } = createMap(1000, () => randomCollisionKey());
+    expectEqual(imMap, jsMap);
   });
 
   it("leaves map unchanged when setting the same value", () => {
@@ -163,7 +163,7 @@ describe("ImMap", () => {
       newJsMap.set(k.toString(), [k, v + "!!!!"]);
     }
 
-    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+    expectEqual(newImMap, newJsMap);
   });
 
   it("updates values", () => {
@@ -179,7 +179,7 @@ describe("ImMap", () => {
       newJsMap.set(k.toString(), [k, v + "!!!!"]);
     }
 
-    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+    expectEqual(newImMap, newJsMap);
   });
 
   it("creates via from", () => {
@@ -193,7 +193,7 @@ describe("ImMap", () => {
     const imMap = ImMap.from(entries);
     const jsMap = new Map<string, [number, string]>(entries.map(([k, v]) => [k.toString(), [k, v]]));
 
-    expectEqual({ imMap, jsMap });
+    expectEqual(imMap, jsMap);
   });
 
   it("creates via from and merge", () => {
@@ -212,7 +212,7 @@ describe("ImMap", () => {
       jsMap.set(k.toString(), [k, oldV === undefined ? v : oldV[1] + v]);
     }
 
-    expectEqual({ imMap, jsMap });
+    expectEqual(imMap, jsMap);
   });
 
   it("creates via build", () => {
@@ -225,7 +225,7 @@ describe("ImMap", () => {
     const imMap = ImMap.build(values, (v) => v + 40_000);
     const jsMap = new Map<string, [number, number]>(values.map((v) => [(v + 40_000).toString(), [v + 40_000, v]]));
 
-    expectEqual({ imMap, jsMap });
+    expectEqual(imMap, jsMap);
   });
 
   it("creates via build with key and value", () => {
@@ -247,7 +247,7 @@ describe("ImMap", () => {
       jsMap.set(k.toString(), [k, oldV === undefined ? t.toString() : oldV[1] + t.toString()]);
     }
 
-    expectEqual({ imMap, jsMap });
+    expectEqual(imMap, jsMap);
   });
 
   it("appends to a map", () => {
@@ -264,8 +264,8 @@ describe("ImMap", () => {
       newJsMap.set(k.toString(), [k, v]);
     }
 
-    expectEqual(initial);
-    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+    expectEqual(initial.imMap, initial.jsMap);
+    expectEqual(newImMap, newJsMap);
   });
 
   it("leaves map unchanged when appending existing entries", () => {
@@ -392,7 +392,7 @@ describe("ImMap", () => {
     deepFreeze(imMap2);
 
     const imUnion = imMap1.union(imMap2, combineNullableStr);
-    expectEqual({ imMap: imUnion, jsMap: jsUnion });
+    expectEqual(imUnion, jsUnion);
 
     // union with itself returns unchanged
     const unionWithIteself = imMap1.union(imMap1);
@@ -420,7 +420,7 @@ describe("ImMap", () => {
       }
     }
 
-    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+    expectEqual(newImMap, newJsMap);
   });
 
   it("unions a small map with a big map", () => {
@@ -434,10 +434,10 @@ describe("ImMap", () => {
     }
 
     const bigOnLeft = bigMap.imMap.union(smallMap.imMap);
-    expectEqual({ imMap: bigOnLeft, jsMap: jsUnion });
+    expectEqual(bigOnLeft, jsUnion);
 
     const bigOnRight = smallMap.imMap.union(bigMap.imMap);
-    expectEqual({ imMap: bigOnRight, jsMap: jsUnion });
+    expectEqual(bigOnRight, jsUnion);
   });
 
   it("deletes from ImMap", () => {
@@ -461,7 +461,7 @@ describe("ImMap", () => {
       }
     }
 
-    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+    expectEqual(newImMap, newJsMap);
   });
 
   it("maps the empty map", () => {
@@ -480,8 +480,8 @@ describe("ImMap", () => {
       newJsMap.set(kS, [k, v + "!!!" + k.hash.toString() + "$$$" + k.x.toString()]);
     }
 
-    expectEqual(m);
-    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+    expectEqual(m.imMap, m.jsMap);
+    expectEqual(newImMap, newJsMap);
   });
 
   it("leaves map unchanged when mapping the same value", () => {
@@ -505,13 +505,13 @@ describe("ImMap", () => {
       }
     });
 
-    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+    expectEqual(newImMap, newJsMap);
   });
 
   it("collects the empty map", () => {
     const m = ImMap.empty<number, string>();
     const m2 = m.collectValues((v) => v + "!");
-    expectEqual({ imMap: m2, jsMap: new Map() });
+    expectEqual(m2, new Map());
   });
 
   it("collects values in an ImMap", () => {
@@ -523,8 +523,8 @@ describe("ImMap", () => {
       newJsMap.set(kS, [k, v + "!!!" + k.hash.toString() + "$$$" + k.x.toString()]);
     }
 
-    expectEqual(m);
-    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+    expectEqual(m.imMap, m.jsMap);
+    expectEqual(newImMap, newJsMap);
   });
 
   it("leaves map unchanged when collecting the same value", () => {
@@ -554,14 +554,14 @@ describe("ImMap", () => {
       }
     });
 
-    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+    expectEqual(newImMap, newJsMap);
   });
 
   it("returns the empty tree when collecting everything", () => {
     const m = createMap(5_000, () => randomCollisionKey());
 
     const newImMap = m.imMap.collectValues(() => null);
-    expectEqual({ imMap: newImMap, jsMap: new Map() });
+    expectEqual(newImMap, new Map());
   });
 
   it("filters a map", () => {
@@ -587,7 +587,7 @@ describe("ImMap", () => {
       }
     });
 
-    expectEqual({ imMap: newImMap, jsMap: jsAfterFilter });
+    expectEqual(newImMap, jsAfterFilter);
   });
 
   it("returns the map unchanged if nothing is filtered", () => {
@@ -617,7 +617,7 @@ describe("ImMap", () => {
 
     const empty = imMap.filter(() => false);
 
-    expectEqual({ imMap: empty, jsMap: new Map() });
+    expectEqual(empty, new Map());
   });
 
   it("returns an empty map from an empty intersection", () => {
@@ -637,10 +637,10 @@ describe("ImMap", () => {
     const { imMap } = createMap(50, randomCollisionKey);
 
     let empty = ImMap.intersection((a, b) => a + b, imMap, ImMap.empty<CollidingKey, string>());
-    expectEqual({ imMap: empty, jsMap: new Map() });
+    expectEqual(empty, new Map());
 
     empty = ImMap.intersection((a, b) => a + b, ImMap.empty<CollidingKey, string>(), imMap);
-    expectEqual({ imMap: empty, jsMap: new Map() });
+    expectEqual(empty, new Map());
   });
 
   it("intersects two maps", () => {
@@ -705,37 +705,10 @@ describe("ImMap", () => {
     deepFreeze(imMap2);
 
     const imInter = ImMap.intersection(combineNullableStr, imMap1, imMap2);
-    expectEqual({ imMap: imInter, jsMap: jsIntersection });
+    expectEqual(imInter, jsIntersection);
 
     // intersection with itself returns unchanged
     const unionWithIteself = ImMap.intersection((_, b) => b, imMap1, imMap1);
     expect(unionWithIteself).is.equal(imMap1);
   });
-
-  /*
-  it("unions three maps", () => {
-    const maps = Array<ImMapAndJsMap<number, string>>();
-    for (let i = 0; i < 3; i++) {
-      maps.push(createMap(100 + i * 1000, () => Math.floor(Math.random() * 5000)));
-      // add an empty map, which should be filtered out
-      maps.push({
-        imMap: ImMap.empty<number, string>(),
-        jsMap: new Map(),
-      });
-    }
-
-    const newImMap = ImMap.union((a, b) => a + b, ...maps.map((i) => i.imMap));
-
-    const newJsMap = new Map<string, [number, string]>();
-    for (const { jsMap } of maps) {
-      for (const [kS, [k, v]] of jsMap) {
-        const oldV = newJsMap.get(kS);
-        newJsMap.set(kS, [k, oldV === undefined ? v : oldV[1] + v]);
-      }
-    }
-
-    expectEqual({ imMap: newImMap, jsMap: newJsMap });
-  });
-
-  */
 });
