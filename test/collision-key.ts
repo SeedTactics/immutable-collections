@@ -1,3 +1,5 @@
+import { mkCompareByProperties } from "../src/comparison.js";
+
 // a key type that can generate hash collisions
 export class CollidingKey {
   readonly h: number;
@@ -8,8 +10,13 @@ export class CollidingKey {
     this.x = x;
   }
 
-  public equals(other: CollidingKey): boolean {
-    return this.hash === other.hash && this.x === other.x;
+  private static compareS = mkCompareByProperties<CollidingKey>(
+    (k) => k.h,
+    (k) => k.x
+  );
+
+  public compare(other: CollidingKey): number {
+    return CollidingKey.compareS(this, other);
   }
 
   public hash() {

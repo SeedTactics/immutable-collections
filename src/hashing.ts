@@ -1,26 +1,22 @@
+import { ComparableObj, ComparisionConfig, dateCompare, objCompare, primCompare, stringCompare } from "./comparison.js";
+
 export type HashKeyObj = {
-  equals(other: unknown): boolean;
   hash(): number;
 };
 
 export function isHashKeyObj(k: unknown): k is HashKeyObj {
-  return k !== null && typeof k === "object" && "hash" in k && "equals" in k;
+  return k !== null && typeof k === "object" && "hash" in k;
 }
 
-export type HashKey = string | number | boolean | Date | HashKeyObj;
+export type HashKey = string | number | boolean | Date | (HashKeyObj & ComparableObj);
 
-export type HashConfig<K> = {
-  readonly keyEq: (a: K, b: K) => boolean;
+export type HashConfig<K> = ComparisionConfig<K> & {
   readonly hash: (v: K) => number;
 };
 
 type InternalHashConfig<K> = {
   -readonly [k in keyof HashConfig<K>]: HashConfig<K>[k];
 };
-
-function primEq(a: unknown, b: unknown): boolean {
-  return a === b;
-}
 
 // the tree uses the hash value in javascript bit operations, and javascript bit operations cast
 // the number to a signed 32-bit integer.  Thus each hash function should return a number which
@@ -62,7 +58,7 @@ function dateHash(d: Date): number {
   return numHash(d.getTime());
 }
 
-export function hashValues(...vals: ReadonlyArray<HashKey | null | undefined>) {
+export function hashValues(...vals: ReadonlyArray<string | number | boolean | Date | HashKeyObj | null | undefined>) {
   let hash = 0;
   for (let i = 0; i < vals.length; i++) {
     const p = vals[i];
@@ -113,14 +109,11 @@ export function mkHashConfig<K extends HashKey>(): HashConfig<K> {
     switch (typeof k) {
       case "object":
         if (k instanceof Date) {
-          m.keyEq = primEq;
+          m.compare = dateCompare as unknown as (k1: K, k2: K) => number;
           m.hash = dateHash as unknown as (k: K) => number;
           return;
         } else if (isHashKeyObj(k)) {
-          // the key types passed to _config.keyEq and _config.hash are equal
-          // to the type K which we just narrowed, but typescript doesn't know
-          // about the narrowing when typing keyEq and hash
-          m.keyEq = (j1, j2) => (j1 as HashKeyObj).equals(j2);
+          m.compare = objCompare as unknown as (a: K, b: K) => number;
           m.hash = (k) => (k as HashKeyObj).hash();
           return;
         } else {
@@ -128,34 +121,34 @@ export function mkHashConfig<K extends HashKey>(): HashConfig<K> {
         }
 
       case "string":
-        m.keyEq = primEq;
+        m.compare = stringCompare as unknown as (k1: K, k2: K) => number;
         // we just narrowed K to string, but typescript forgets this when
         // typing hash
         m.hash = stringHash as unknown as (k: K) => number;
         return;
 
       case "boolean":
-        m.keyEq = primEq;
+        m.compare = primCompare as unknown as (k1: K, k2: K) => number;
         m.hash = boolHash as unknown as (k: K) => number;
         return;
 
       case "number":
-        m.keyEq = primEq;
+        m.compare = primCompare as unknown as (k1: K, k2: K) => number;
         m.hash = numHash as unknown as (k: K) => number;
         return;
     }
   }
 
-  function firstKeyEq(k1: K, k2: K): boolean {
+  function firstCompare(k1: K, k2: K): number {
     updateConfig(k1);
-    return m.keyEq(k1, k2);
+    return m.compare(k1, k2);
   }
   function firstHash(k: K): number {
     updateConfig(k);
     return m.hash(k);
   }
 
-  m = { keyEq: firstKeyEq, hash: firstHash };
+  m = { compare: firstCompare, hash: firstHash };
 
   return m;
 }

@@ -112,7 +112,7 @@ export function lookup<K, V>(
         shift += bitsPerSubkey;
       }
     } else if ("key" in node) {
-      if (hash === node.hash && cfg.keyEq(k, node.key)) {
+      if (hash === node.hash && cfg.compare(k, node.key) === 0) {
         return node.val;
       } else {
         return undefined;
@@ -122,7 +122,7 @@ export function lookup<K, V>(
         const arr = node.collision;
         for (let i = 0, len = arr.length; i < len; i++) {
           const n = arr[i];
-          if (cfg.keyEq(k, n.key)) {
+          if (cfg.compare(k, n.key) === 0) {
             return n.val;
           }
         }
@@ -284,7 +284,7 @@ export function insert<K, V>(
       let newNode: HamtNode<K, V>;
       let inserted = true;
       if (hash === curNode.hash) {
-        if (cfg.keyEq(k, curNode.key)) {
+        if (cfg.compare(k, curNode.key) === 0) {
           const newVal = getVal(curNode.val);
           if (newVal === curNode.val) {
             // return the original root node because nothing changed
@@ -322,7 +322,7 @@ export function insert<K, V>(
         // check and extend the existing collision node
         for (let i = 0, collision = curNode.collision, len = collision.length; i < len; i++) {
           const c = collision[i];
-          if (cfg.keyEq(k, c.key)) {
+          if (cfg.compare(k, c.key) === 0) {
             const newVal = getVal(c.val);
             if (c.val === newVal) {
               // return the original root node because nothing changed
@@ -408,7 +408,7 @@ export function mutateInsert<K, T, V>(
       // node is a leaf, check if key is equal or there is a collision
       let newNode: MutableHamtNode<K, V>;
       if (hash === curNode.hash) {
-        if (cfg.keyEq(k, curNode.key)) {
+        if (cfg.compare(k, curNode.key) === 0) {
           // replace the value
           curNode.val = getVal(curNode.val, t);
           return rootNode;
@@ -439,7 +439,7 @@ export function mutateInsert<K, T, V>(
         // check if already in current collision node
         for (let i = 0, collision = curNode.collision, len = collision.length; i < len; i++) {
           const c = collision[i];
-          if (cfg.keyEq(k, c.key)) {
+          if (cfg.compare(k, c.key) === 0) {
             // replace the value
             c.val = getVal(c.val, t);
             return rootNode;
@@ -582,7 +582,7 @@ export function remove<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V> 
       curNode = newNode.children[idx];
     } else if ("key" in curNode) {
       if (hash === curNode.hash) {
-        if (cfg.keyEq(k, curNode.key)) {
+        if (cfg.compare(k, curNode.key) === 0) {
           if (spine.length === 0) {
             // this leaf is the root, so removing it will make the tree empty
             return null;
@@ -601,7 +601,7 @@ export function remove<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V> 
       // collision
       if (hash === curNode.hash) {
         for (let i = 0, collision = curNode.collision, len = collision.length; i < len; i++) {
-          if (cfg.keyEq(k, collision[i].key)) {
+          if (cfg.compare(k, collision[i].key) === 0) {
             let newNode: HamtNode<K, V>;
             if (collision.length === 2) {
               // switch back to a leaf node
@@ -874,7 +874,7 @@ export function union<K, V>(
     // Leaf vs Leaf
     if ("key" in node1 && "key" in node2) {
       if (node1.hash === node2.hash) {
-        if (cfg.keyEq(node1.key, node2.key)) {
+        if (cfg.compare(node1.key, node2.key) === 0) {
           intersectionSize++;
           const newVal = f(node1.val, node2.val, node1.key);
           if (newVal === node1.val) {
@@ -901,7 +901,7 @@ export function union<K, V>(
       if (node1.hash === node2.hash) {
         for (let i = 0, arr = node2.collision, len = arr.length; i < len; i++) {
           const n = arr[i];
-          if (cfg.keyEq(node1.key, n.key)) {
+          if (cfg.compare(node1.key, n.key) === 0) {
             intersectionSize++;
             const newVal = f(node1.val, n.val, n.key);
             if (newVal === n.val) {
@@ -924,7 +924,7 @@ export function union<K, V>(
       if (node1.hash === node2.hash) {
         for (let i = 0, arr = node1.collision, len = arr.length; i < len; i++) {
           const n = arr[i];
-          if (cfg.keyEq(n.key, node2.key)) {
+          if (cfg.compare(n.key, node2.key) === 0) {
             intersectionSize++;
             const newVal = f(n.val, node2.val, n.key);
             if (newVal === n.val) {
@@ -953,7 +953,7 @@ export function union<K, V>(
           let found = false;
           for (let j = 0; j < origNode1ColLength; j++) {
             const existing1 = newArr[j];
-            if (cfg.keyEq(existing1.key, node2entry.key)) {
+            if (cfg.compare(existing1.key, node2entry.key) === 0) {
               intersectionSize++;
               const newVal = f(existing1.val, node2entry.val, node2entry.key);
               if (newVal !== existing1.val) {
@@ -1167,7 +1167,7 @@ export function intersection<K, V>(
         let found = false;
         for (let j = 0, col2 = node2.collision, len2 = col2.length; j < len2; j++) {
           const y = col2[j];
-          if (cfg.keyEq(x.key, y.key)) {
+          if (cfg.compare(x.key, y.key) === 0) {
             intersectionSize++;
             const newVal = f(x.val, y.val, x.key);
             if (newCol) {
