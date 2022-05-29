@@ -77,7 +77,7 @@ export function hashValues(...vals: ReadonlyArray<string | number | boolean | Da
           break;
         default:
           if (p instanceof Date) {
-            hash = hash2Ints(hash, p.getTime());
+            hash = hash2Ints(hash, numHash(p.getTime()));
           } else if (isHashKeyObj(p)) {
             hash = hash2Ints(hash, p.hash());
           } else {
