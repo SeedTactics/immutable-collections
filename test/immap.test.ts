@@ -304,7 +304,7 @@ describe("ImMap", () => {
       // want a bunch of keys in distinct in each map
       for (let i = 0; i < 2000; i++) {
         yield { map1K: randomCollisionKey(), map1V: randomNullableStr() };
-        yield { map1K: randomCollisionKey(), map1V: randomNullableStr() };
+        yield { map2K: randomCollisionKey(), map2V: randomNullableStr() };
       }
 
       for (let i = 0; i < 500; i++) {
@@ -619,4 +619,123 @@ describe("ImMap", () => {
 
     expectEqual({ imMap: empty, jsMap: new Map() });
   });
+
+  it("returns an empty map from an empty intersection", () => {
+    const m = ImMap.intersection<number, string>((a, b) => a + b);
+    expect(m.size === 0);
+    expect(Array.from(m)).to.be.empty;
+  });
+
+  it("returns the map directly from an intersection", () => {
+    const { imMap } = createMap(50, randomCollisionKey);
+
+    const m = ImMap.intersection((a, b) => a + b, imMap);
+    expect(m).to.equal(imMap);
+  });
+
+  it("returns empty if one side is empty from an intersection", () => {
+    const { imMap } = createMap(50, randomCollisionKey);
+
+    let empty = ImMap.intersection((a, b) => a + b, imMap, ImMap.empty<CollidingKey, string>());
+    expectEqual({ imMap: empty, jsMap: new Map() });
+
+    empty = ImMap.intersection((a, b) => a + b, ImMap.empty<CollidingKey, string>(), imMap);
+    expectEqual({ imMap: empty, jsMap: new Map() });
+  });
+
+  it("intersects two maps", () => {
+    function* intersectionValues(): Generator<
+      | { map1K: CollidingKey; map1V: string | null }
+      | { map2K: CollidingKey; map2V: string | null }
+      | { both: CollidingKey; val1: string | null; val2: string | null }
+    > {
+      // want a bunch of keys in both maps
+      for (let i = 0; i < 2000; i++) {
+        const k = randomCollisionKey();
+        yield { both: k, val1: randomNullableStr(), val2: randomNullableStr() };
+      }
+
+      // want a bunch of keys in distinct in each map
+      for (let i = 0; i < 2000; i++) {
+        yield { map1K: randomCollisionKey(), map1V: randomNullableStr() };
+        yield { map2K: randomCollisionKey(), map2V: randomNullableStr() };
+      }
+
+      for (let i = 0; i < 500; i++) {
+        // some keys with the same hash but distinct
+        const [k1, k2] = createKeyWithSameHash(2);
+        yield { map1K: k1, map1V: randomNullableStr() };
+        yield { map2K: k2, map2V: randomNullableStr() };
+      }
+
+      for (let i = 0; i < 500; i++) {
+        // some keys with the same hash and a collision and overlap in imMap1
+        const [k1, k2, k3] = createKeyWithSameHash(3);
+        yield { map1K: k1, map1V: randomNullableStr() };
+        yield { map1K: k2, map1V: randomNullableStr() };
+        yield { both: k3, val1: randomNullableStr(), val2: randomNullableStr() };
+      }
+
+      for (let i = 0; i < 500; i++) {
+        // some keys with the same hash and a collision and overlap in imMap2
+        const [k1, k2, k3] = createKeyWithSameHash(3);
+        yield { both: k1, val1: randomNullableStr(), val2: randomNullableStr() };
+        yield { map2K: k2, map2V: randomNullableStr() };
+        yield { map2K: k3, map2V: randomNullableStr() };
+      }
+    }
+
+    // create the maps and the expected union
+    let imMap1 = ImMap.empty<CollidingKey, string | null>();
+    let imMap2 = ImMap.empty<CollidingKey, string | null>();
+    const jsIntersection = new Map<string, [CollidingKey, string | null]>();
+    for (const x of intersectionValues()) {
+      if ("map1K" in x) {
+        imMap1 = imMap1.set(x.map1K, x.map1V);
+      } else if ("map2K" in x) {
+        imMap2 = imMap2.set(x.map2K, x.map2V);
+      } else {
+        imMap1 = imMap1.set(x.both, x.val1);
+        imMap2 = imMap2.set(x.both, x.val2);
+        jsIntersection.set(x.both.toString(), [x.both, combineNullableStr(x.val1, x.val2)]);
+      }
+    }
+
+    deepFreeze(imMap1);
+    deepFreeze(imMap2);
+
+    const imInter = ImMap.intersection(combineNullableStr, imMap1, imMap2);
+    expectEqual({ imMap: imInter, jsMap: jsIntersection });
+
+    // intersection with itself returns unchanged
+    const unionWithIteself = ImMap.intersection((_, b) => b, imMap1, imMap1);
+    expect(unionWithIteself).is.equal(imMap1);
+  });
+
+  /*
+  it("unions three maps", () => {
+    const maps = Array<ImMapAndJsMap<number, string>>();
+    for (let i = 0; i < 3; i++) {
+      maps.push(createMap(100 + i * 1000, () => Math.floor(Math.random() * 5000)));
+      // add an empty map, which should be filtered out
+      maps.push({
+        imMap: ImMap.empty<number, string>(),
+        jsMap: new Map(),
+      });
+    }
+
+    const newImMap = ImMap.union((a, b) => a + b, ...maps.map((i) => i.imMap));
+
+    const newJsMap = new Map<string, [number, string]>();
+    for (const { jsMap } of maps) {
+      for (const [kS, [k, v]] of jsMap) {
+        const oldV = newJsMap.get(kS);
+        newJsMap.set(kS, [k, oldV === undefined ? v : oldV[1] + v]);
+      }
+    }
+
+    expectEqual({ imMap: newImMap, jsMap: newJsMap });
+  });
+
+  */
 });

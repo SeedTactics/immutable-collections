@@ -87,9 +87,13 @@ function fullIndex(hash: number, shift: number): number {
   return (hash >>> shift) & subkeyMask;
 }
 
-export function lookup<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V>): V | undefined {
-  const hash = cfg.hash(k);
-  let shift = 0;
+export function lookup<K, V>(
+  cfg: HashConfig<K>,
+  hash: number,
+  shift: number,
+  k: K,
+  rootNode: HamtNode<K, V>
+): V | undefined {
   let node = rootNode;
   do {
     if ("children" in node) {
@@ -1128,7 +1132,7 @@ export function intersection<K, V>(
   function loop(shift: number, node1: HamtNode<K, V>, node2: HamtNode<K, V>): HamtNode<K, V> | null {
     // Leaf vs anything
     if ("key" in node1) {
-      const other = lookup(cfg, node1.key, node2);
+      const other = lookup(cfg, node1.hash, shift, node1.key, node2);
       if (other !== undefined) {
         intersectionSize++;
         const newVal = f(node1.val, other, node1.key);
@@ -1141,7 +1145,7 @@ export function intersection<K, V>(
         return null;
       }
     } else if ("key" in node2) {
-      const other = lookup(cfg, node2.key, node1);
+      const other = lookup(cfg, node2.hash, shift, node2.key, node1);
       if (other !== undefined) {
         intersectionSize++;
         const newVal = f(other, node2.val, node2.key);
@@ -1160,6 +1164,7 @@ export function intersection<K, V>(
       let newCol: Array<{ key: K; val: V }> | undefined;
       for (let i = 0, col1 = node1.collision, len1 = col1.length; i < len1; i++) {
         const x = col1[i];
+        let found = false;
         for (let j = 0, col2 = node2.collision, len2 = col2.length; j < len2; j++) {
           const y = col2[j];
           if (cfg.keyEq(x.key, y.key)) {
@@ -1178,16 +1183,19 @@ export function intersection<K, V>(
                 newCol = [...col1.slice(0, i), { key: x.key, val: newVal }];
               }
             }
+            found = true;
             break;
           }
         }
-        if (!newCol) {
+        if (!newCol && !found) {
           newCol = [...col1.slice(0, i)];
         }
       }
 
-      if (newCol === undefined || newCol.length === 0) {
+      if (newCol === undefined) {
         return node1;
+      } else if (newCol.length === 0) {
+        return null;
       } else if (newCol.length === 1) {
         return { hash: node1.hash, key: newCol[0].key, val: newCol[0].val };
       } else {
@@ -1238,7 +1246,7 @@ export function intersection<K, V>(
             // need to delete this node from the new array
             newArr = [...node1.children.slice(0, node1Idx)];
           }
-          // NOTE; newBitmap is already 0 at this mask since we are not in the intersection
+          // newBitmap is already 0 at this mask since we are not in the intersection
           node1Idx++;
         } else if (mask & node2bitmap) {
           // ignore this part of the tree, is not intersecting node1
@@ -1251,7 +1259,7 @@ export function intersection<K, V>(
       } else if (newArr.length === 0) {
         return null;
       } else if (newArr.length === 1) {
-        return hasSingleLeafOrCollision(newArr[0]) ?? newArr[0];
+        return hasSingleLeafOrCollision(newArr[0]) ?? { bitmap: newBitmap, children: newArr };
       } else if (newArr.length === maxChildren) {
         return { children: newArr };
       } else {
@@ -1259,7 +1267,7 @@ export function intersection<K, V>(
       }
     }
 
-    // Collision vs Branch
+    //  Branch vs Collision
     else if ("children" in node1) {
       // node2 is guaranteed to be collision, but typescript doesn't know that
       const hash2: number = (node2 as CollisionNode<K, V>).hash;
@@ -1271,7 +1279,7 @@ export function intersection<K, V>(
       } else {
         const m = mask(hash2, shift);
         if (m & node1.bitmap) {
-          idx = sparseIndex(node1.bitmap, shift);
+          idx = sparseIndex(node1.bitmap, m);
         } else {
           return null;
         }
@@ -1281,18 +1289,18 @@ export function intersection<K, V>(
       return loop(shift + bitsPerSubkey, node1.children[idx], node2);
     }
 
-    // Branch vs Collision
+    // Collision vs Branch
     else if ("children" in node2) {
       const hash1: number = node1.hash;
 
-      // find the index where hash2 will live (if any)
+      // find the index where hash1 will live (if any)
       let idx: number;
       if (node2.bitmap === undefined) {
         idx = fullIndex(hash1, shift);
       } else {
         const m = mask(hash1, shift);
         if (m & node2.bitmap) {
-          idx = sparseIndex(node2.bitmap, shift);
+          idx = sparseIndex(node2.bitmap, m);
         } else {
           return null;
         }

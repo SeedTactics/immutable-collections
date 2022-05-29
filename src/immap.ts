@@ -33,7 +33,7 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
 
   get(k: K): V | undefined {
     if (this.root === null) return undefined;
-    return lookup(this.cfg, k, this.root);
+    return lookup(this.cfg, this.cfg.hash(k), 0, k, this.root);
   }
 
   has(k: K): boolean {
@@ -265,22 +265,21 @@ export class ImMap<K, V> implements ReadonlyMap<K, V> {
   }
 
   public static intersection<K, V>(merge: (v1: V, v2: V) => V, ...maps: readonly ImMap<K, V>[]): ImMap<K, V> {
-    const nonEmpty = maps.filter((m) => m.size > 0);
-    if (nonEmpty.length === 0) {
-      return ImMap.empty(maps[0]?.cfg);
+    if (maps.length === 0) {
+      return ImMap.empty() as unknown as ImMap<K, V>;
     } else {
-      let root = nonEmpty[0].root;
-      let newSize = nonEmpty[0].size;
-      for (let i = 1; i < nonEmpty.length; i++) {
-        const m = nonEmpty[i];
+      let root = maps[0].root;
+      let newSize = 0;
+      for (let i = 1; i < maps.length; i++) {
+        const m = maps[i];
         const [r, intersectionSize] = intersection(m.cfg, merge, root, m.root);
         root = r;
         newSize += intersectionSize;
       }
-      if (root === nonEmpty[0].root) {
-        return nonEmpty[0];
+      if (root === maps[0].root) {
+        return maps[0];
       } else {
-        return new ImMap(nonEmpty[0].cfg, root, newSize);
+        return new ImMap(maps[0].cfg, root, newSize);
       }
     }
   }

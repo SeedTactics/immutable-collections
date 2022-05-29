@@ -34,7 +34,7 @@ export class ImSet<T> implements ReadonlySet<T> {
 
   has(t: T): boolean {
     if (this.root === null) return false;
-    return lookup(this.cfg, t, this.root) === true;
+    return lookup(this.cfg, this.cfg.hash(t), 0, t, this.root) === true;
   }
 
   [Symbol.iterator](): IterableIterator<T> {
@@ -171,22 +171,21 @@ export class ImSet<T> implements ReadonlySet<T> {
   }
 
   public static intersection<T>(...sets: readonly ImSet<T>[]): ImSet<T> {
-    const nonEmpty = sets.filter((m) => m.size > 0);
-    if (nonEmpty.length === 0) {
-      return ImSet.empty(sets[0]?.cfg);
+    if (sets.length === 0) {
+      return ImSet.empty() as unknown as ImSet<T>;
     } else {
-      let root = nonEmpty[0].root;
-      let newSize = nonEmpty[0].size;
-      for (let i = 1; i < nonEmpty.length; i++) {
-        const m = nonEmpty[i];
+      let root = sets[0].root;
+      let newSize = 0;
+      for (let i = 1; i < sets.length; i++) {
+        const m = sets[i];
         const [r, intersectionSize] = intersection(m.cfg, constTrue, root, m.root);
         root = r;
         newSize += intersectionSize;
       }
-      if (root === nonEmpty[0].root) {
-        return nonEmpty[0];
+      if (root === sets[0].root) {
+        return sets[0];
       } else {
-        return new ImSet(nonEmpty[0].cfg, root, newSize);
+        return new ImSet(sets[0].cfg, root, newSize);
       }
     }
   }

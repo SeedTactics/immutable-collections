@@ -53,10 +53,10 @@ describe("HAMT Remove", () => {
         .toRArray(),
     });
 
-    expect(lookup(cfg, new CollidingKey(2, 2), newTree!)).to.equal(2 * 100);
-    expect(lookup(cfg, new CollidingKey(3, 3), newTree!)).to.be.undefined;
-    expect(lookup(cfg, new CollidingKey(3, 3), tree!)).to.equal(3 * 100);
-    expect(lookup(cfg, new CollidingKey(4, 4), newTree!)).to.equal(4 * 100);
+    expect(lookup(cfg, 2, 0, new CollidingKey(2, 2), newTree!)).to.equal(2 * 100);
+    expect(lookup(cfg, 3, 0, new CollidingKey(3, 3), newTree!)).to.be.undefined;
+    expect(lookup(cfg, 3, 0, new CollidingKey(3, 3), tree!)).to.equal(3 * 100);
+    expect(lookup(cfg, 4, 0, new CollidingKey(4, 4), newTree!)).to.equal(4 * 100);
 
     // remove some stuff not in the tree
     expect(remove(cfg, new CollidingKey(50, 50), newTree)).to.equal(newTree);
@@ -84,10 +84,10 @@ describe("HAMT Remove", () => {
         .toRArray(),
     });
 
-    expect(lookup(cfg, new CollidingKey(2, 2), newTree!)).to.equal(2 * 100);
-    expect(lookup(cfg, new CollidingKey(3, 3), newTree!)).to.be.undefined;
-    expect(lookup(cfg, new CollidingKey(3, 3), tree!)).to.equal(3 * 100);
-    expect(lookup(cfg, new CollidingKey(4, 4), newTree!)).to.equal(4 * 100);
+    expect(lookup(cfg, 2, 0, new CollidingKey(2, 2), newTree!)).to.equal(2 * 100);
+    expect(lookup(cfg, 3, 0, new CollidingKey(3, 3), newTree!)).to.be.undefined;
+    expect(lookup(cfg, 3, 0, new CollidingKey(3, 3), tree!)).to.equal(3 * 100);
+    expect(lookup(cfg, 4, 0, new CollidingKey(4, 4), newTree!)).to.equal(4 * 100);
 
     // remove some stuff not in the tree
     expect(remove(cfg, new CollidingKey(50, 50), newTree)).to.equal(newTree);
@@ -101,8 +101,8 @@ describe("HAMT Remove", () => {
     expect(leaf).to.deep.equal({ hash: 6, key: new CollidingKey(6, 6), val: 6 * 100 });
 
     // no changes to tree or newTree
-    expect(lookup(cfg, new CollidingKey(4, 4), tree!)).to.equal(4 * 100);
-    expect(lookup(cfg, new CollidingKey(4, 4), newTree!)).to.equal(4 * 100);
+    expect(lookup(cfg, 4, 0, new CollidingKey(4, 4), tree!)).to.equal(4 * 100);
+    expect(lookup(cfg, 4, 0, new CollidingKey(4, 4), newTree!)).to.equal(4 * 100);
   });
 
   it("removes a chain of single-child nodes", () => {
@@ -119,7 +119,7 @@ describe("HAMT Remove", () => {
     });
 
     // didn't adjust node2
-    expect(lookup(cfg, k1, node2)).to.equal(100);
+    expect(lookup(cfg, cfg.hash(k1), 0, k1, node2)).to.equal(100);
 
     //try removing k2
     expect(remove(cfg, k2, node2)).to.deep.equal({
@@ -191,7 +191,7 @@ describe("HAMT Remove", () => {
       ],
     });
 
-    expect(lookup(cfg, k1, node3)).to.equal(100);
+    expect(lookup(cfg, cfg.hash(k1), 0, k1, node3)).to.equal(100);
 
     expect(remove(cfg, k2, afterRemove1)).to.deep.equal({
       hash: 20,
@@ -199,6 +199,6 @@ describe("HAMT Remove", () => {
       val: 300,
     });
 
-    expect(lookup(cfg, k2, node2)).to.equal(200);
+    expect(lookup(cfg, cfg.hash(k2), 0, k2, node2)).to.equal(200);
   });
 });
