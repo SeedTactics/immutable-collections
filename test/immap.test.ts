@@ -127,6 +127,30 @@ describe("ImMap", () => {
     expectEqual(imMap, jsMap);
   });
 
+  it("creates a boolean keyed map", () => {
+    const trueMap = ImMap.from([[true, "aaa"]]);
+    const falseMap = ImMap.from([[false, "bbb"]]);
+    const allMap = ImMap.from([
+      [true, "aaa"],
+      [false, "bbb"],
+    ]);
+
+    expectEqual(trueMap, new Map([["true", [true, "aaa"]]]));
+    expectEqual(falseMap, new Map([["false", [false, "bbb"]]]));
+    expectEqual(
+      allMap,
+      new Map([
+        ["true", [true, "aaa"]],
+        ["false", [false, "bbb"]],
+      ])
+    );
+  });
+
+  it("creates a date-keyed map", () => {
+    const { imMap, jsMap } = createMap(1000, () => faker.datatype.datetime());
+    expectEqual(imMap, jsMap);
+  });
+
   it("creates a object keyed map", () => {
     const { imMap, jsMap } = createMap(1000, () => randomCollisionKey());
     expectEqual(imMap, jsMap);

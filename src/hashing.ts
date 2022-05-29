@@ -7,7 +7,7 @@ export function isHashKeyObj(k: unknown): k is HashKeyObj {
   return k !== null && typeof k === "object" && "hashPrimitives" in k && "equals" in k;
 }
 
-export type HashKey = string | number | boolean | HashKeyObj;
+export type HashKey = string | number | boolean | Date | HashKeyObj;
 
 export type HashConfig<K> = {
   readonly keyEq: (a: K, b: K) => boolean;
@@ -56,6 +56,10 @@ function numHash(a: number): number {
     const intarr = new Int32Array(buff);
     return hash2Ints(intarr[0], intarr[1]);
   }
+}
+
+function dateHash(d: Date): number {
+  return numHash(d.getTime());
 }
 
 function objHash(a: HashKeyObj): number {
@@ -109,7 +113,11 @@ export function mkHashConfig<K extends HashKey>(): HashConfig<K> {
   function updateConfig(k: K): void {
     switch (typeof k) {
       case "object":
-        if (isHashKeyObj(k)) {
+        if (k instanceof Date) {
+          m.keyEq = primEq;
+          m.hash = dateHash as unknown as (k: K) => number;
+          return;
+        } else if (isHashKeyObj(k)) {
           // the key types passed to _config.keyEq and _config.hash are equal
           // to the type K which we just narrowed, but typescript doesn't know
           // about the narrowing when typing keyEq and hash
