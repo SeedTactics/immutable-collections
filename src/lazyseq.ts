@@ -1,6 +1,6 @@
 import { HashKey } from "./hashing.js";
 import { ImMap } from "./immap.js";
-import { CompareByProperty, compareByProperties, ToComparable } from "./comparison.js";
+import { ToComparableDirection, mkCompareByProperties, ToComparable } from "./comparison.js";
 
 type JsMapKey = number | string | boolean;
 
@@ -207,7 +207,7 @@ export class LazySeq<T> {
 
   groupBy<K>(
     f: (x: T) => K & JsMapKey,
-    ...sort: ReadonlyArray<CompareByProperty<T>>
+    ...sort: ReadonlyArray<ToComparableDirection<T>>
   ): LazySeq<readonly [K, ReadonlyArray<T>]> {
     const m = new Map<K, T[]>();
     for (const x of this.iter) {
@@ -220,7 +220,7 @@ export class LazySeq<T> {
       v.push(x);
     }
     if (sort.length > 0) {
-      const sortF = compareByProperties(...sort);
+      const sortF = mkCompareByProperties(...sort);
       for (const v of m.values()) {
         v.sort(sortF);
       }
@@ -270,7 +270,7 @@ export class LazySeq<T> {
   }
 
   maxOn(...props: ReadonlyArray<ToComparable<T>>): T | undefined {
-    const compare = compareByProperties<T>(...props);
+    const compare = mkCompareByProperties<T>(...props);
     let ret: T | undefined = undefined;
     for (const x of this.iter) {
       if (ret === undefined) {
@@ -285,7 +285,7 @@ export class LazySeq<T> {
   }
 
   minOn(...props: ReadonlyArray<ToComparable<T>>): T | undefined {
-    const compare = compareByProperties<T>(...props);
+    const compare = mkCompareByProperties<T>(...props);
     let ret: T | undefined = undefined;
     for (const x of this.iter) {
       if (ret === undefined) {
@@ -319,8 +319,8 @@ export class LazySeq<T> {
     return LazySeq.ofIterable(Array.from(this.iter).sort(compare));
   }
 
-  sort(...getKeys: Array<ToComparable<T> | CompareByProperty<T>>): LazySeq<T> {
-    return LazySeq.ofIterable(Array.from(this.iter).sort(compareByProperties(...getKeys)));
+  sort(...getKeys: Array<ToComparable<T> | ToComparableDirection<T>>): LazySeq<T> {
+    return LazySeq.ofIterable(Array.from(this.iter).sort(mkCompareByProperties(...getKeys)));
   }
 
   sumOn(getNumber: (v: T) => number): number {
@@ -397,10 +397,10 @@ export class LazySeq<T> {
   }
 
   toSortedArray(
-    getKey: ToComparable<T> | CompareByProperty<T>,
-    ...getKeys: ReadonlyArray<ToComparable<T> | CompareByProperty<T>>
+    getKey: ToComparable<T> | ToComparableDirection<T>,
+    ...getKeys: ReadonlyArray<ToComparable<T> | ToComparableDirection<T>>
   ): ReadonlyArray<T> {
-    return Array.from(this.iter).sort(compareByProperties(getKey, ...getKeys));
+    return Array.from(this.iter).sort(mkCompareByProperties(getKey, ...getKeys));
   }
 
   toImMap<K, S>(f: (x: T) => readonly [K & HashKey, S], merge?: (v1: S, v2: S) => S): ImMap<K & HashKey, S> {

@@ -5,6 +5,14 @@ import assert from "assert";
 
 import { LazySeq } from "../src/lazyseq.js";
 
+class ComparableInt {
+  constructor(public value: number) {}
+
+  compare(other: ComparableInt): number {
+    return this.value - other.value;
+  }
+}
+
 describe("LazySeq", () => {
   it("constructs from an iterable", () => {
     const arr = faker.datatype.array();
@@ -363,6 +371,43 @@ describe("LazySeq", () => {
       { foo: 2, bar: "yA" },
       { foo: 2, bar: "yB" },
       { foo: 1, bar: "z" },
+    ]);
+  });
+
+  it("sorts by custom comparable object", () => {
+    const seq = LazySeq.ofIterable([
+      new ComparableInt(1),
+      new ComparableInt(7),
+      new ComparableInt(4),
+      new ComparableInt(2),
+      null,
+      new ComparableInt(3),
+      new ComparableInt(8),
+      new ComparableInt(6),
+    ]);
+
+    // asc
+    expect(seq.sort((x) => x).toRArray()).to.deep.equal([
+      new ComparableInt(1),
+      new ComparableInt(2),
+      new ComparableInt(3),
+      new ComparableInt(4),
+      new ComparableInt(6),
+      new ComparableInt(7),
+      new ComparableInt(8),
+      null,
+    ]);
+
+    // desc
+    expect(seq.sort({ desc: (x) => x }).toRArray()).to.deep.equal([
+      null,
+      new ComparableInt(8),
+      new ComparableInt(7),
+      new ComparableInt(6),
+      new ComparableInt(4),
+      new ComparableInt(3),
+      new ComparableInt(2),
+      new ComparableInt(1),
     ]);
   });
 

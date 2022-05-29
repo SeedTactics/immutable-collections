@@ -1,13 +1,22 @@
+export type ComparableObj = {
+  compare(other: ComparableObj): number;
+};
+
+export function isComparableObj(o: unknown): o is ComparableObj {
+  return o !== null && typeof o === "object" && "compare" in o;
+}
+
 export type ToComparable<T> =
   | ((t: T) => number | null)
   | ((t: T) => string | null)
   | ((t: T) => boolean | null)
-  | ((t: T) => Date | null);
+  | ((t: T) => Date | null)
+  | ((t: T) => ComparableObj | null);
 
-export type CompareByProperty<T> = { asc: ToComparable<T> } | { desc: ToComparable<T> };
+export type ToComparableDirection<T> = { asc: ToComparable<T> } | { desc: ToComparable<T> };
 
-export function compareByProperties<T>(
-  ...getKeys: ReadonlyArray<ToComparable<T> | CompareByProperty<T>>
+export function mkCompareByProperties<T>(
+  ...getKeys: ReadonlyArray<ToComparable<T> | ToComparableDirection<T>>
 ): (a: T, b: T) => -1 | 0 | 1 {
   return (x, y) => {
     for (const getKey of getKeys) {
@@ -20,6 +29,13 @@ export function compareByProperties<T>(
             continue;
           } else {
             return cmp < 0 ? 1 : -1;
+          }
+        } else if (isComparableObj(a) && b !== null) {
+          const c = a.compare(b as ComparableObj);
+          if (c === 0) {
+            continue;
+          } else {
+            return c < 0 ? 1 : -1;
           }
         } else {
           if (a === b) {
@@ -42,6 +58,13 @@ export function compareByProperties<T>(
             continue;
           } else {
             return cmp < 0 ? -1 : 1;
+          }
+        } else if (isComparableObj(a) && b !== null) {
+          const c = a.compare(b as ComparableObj);
+          if (c === 0) {
+            continue;
+          } else {
+            return c < 0 ? -1 : 1;
           }
         } else {
           if (a === b) {
