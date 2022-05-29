@@ -115,13 +115,13 @@ describe("Hashing", () => {
     const k1 = new ComplexKey(true, new Date(Date.UTC(2022, 5, 6, 10, 2, 2)), 100, "str");
     const k1a = new ComplexKey(true, new Date(Date.UTC(2022, 5, 6, 10, 2, 2)), 100, "str");
 
-    expect(k1.hash()).to.equal(-695831497);
-    expect(k1.hash()).to.equal(-695831497);
-    expect(k1a.hash()).to.equal(-695831497);
+    expect(k1.hash()).to.equal(-298682581);
+    expect(k1.hash()).to.equal(-298682581);
+    expect(k1a.hash()).to.equal(-298682581);
 
-    expect(new ComplexKey(false, k1.d, k1.k.i, k1.k.s).hash()).to.equal(1603650511);
-    expect(new ComplexKey(k1.b, new Date(Date.UTC(2022, 5, 4, 10, 2, 2)), k1.k.i, k1.k.s).hash()).to.equal(-320738249);
-    expect(new ComplexKey(k1.b, k1.d, 102, k1.k.s).hash()).to.equal(-661409329);
-    expect(new ComplexKey(k1.b, k1.d, k1.k.i, "hello").hash()).to.equal(1986403651);
+    expect(new ComplexKey(false, k1.d, k1.k.i, k1.k.s).hash()).to.equal(1886983859);
+    expect(new ComplexKey(k1.b, new Date(Date.UTC(2022, 5, 4, 10, 2, 2)), k1.k.i, k1.k.s).hash()).to.equal(1043564563);
+    expect(new ComplexKey(k1.b, k1.d, 102, k1.k.s).hash()).to.equal(-60260645);
+    expect(new ComplexKey(k1.b, k1.d, k1.k.i, "hello").hash()).to.equal(1803504075);
   });
 });
