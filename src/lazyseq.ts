@@ -1,55 +1,6 @@
 import { HashKey } from "./hashing.js";
 import { ImMap } from "./immap.js";
-
-export type PrimitiveOrd = number | string | boolean;
-
-export type ToPrimitiveOrd<T> = ((t: T) => number) | ((t: T) => string) | ((t: T) => boolean);
-
-export type SortByProperty<T> = { asc: ToPrimitiveOrd<T> } | { desc: ToPrimitiveOrd<T> };
-
-export function sortByProp<T>(
-  ...getKeys: ReadonlyArray<ToPrimitiveOrd<T> | SortByProperty<T>>
-): (a: T, b: T) => -1 | 0 | 1 {
-  return (x, y) => {
-    for (const getKey of getKeys) {
-      if ("desc" in getKey) {
-        const a = getKey.desc(x);
-        const b = getKey.desc(y);
-        if (typeof a === "string" && typeof b === "string") {
-          const cmp = a.localeCompare(b);
-          if (cmp === 0) {
-            continue;
-          } else {
-            return cmp < 0 ? 1 : -1;
-          }
-        } else {
-          if (a === b) {
-            continue;
-          }
-          return a < b ? 1 : -1;
-        }
-      } else {
-        const f = "asc" in getKey ? getKey.asc : getKey;
-        const a = f(x);
-        const b = f(y);
-        if (typeof a === "string" && typeof b === "string") {
-          const cmp = a.localeCompare(b);
-          if (cmp === 0) {
-            continue;
-          } else {
-            return cmp < 0 ? -1 : 1;
-          }
-        } else {
-          if (a === b) {
-            continue;
-          }
-          return a < b ? -1 : 1;
-        }
-      }
-    }
-    return 0;
-  };
-}
+import { PrimitiveOrd, CompareByProperty, compareByProperties, ToPrimitiveOrd } from "./comparison.js";
 
 export class LazySeq<T> {
   static ofIterable<T>(iter: Iterable<T>): LazySeq<T> {
@@ -254,7 +205,7 @@ export class LazySeq<T> {
 
   groupBy<K>(
     f: (x: T) => K & PrimitiveOrd,
-    ...sort: ReadonlyArray<SortByProperty<T>>
+    ...sort: ReadonlyArray<CompareByProperty<T>>
   ): LazySeq<readonly [K, ReadonlyArray<T>]> {
     const m = new Map<K, T[]>();
     for (const x of this.iter) {
@@ -267,7 +218,7 @@ export class LazySeq<T> {
       v.push(x);
     }
     if (sort.length > 0) {
-      const sortF = sortByProp(...sort);
+      const sortF = compareByProperties(...sort);
       for (const v of m.values()) {
         v.sort(sortF);
       }
@@ -372,8 +323,8 @@ export class LazySeq<T> {
     return LazySeq.ofIterable(Array.from(this.iter).sort(compare));
   }
 
-  sort(...getKeys: Array<ToPrimitiveOrd<T> | SortByProperty<T>>): LazySeq<T> {
-    return LazySeq.ofIterable(Array.from(this.iter).sort(sortByProp(...getKeys)));
+  sort(...getKeys: Array<ToPrimitiveOrd<T> | CompareByProperty<T>>): LazySeq<T> {
+    return LazySeq.ofIterable(Array.from(this.iter).sort(compareByProperties(...getKeys)));
   }
 
   sumOn(getNumber: (v: T) => number): number {
@@ -450,10 +401,10 @@ export class LazySeq<T> {
   }
 
   toSortedArray(
-    getKey: ToPrimitiveOrd<T> | SortByProperty<T>,
-    ...getKeys: ReadonlyArray<ToPrimitiveOrd<T> | SortByProperty<T>>
+    getKey: ToPrimitiveOrd<T> | CompareByProperty<T>,
+    ...getKeys: ReadonlyArray<ToPrimitiveOrd<T> | CompareByProperty<T>>
   ): ReadonlyArray<T> {
-    return Array.from(this.iter).sort(sortByProp(getKey, ...getKeys));
+    return Array.from(this.iter).sort(compareByProperties(getKey, ...getKeys));
   }
 
   toImMap<K, S>(f: (x: T) => readonly [K & HashKey, S], merge?: (v1: S, v2: S) => S): ImMap<K & HashKey, S> {

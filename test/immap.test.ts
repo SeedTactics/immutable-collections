@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { faker } from "@faker-js/faker";
 import { HashKey } from "../src/hashing.js";
 import { ImMap } from "../src/immap.js";
-import { sortByProp } from "../src/lazyseq.js";
+import { compareByProperties } from "../src/comparison.js";
 import { CollidingKey, createKeyWithSameHash, distinctKeyWithHash, randomCollisionKey } from "./collision-key.js";
 import { deepFreeze } from "./deepfreeze.js";
 
@@ -13,12 +13,12 @@ interface ImMapAndJsMap<K extends HashKey, V> {
 
 function sortEntries<K extends HashKey, V>(e: Iterable<readonly [K, V]>): Array<readonly [K, V]> {
   const entries = Array.from(e);
-  return entries.sort(sortByProp(([k]) => k.toString()));
+  return entries.sort(compareByProperties(([k]) => k.toString()));
 }
 
 function sortKeys<K extends HashKey>(e: Iterable<K>): Array<K> {
   const keys = Array.from(e);
-  return keys.sort(sortByProp((k) => k.toString()));
+  return keys.sort(compareByProperties((k) => k.toString()));
 }
 
 function sortValues<V>(e: Iterable<V>): Array<V> {
