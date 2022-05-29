@@ -83,7 +83,7 @@ export function mkCompareByProperties<T>(
   };
 }
 
-export type ComparisionKey = string | number | boolean | Date | ComparableObj;
+export type OrderedMapKey = string | number | boolean | Date | ComparableObj;
 
 export type ComparisionConfig<K> = {
   readonly compare: (a: K, b: K) => number;
@@ -120,7 +120,7 @@ export function objCompare(a: ComparableObj, b: ComparableObj): number {
 // inserted.  Therefore, for the initial empty map, we use a map config
 // which checks the type of the key and then replace the configuration with the correct one.
 
-export function mkComparisonConfig<K extends ComparisionKey>(): ComparisionConfig<K> {
+export function mkComparisonConfig<K extends OrderedMapKey>(): ComparisionConfig<K> {
   // eslint-disable-next-line prefer-const
   let m: InternalComparisonConfig<K>;
 
