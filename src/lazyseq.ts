@@ -1,6 +1,8 @@
 import { HashKey } from "./hashing.js";
 import { ImMap } from "./immap.js";
-import { PrimitiveOrd, CompareByProperty, compareByProperties, ToPrimitiveOrd } from "./comparison.js";
+import { CompareByProperty, compareByProperties, ToComparable } from "./comparison.js";
+
+type JsMapKey = number | string | boolean;
 
 export class LazySeq<T> {
   static ofIterable<T>(iter: Iterable<T>): LazySeq<T> {
@@ -49,7 +51,7 @@ export class LazySeq<T> {
   }
 
   aggregate<K, S>(
-    key: (x: T) => K & PrimitiveOrd,
+    key: (x: T) => K & JsMapKey,
     val: (x: T) => S,
     combine: (s1: S, s2: S) => S
   ): LazySeq<readonly [K, S]> {
@@ -204,7 +206,7 @@ export class LazySeq<T> {
   }
 
   groupBy<K>(
-    f: (x: T) => K & PrimitiveOrd,
+    f: (x: T) => K & JsMapKey,
     ...sort: ReadonlyArray<CompareByProperty<T>>
   ): LazySeq<readonly [K, ReadonlyArray<T>]> {
     const m = new Map<K, T[]>();
@@ -267,36 +269,30 @@ export class LazySeq<T> {
     });
   }
 
-  maxOn(f: ToPrimitiveOrd<T>): T | undefined {
+  maxOn(...props: ReadonlyArray<ToComparable<T>>): T | undefined {
+    const compare = compareByProperties<T>(...props);
     let ret: T | undefined = undefined;
-    let maxVal: number | string | boolean | null = null;
     for (const x of this.iter) {
-      if (ret === null) {
+      if (ret === undefined) {
         ret = x;
-        maxVal = f(x);
       } else {
-        const curVal = f(x);
-        if (maxVal === null || maxVal < curVal) {
+        if (compare(ret, x) <= 0) {
           ret = x;
-          maxVal = curVal;
         }
       }
     }
     return ret;
   }
 
-  minOn(f: ToPrimitiveOrd<T>): T | undefined {
+  minOn(...props: ReadonlyArray<ToComparable<T>>): T | undefined {
+    const compare = compareByProperties<T>(...props);
     let ret: T | undefined = undefined;
-    let minVal: number | string | boolean | null = null;
     for (const x of this.iter) {
-      if (ret === null) {
+      if (ret === undefined) {
         ret = x;
-        minVal = f(x);
       } else {
-        const curVal = f(x);
-        if (minVal === null || minVal > curVal) {
+        if (compare(ret, x) >= 0) {
           ret = x;
-          minVal = curVal;
         }
       }
     }
@@ -323,7 +319,7 @@ export class LazySeq<T> {
     return LazySeq.ofIterable(Array.from(this.iter).sort(compare));
   }
 
-  sort(...getKeys: Array<ToPrimitiveOrd<T> | CompareByProperty<T>>): LazySeq<T> {
+  sort(...getKeys: Array<ToComparable<T> | CompareByProperty<T>>): LazySeq<T> {
     return LazySeq.ofIterable(Array.from(this.iter).sort(compareByProperties(...getKeys)));
   }
 
@@ -401,8 +397,8 @@ export class LazySeq<T> {
   }
 
   toSortedArray(
-    getKey: ToPrimitiveOrd<T> | CompareByProperty<T>,
-    ...getKeys: ReadonlyArray<ToPrimitiveOrd<T> | CompareByProperty<T>>
+    getKey: ToComparable<T> | CompareByProperty<T>,
+    ...getKeys: ReadonlyArray<ToComparable<T> | CompareByProperty<T>>
   ): ReadonlyArray<T> {
     return Array.from(this.iter).sort(compareByProperties(getKey, ...getKeys));
   }
@@ -417,7 +413,7 @@ export class LazySeq<T> {
     return ImMap.build(this.iter, key, val as (old: S | undefined, t: T) => S);
   }
 
-  toMutableMap<K, S>(f: (x: T) => readonly [K & PrimitiveOrd, S], merge?: (v1: S, v2: S) => S): Map<K, S> {
+  toMutableMap<K, S>(f: (x: T) => readonly [K & JsMapKey, S], merge?: (v1: S, v2: S) => S): Map<K, S> {
     const m = new Map<K, S>();
     for (const x of this.iter) {
       const [k, s] = f(x);
@@ -435,7 +431,7 @@ export class LazySeq<T> {
     return m;
   }
 
-  toRMap<K, S>(f: (x: T) => readonly [K & PrimitiveOrd, S], merge?: (v1: S, v2: S) => S): ReadonlyMap<K, S> {
+  toRMap<K, S>(f: (x: T) => readonly [K & JsMapKey, S], merge?: (v1: S, v2: S) => S): ReadonlyMap<K, S> {
     return this.toMutableMap(f, merge);
   }
 
@@ -459,7 +455,7 @@ export class LazySeq<T> {
     return m;
   }
 
-  toMutableSet<S>(converter: (x: T) => S & PrimitiveOrd): Set<S> {
+  toMutableSet<S>(converter: (x: T) => S & JsMapKey): Set<S> {
     const s = new Set<S>();
     for (const x of this.iter) {
       s.add(converter(x));
@@ -467,7 +463,7 @@ export class LazySeq<T> {
     return s;
   }
 
-  toRSet<S>(converter: (x: T) => S & PrimitiveOrd): ReadonlySet<S> {
+  toRSet<S>(converter: (x: T) => S & JsMapKey): ReadonlySet<S> {
     return this.toMutableSet(converter);
   }
 

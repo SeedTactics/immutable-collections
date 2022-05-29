@@ -1,11 +1,13 @@
-export type PrimitiveOrd = number | string | boolean;
+export type ToComparable<T> =
+  | ((t: T) => number | null)
+  | ((t: T) => string | null)
+  | ((t: T) => boolean | null)
+  | ((t: T) => Date | null);
 
-export type ToPrimitiveOrd<T> = ((t: T) => number) | ((t: T) => string) | ((t: T) => boolean);
-
-export type CompareByProperty<T> = { asc: ToPrimitiveOrd<T> } | { desc: ToPrimitiveOrd<T> };
+export type CompareByProperty<T> = { asc: ToComparable<T> } | { desc: ToComparable<T> };
 
 export function compareByProperties<T>(
-  ...getKeys: ReadonlyArray<ToPrimitiveOrd<T> | CompareByProperty<T>>
+  ...getKeys: ReadonlyArray<ToComparable<T> | CompareByProperty<T>>
 ): (a: T, b: T) => -1 | 0 | 1 {
   return (x, y) => {
     for (const getKey of getKeys) {
@@ -22,8 +24,13 @@ export function compareByProperties<T>(
         } else {
           if (a === b) {
             continue;
+          } else if (a === null) {
+            return -1;
+          } else if (b === null) {
+            return 1;
+          } else {
+            return a < b ? 1 : -1;
           }
-          return a < b ? 1 : -1;
         }
       } else {
         const f = "asc" in getKey ? getKey.asc : getKey;
@@ -39,8 +46,13 @@ export function compareByProperties<T>(
         } else {
           if (a === b) {
             continue;
+          } else if (a === null) {
+            return 1;
+          } else if (b === null) {
+            return -1;
+          } else {
+            return a < b ? -1 : 1;
           }
-          return a < b ? -1 : 1;
         }
       }
     }
