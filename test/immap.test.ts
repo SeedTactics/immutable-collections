@@ -476,7 +476,7 @@ describe("ImMap", () => {
         newJsMap.delete(kS);
       } else if (r < 0.5) {
         // delete with same hash but different key
-        const m = newImMap.delete(distinctKeyWithHash(k.hash));
+        const m = newImMap.delete(distinctKeyWithHash(k.h));
         expect(m).to.equal(newImMap);
       } else if (r < 0.6) {
         // deletes with different hash

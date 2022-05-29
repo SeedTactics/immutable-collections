@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
-import { isHashKeyObj, mkHashConfig } from "../src/hashing.js";
+import { hashValues, isHashKeyObj, mkHashConfig } from "../src/hashing.js";
 
 export class IntStrKey {
   readonly i: number;
@@ -13,8 +13,8 @@ export class IntStrKey {
   public equals(other: IntStrKey): boolean {
     return this.i === other.i && this.s === other.s;
   }
-  public hashPrimitives(): readonly [number, string] {
-    return [this.i, this.s];
+  public hash(): number {
+    return hashValues(this.i, this.s);
   }
   public toString(): string {
     return `[${this.i}, ${this.s}]`;
@@ -34,8 +34,8 @@ export class ComplexKey {
   public equals(other: ComplexKey): boolean {
     return this.b === other.b && this.d.getTime() === other.d.getTime() && this.k.equals(other.k);
   }
-  public hashPrimitives(): readonly [boolean, Date, IntStrKey] {
-    return [this.b, this.d, this.k];
+  public hash(): number {
+    return hashValues(this.b, this.d, this.k);
   }
   public toString(): string {
     return `[${this.b.toString()}, ${this.d.toString()}, ${this.k.toString()}]`;

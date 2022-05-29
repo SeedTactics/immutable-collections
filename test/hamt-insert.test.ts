@@ -72,7 +72,7 @@ describe("HAMT insert and lookup", () => {
     expect(inserted3).to.be.true;
 
     expect(node1).to.deep.equal({
-      hash: k1.hash,
+      hash: k1.h,
       key: k1,
       val: 100,
     });
@@ -85,8 +85,8 @@ describe("HAMT insert and lookup", () => {
             {
               bitmap: (1 << 0b10101) | (1 << 0b10000),
               children: [
-                { hash: k2.hash, key: k2, val: 200 }, // k2 has smaller hash, so it is first
-                { hash: k1.hash, key: k1, val: 100 },
+                { hash: k2.h, key: k2, val: 200 }, // k2 has smaller hash, so it is first
+                { hash: k1.h, key: k1, val: 100 },
               ],
             },
           ],
@@ -102,11 +102,11 @@ describe("HAMT insert and lookup", () => {
             {
               bitmap: (1 << 0b10101) | (1 << 0b10000),
               children: [
-                { hash: k2.hash, key: k2, val: 200 },
-                { hash: k1.hash, key: k1, val: 100 },
+                { hash: k2.h, key: k2, val: 200 },
+                { hash: k1.h, key: k1, val: 100 },
               ],
             },
-            { hash: k3.hash, key: k3, val: 300 },
+            { hash: k3.h, key: k3, val: 300 },
           ],
         },
       ],

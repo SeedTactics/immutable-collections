@@ -113,7 +113,7 @@ describe("HAMT Remove", () => {
     const [node2] = insert(cfg, k2, setNewVal(200), node1);
 
     expect(remove(cfg, k1, node2)).to.deep.equal({
-      hash: k2.hash,
+      hash: k2.h,
       key: k2,
       val: 200,
     });
@@ -123,7 +123,7 @@ describe("HAMT Remove", () => {
 
     //try removing k2
     expect(remove(cfg, k2, node2)).to.deep.equal({
-      hash: k1.hash,
+      hash: k1.h,
       key: k1,
       val: 100,
     });
@@ -144,8 +144,8 @@ describe("HAMT Remove", () => {
         {
           bitmap: (1 << 0b10010) | (1 << 0b10110),
           children: [
-            { hash: k2.hash, key: k2, val: 200 },
-            { hash: k3.hash, key: k3, val: 300 },
+            { hash: k2.h, key: k2, val: 200 },
+            { hash: k3.h, key: k3, val: 300 },
           ],
         },
       ],
@@ -161,11 +161,11 @@ describe("HAMT Remove", () => {
             {
               bitmap: (1 << 0b10101) | (1 << 0b10000),
               children: [
-                { hash: k2.hash, key: k2, val: 200 },
-                { hash: k1.hash, key: k1, val: 100 },
+                { hash: k2.h, key: k2, val: 200 },
+                { hash: k1.h, key: k1, val: 100 },
               ],
             },
-            { hash: k3.hash, key: k3, val: 300 },
+            { hash: k3.h, key: k3, val: 300 },
           ],
         },
       ],

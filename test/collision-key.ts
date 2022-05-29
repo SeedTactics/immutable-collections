@@ -1,10 +1,10 @@
 // a key type that can generate hash collisions
 export class CollidingKey {
-  readonly hash: number;
+  readonly h: number;
   readonly x: number;
 
   public constructor(hash: number, x: number) {
-    this.hash = hash;
+    this.h = hash;
     this.x = x;
   }
 
@@ -12,13 +12,13 @@ export class CollidingKey {
     return this.hash === other.hash && this.x === other.x;
   }
 
-  public hashPrimitives() {
+  public hash() {
     // only include this.hash so that we can generate collisions
-    return [this.hash];
+    return this.h;
   }
 
   public toString(): string {
-    return `${this.hash}::${this.x}`;
+    return `${this.h}::${this.x}`;
   }
 }
 

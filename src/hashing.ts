@@ -1,10 +1,10 @@
 export type HashKeyObj = {
   equals(other: unknown): boolean;
-  hashPrimitives(): ReadonlyArray<HashKey | Date | null | undefined>;
+  hash(): number;
 };
 
 export function isHashKeyObj(k: unknown): k is HashKeyObj {
-  return k !== null && typeof k === "object" && "hashPrimitives" in k && "equals" in k;
+  return k !== null && typeof k === "object" && "hash" in k && "equals" in k;
 }
 
 export type HashKey = string | number | boolean | Date | HashKeyObj;
@@ -62,11 +62,10 @@ function dateHash(d: Date): number {
   return numHash(d.getTime());
 }
 
-function objHash(a: HashKeyObj): number {
-  const prims = a.hashPrimitives();
+export function hashValues(...vals: ReadonlyArray<HashKey | null | undefined>) {
   let hash = 0;
-  for (let i = 0; i < prims.length; i++) {
-    const p = prims[i];
+  for (let i = 0; i < vals.length; i++) {
+    const p = vals[i];
     if (p === null || p === undefined) {
       hash = hash2Ints(hash, 0);
     } else {
@@ -84,7 +83,7 @@ function objHash(a: HashKeyObj): number {
           if (p instanceof Date) {
             hash = hash2Ints(hash, p.getTime());
           } else if (isHashKeyObj(p)) {
-            hash = hash2Ints(hash, objHash(p));
+            hash = hash2Ints(hash, p.hash());
           } else {
             // typescript should prevent this from happening
             hash = hash2Ints(hash, stringHash((p as unknown as object).toString()));
@@ -93,10 +92,10 @@ function objHash(a: HashKeyObj): number {
       }
     }
   }
-  if (prims.length === 1) {
+  if (vals.length === 1) {
     return hash;
   } else {
-    return hash2Ints(hash, prims.length);
+    return hash2Ints(hash, vals.length);
   }
 }
 
@@ -121,8 +120,8 @@ export function mkHashConfig<K extends HashKey>(): HashConfig<K> {
           // the key types passed to _config.keyEq and _config.hash are equal
           // to the type K which we just narrowed, but typescript doesn't know
           // about the narrowing when typing keyEq and hash
-          m.keyEq = (j1, j2) => (j1 as unknown as HashKeyObj).equals(j2);
-          m.hash = objHash as unknown as (k: K) => number;
+          m.keyEq = (j1, j2) => (j1 as HashKeyObj).equals(j2);
+          m.hash = (k) => (k as HashKeyObj).hash();
           return;
         } else {
           throw new Error("key type must have equals and hash methods");
