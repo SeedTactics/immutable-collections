@@ -82,3 +82,77 @@ export function mkCompareByProperties<T>(
     return 0;
   };
 }
+
+export type ComparisionKey = string | number | boolean | Date | ComparableObj;
+
+export type ComparisionConfig<K> = {
+  readonly compare: (a: K, b: K) => number;
+};
+
+type InternalComparisonConfig<K> = {
+  -readonly [k in keyof ComparisionConfig<K>]: ComparisionConfig<K>[k];
+};
+
+export function primCompare<T extends number | string | boolean | Date>(a: T, b: T): number {
+  if (a === b) {
+    return 0;
+  } else if (a < b) {
+    return -1;
+  } else {
+    return 1;
+  }
+}
+
+export function stringCompare(a: string, b: string): number {
+  return a.localeCompare(b);
+}
+
+export function dateCompare(a: Date, b: Date): number {
+  return a.getTime() - b.getTime();
+}
+
+export function objCompare(a: ComparableObj, b: ComparableObj): number {
+  return a.compare(b);
+}
+
+// We have a small hack here.  At the time of creation, we don't know the
+// key type of the map.  We only know the type the first time a key/value is
+// inserted.  Therefore, for the initial empty map, we use a map config
+// which checks the type of the key and then replace the configuration with the correct one.
+
+export function mkComparisonConfig<K extends ComparisionKey>(): ComparisionConfig<K> {
+  // eslint-disable-next-line prefer-const
+  let m: InternalComparisonConfig<K>;
+
+  function updateConfig(k: K): void {
+    switch (typeof k) {
+      case "object":
+        if (k instanceof Date) {
+          m.compare = dateCompare as unknown as (a: K, b: K) => number;
+          return;
+        } else if (isComparableObj(k)) {
+          m.compare = objCompare as unknown as (a: K, b: K) => number;
+          return;
+        } else {
+          throw new Error("key type must have equals and hash methods");
+        }
+
+      case "string":
+        m.compare = stringCompare as unknown as (a: K, b: K) => number;
+        return;
+
+      default:
+        m.compare = primCompare as unknown as (a: K, b: K) => number;
+        return;
+    }
+  }
+
+  function firstCompare(x: K, y: K): number {
+    updateConfig(x);
+    return m.compare(x, y);
+  }
+
+  m = { compare: firstCompare };
+
+  return m;
+}
