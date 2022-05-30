@@ -18,7 +18,7 @@ function constTrue() {
   return true;
 }
 
-export class ImSet<T> implements ReadonlySet<T> {
+export class ImSet<T extends HashKey> implements ReadonlySet<T> {
   private cfg: HashConfig<T>;
   private root: HamtNode<T, unknown> | null;
 
@@ -93,7 +93,7 @@ export class ImSet<T> implements ReadonlySet<T> {
   }
 
   append(items: Iterable<T>) {
-    return ImSet.union(this, ImSet.from(items, this.cfg));
+    return ImSet.union(this, ImSet.from(items));
   }
 
   union(other: ImSet<T>): ImSet<T> {
@@ -102,18 +102,14 @@ export class ImSet<T> implements ReadonlySet<T> {
 
   // Creating new sets
 
-  public static empty<T extends HashKey>(): ImSet<T>;
-  public static empty<T>(cfg: HashConfig<T>): ImSet<T>;
-  public static empty<T>(cfg?: HashConfig<T>): ImSet<T> {
-    return new ImSet<T>(cfg ?? (mkHashConfig<T & HashKey>() as HashConfig<T>), null, 0);
+  public static empty<T extends HashKey>(): ImSet<T> {
+    return new ImSet(mkHashConfig(), null, 0);
   }
 
-  public static from<T extends HashKey>(items: Iterable<T>): ImSet<T>;
-  public static from<T>(items: Iterable<T>, cfg: HashConfig<T>): ImSet<T>;
-  public static from<T extends HashKey>(items: Iterable<T>, cfg?: HashConfig<T>): ImSet<T> {
+  public static from<T extends HashKey>(items: Iterable<T>): ImSet<T> {
     let root: MutableHamtNode<T, boolean> | null = null;
     let size = 0;
-    cfg = cfg ?? (mkHashConfig<T & HashKey>() as HashConfig<T>);
+    const cfg = mkHashConfig();
 
     function val(old: boolean | undefined) {
       if (old === undefined) {
@@ -128,12 +124,10 @@ export class ImSet<T> implements ReadonlySet<T> {
     return new ImSet(cfg, root, size);
   }
 
-  public static build<T extends HashKey, R>(items: Iterable<R>, key: (v: R) => T): ImSet<T>;
-  public static build<T, R>(items: Iterable<R>, key: (v: R) => T, cfg: HashConfig<T>): ImSet<T>;
-  public static build<T, R>(items: Iterable<R>, key: (v: R) => T, cfg?: HashConfig<T>): ImSet<T> {
+  public static build<T extends HashKey, R>(items: Iterable<R>, key: (v: R) => T): ImSet<T> {
     let root: MutableHamtNode<T, boolean> | null = null;
     let size = 0;
-    cfg = cfg ?? (mkHashConfig<T & HashKey>() as HashConfig<T>);
+    const cfg = mkHashConfig();
 
     function val(old: boolean | undefined) {
       if (old === undefined) {
@@ -149,10 +143,10 @@ export class ImSet<T> implements ReadonlySet<T> {
     return new ImSet(cfg, root, size);
   }
 
-  public static union<T>(...sets: ReadonlyArray<ImSet<T>>) {
+  public static union<T extends HashKey>(...sets: readonly ImSet<T>[]): ImSet<T> {
     const nonEmpty = sets.filter((s) => s.size > 0);
     if (nonEmpty.length === 0) {
-      return ImSet.empty(sets[0]?.cfg);
+      return ImSet.empty();
     } else {
       let root = nonEmpty[0].root;
       let newSize = nonEmpty[0].size;
@@ -170,9 +164,9 @@ export class ImSet<T> implements ReadonlySet<T> {
     }
   }
 
-  public static intersection<T>(...sets: readonly ImSet<T>[]): ImSet<T> {
+  public static intersection<T extends HashKey>(...sets: readonly ImSet<T>[]): ImSet<T> {
     if (sets.length === 0) {
-      return ImSet.empty() as unknown as ImSet<T>;
+      return ImSet.empty();
     } else {
       let root = sets[0].root;
       let newSize = 0;
