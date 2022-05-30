@@ -1,14 +1,14 @@
 import { ComparableObj, ComparisionConfig, dateCompare, objCompare, primCompare, stringCompare } from "./comparison.js";
 
-export type HashKeyObj = {
+export type HashableObj = {
   hash(): number;
 };
 
-export function isHashKeyObj(k: unknown): k is HashKeyObj {
+export function isHashableObj(k: unknown): k is HashableObj {
   return k !== null && typeof k === "object" && "hash" in k;
 }
 
-export type HashKey = string | number | boolean | Date | (HashKeyObj & ComparableObj);
+export type HashKey = string | number | boolean | Date | (HashableObj & ComparableObj);
 
 export type HashConfig<K> = ComparisionConfig<K> & {
   readonly hash: (v: K) => number;
@@ -58,7 +58,7 @@ function dateHash(d: Date): number {
   return numHash(d.getTime());
 }
 
-export function hashValues(...vals: ReadonlyArray<string | number | boolean | Date | HashKeyObj | null | undefined>) {
+export function hashValues(...vals: ReadonlyArray<string | number | boolean | Date | HashableObj | null | undefined>) {
   let hash = 0;
   for (let i = 0; i < vals.length; i++) {
     const p = vals[i];
@@ -78,7 +78,7 @@ export function hashValues(...vals: ReadonlyArray<string | number | boolean | Da
         default:
           if (p instanceof Date) {
             hash = hash2Ints(hash, numHash(p.getTime()));
-          } else if (isHashKeyObj(p)) {
+          } else if (isHashableObj(p)) {
             hash = hash2Ints(hash, p.hash());
           } else {
             // typescript should prevent this from happening
@@ -112,9 +112,9 @@ export function mkHashConfig<K extends HashKey>(): HashConfig<K> {
           m.compare = dateCompare as unknown as (k1: K, k2: K) => number;
           m.hash = dateHash as unknown as (k: K) => number;
           return;
-        } else if (isHashKeyObj(k)) {
+        } else if (isHashableObj(k)) {
           m.compare = objCompare as unknown as (a: K, b: K) => number;
-          m.hash = (k) => (k as HashKeyObj).hash();
+          m.hash = (k) => (k as HashableObj).hash();
           return;
         } else {
           throw new Error("key type must have equals and hash methods");

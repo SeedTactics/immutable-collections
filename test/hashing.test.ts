@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
-import { hashValues, isHashKeyObj, mkHashConfig } from "../src/hashing.js";
+import { hashValues, isHashableObj, mkHashConfig } from "../src/hashing.js";
 
 export class IntStrKey {
   readonly i: number;
@@ -39,9 +39,9 @@ export class ComplexKey {
 describe("Hashing", () => {
   it("detects a hash key object", () => {
     const k = new IntStrKey(faker.datatype.number(), faker.datatype.string());
-    expect(isHashKeyObj(k)).to.be.true;
-    expect(isHashKeyObj(faker.datatype.string())).to.be.false;
-    expect(isHashKeyObj({ foo: faker.datatype.string() })).to.be.false;
+    expect(isHashableObj(k)).to.be.true;
+    expect(isHashableObj(faker.datatype.string())).to.be.false;
+    expect(isHashableObj({ foo: faker.datatype.string() })).to.be.false;
   });
 
   it("hashes a string", () => {

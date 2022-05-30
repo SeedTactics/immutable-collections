@@ -1,4 +1,4 @@
-export { HashKey, HashKeyObj, hashValues } from "./hashing.js";
+export { HashKey, HashableObj, isHashableObj, hashValues } from "./hashing.js";
 export {
   mkCompareByProperties,
   ToComparableDirection,
