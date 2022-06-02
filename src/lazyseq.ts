@@ -1,5 +1,5 @@
 import { HashKey } from "./hashing.js";
-import { ImMap } from "./immap.js";
+import { HashMap } from "./hashmap.js";
 import { ToComparableDirection, mkCompareByProperties, ToComparable } from "./comparison.js";
 
 type JsMapKey = number | string | boolean;
@@ -403,14 +403,14 @@ export class LazySeq<T> {
     return Array.from(this.iter).sort(mkCompareByProperties(getKey, ...getKeys));
   }
 
-  toImMap<K, S>(f: (x: T) => readonly [K & HashKey, S], merge?: (v1: S, v2: S) => S): ImMap<K & HashKey, S> {
-    return ImMap.from(this.map(f), merge);
+  toHashMap<K, S>(f: (x: T) => readonly [K & HashKey, S], merge?: (v1: S, v2: S) => S): HashMap<K & HashKey, S> {
+    return HashMap.from(this.map(f), merge);
   }
 
-  buildImMap<K>(key: (x: T) => K & HashKey): ImMap<K & HashKey, T>;
-  buildImMap<K, S>(key: (x: T) => K & HashKey, val: (old: S | undefined, t: T) => S): ImMap<K & HashKey, S>;
-  buildImMap<K, S>(key: (x: T) => K & HashKey, val?: (old: S | undefined, t: T) => S): ImMap<K & HashKey, S> {
-    return ImMap.build(this.iter, key, val as (old: S | undefined, t: T) => S);
+  buildHashMap<K>(key: (x: T) => K & HashKey): HashMap<K & HashKey, T>;
+  buildHashMap<K, S>(key: (x: T) => K & HashKey, val: (old: S | undefined, t: T) => S): HashMap<K & HashKey, S>;
+  buildHashMap<K, S>(key: (x: T) => K & HashKey, val?: (old: S | undefined, t: T) => S): HashMap<K & HashKey, S> {
+    return HashMap.build(this.iter, key, val as (old: S | undefined, t: T) => S);
   }
 
   toMutableMap<K, S>(f: (x: T) => readonly [K & JsMapKey, S], merge?: (v1: S, v2: S) => S): Map<K, S> {
@@ -467,9 +467,9 @@ export class LazySeq<T> {
     return this.toMutableSet(converter);
   }
 
-  toLookup<K>(key: (x: T) => K & HashKey): ImMap<K & HashKey, ReadonlyArray<T>>;
-  toLookup<K, S>(key: (x: T) => K & HashKey, val: (x: T) => S): ImMap<K & HashKey, ReadonlyArray<S>>;
-  toLookup<K, S>(key: (x: T) => K & HashKey, val?: (x: T) => S): ImMap<K & HashKey, ReadonlyArray<S>> {
+  toLookup<K>(key: (x: T) => K & HashKey): HashMap<K & HashKey, ReadonlyArray<T>>;
+  toLookup<K, S>(key: (x: T) => K & HashKey, val: (x: T) => S): HashMap<K & HashKey, ReadonlyArray<S>>;
+  toLookup<K, S>(key: (x: T) => K & HashKey, val?: (x: T) => S): HashMap<K & HashKey, ReadonlyArray<S>> {
     function merge(old: Array<S> | undefined, t: T): Array<S> {
       if (old) {
         old.push(val === undefined ? (t as unknown as S) : val(t));
@@ -478,29 +478,29 @@ export class LazySeq<T> {
         return [val === undefined ? (t as unknown as S) : val(t)];
       }
     }
-    return ImMap.build(this.iter, key, merge);
+    return HashMap.build(this.iter, key, merge);
   }
 
   toLookupMap<K1, K2>(
     key1: (x: T) => K1 & HashKey,
     key2: (x: T) => K2 & HashKey
-  ): ImMap<K1 & HashKey, ImMap<K2 & HashKey, T>>;
+  ): HashMap<K1 & HashKey, HashMap<K2 & HashKey, T>>;
   toLookupMap<K1, K2, S>(
     key1: (x: T) => K1 & HashKey,
     key2: (x: T) => K2 & HashKey,
     val: (x: T) => S,
     mergeVals?: (v1: S, v2: S) => S
-  ): ImMap<K1 & HashKey, ImMap<K2 & HashKey, S>>;
+  ): HashMap<K1 & HashKey, HashMap<K2 & HashKey, S>>;
   toLookupMap<K1, K2, S>(
     key1: (x: T) => K1 & HashKey,
     key2: (x: T) => K2 & HashKey,
     val?: (x: T) => S,
     mergeVals?: (v1: S, v2: S) => S
-  ): ImMap<K1 & HashKey, ImMap<K2 & HashKey, T | S>> {
+  ): HashMap<K1 & HashKey, HashMap<K2 & HashKey, T | S>> {
     // TODO: add dedicated function to ImMap to make this efficient
-    function merge(old: ImMap<K2 & HashKey, T | S> | undefined, t: T): ImMap<K2 & HashKey, T | S> {
+    function merge(old: HashMap<K2 & HashKey, T | S> | undefined, t: T): HashMap<K2 & HashKey, T | S> {
       if (old === undefined) {
-        old = ImMap.empty<K2 & HashKey, T | S>();
+        old = HashMap.empty<K2 & HashKey, T | S>();
       }
       if (val === undefined) {
         return old.set(key2(t), t);
@@ -510,7 +510,7 @@ export class LazySeq<T> {
         return old.modify(key2(t), (oldV) => (oldV === undefined ? val(t) : mergeVals(oldV as S, val(t))));
       }
     }
-    return ImMap.build(this.iter, key1, merge);
+    return HashMap.build(this.iter, key1, merge);
   }
 
   toRLookup<K>(key: (x: T) => K): ReadonlyMap<K, ReadonlyArray<T>>;

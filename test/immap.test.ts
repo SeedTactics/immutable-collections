@@ -1,13 +1,13 @@
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
 import { HashKey } from "../src/hashing.js";
-import { ImMap } from "../src/immap.js";
+import { HashMap } from "../src/hashmap.js";
 import { mkCompareByProperties } from "../src/comparison.js";
 import { CollidingKey, createKeyWithSameHash, distinctKeyWithHash, randomCollisionKey } from "./collision-key.js";
 import { deepFreeze } from "./deepfreeze.js";
 
 interface ImMapAndJsMap<K extends HashKey, V> {
-  readonly imMap: ImMap<K, V>;
+  readonly imMap: HashMap<K, V>;
   readonly jsMap: Map<string, [K, V]>;
 }
 
@@ -38,7 +38,7 @@ function combineNullableStr(a: string | null, b: string | null): string | null {
 }
 
 function createMap<K extends HashKey>(size: number, key: () => K): ImMapAndJsMap<K, string> {
-  let imMap = ImMap.empty<K, string>();
+  let imMap = HashMap.empty<K, string>();
   const jsMap = new Map<string, [K, string]>();
 
   for (let i = 0; i < size; i++) {
@@ -59,7 +59,7 @@ function createMap<K extends HashKey>(size: number, key: () => K): ImMapAndJsMap
   return { imMap, jsMap };
 }
 
-function expectEqual<K extends HashKey, V>(imMap: ImMap<K, V>, jsMap: Map<string, [K, V]>): void {
+function expectEqual<K extends HashKey, V>(imMap: HashMap<K, V>, jsMap: Map<string, [K, V]>): void {
   const entries = sortEntries(jsMap.values());
   expect(imMap.size).to.equal(jsMap.size);
 
@@ -94,7 +94,7 @@ function expectEqual<K extends HashKey, V>(imMap: ImMap<K, V>, jsMap: Map<string
 
 describe("ImMap", () => {
   it("creates an empty ImMap", () => {
-    const m = ImMap.empty<number, string>();
+    const m = HashMap.empty<number, string>();
     expect(m.size).to.equal(0);
 
     expect(m.get(100)).to.be.undefined;
@@ -103,7 +103,7 @@ describe("ImMap", () => {
   });
 
   it("creates a ImMap", () => {
-    const m = ImMap.from([
+    const m = HashMap.from([
       [1, "a"],
       [2, "b"],
       [3, "c"],
@@ -128,9 +128,9 @@ describe("ImMap", () => {
   });
 
   it("creates a boolean keyed map", () => {
-    const trueMap = ImMap.from([[true, "aaa"]]);
-    const falseMap = ImMap.from([[false, "bbb"]]);
-    const allMap = ImMap.from([
+    const trueMap = HashMap.from([[true, "aaa"]]);
+    const falseMap = HashMap.from([[false, "bbb"]]);
+    const allMap = HashMap.from([
       [true, "aaa"],
       [false, "bbb"],
     ]);
@@ -214,7 +214,7 @@ describe("ImMap", () => {
       const v = faker.datatype.string();
       entries[i] = [k, v];
     }
-    const imMap = ImMap.from(entries);
+    const imMap = HashMap.from(entries);
     const jsMap = new Map<string, [number, string]>(entries.map(([k, v]) => [k.toString(), [k, v]]));
 
     expectEqual(imMap, jsMap);
@@ -228,7 +228,7 @@ describe("ImMap", () => {
       const v = faker.datatype.string();
       entries[i] = [k, v];
     }
-    const imMap = ImMap.from(entries, (a, b) => a + b);
+    const imMap = HashMap.from(entries, (a, b) => a + b);
 
     const jsMap = new Map<string, [CollidingKey, string]>();
     for (const [k, v] of entries) {
@@ -246,7 +246,7 @@ describe("ImMap", () => {
       values[i] = faker.datatype.number({ min: 0, max: 5000 });
     }
 
-    const imMap = ImMap.build(values, (v) => v + 40_000);
+    const imMap = HashMap.build(values, (v) => v + 40_000);
     const jsMap = new Map<string, [number, number]>(values.map((v) => [(v + 40_000).toString(), [v + 40_000, v]]));
 
     expectEqual(imMap, jsMap);
@@ -259,7 +259,7 @@ describe("ImMap", () => {
       ts[i] = faker.datatype.number({ min: 0, max: 5000 });
     }
 
-    const imMap = ImMap.build<number, CollidingKey, string>(
+    const imMap = HashMap.build<number, CollidingKey, string>(
       ts,
       (t) => new CollidingKey(t % 100, t + 40_000),
       (old, t) => (old ?? "") + t.toString()
@@ -302,7 +302,7 @@ describe("ImMap", () => {
   });
 
   it("returns an empty map from an empty union", () => {
-    const m = ImMap.union<number, string>((a, b) => a + b);
+    const m = HashMap.union<number, string>((a, b) => a + b);
     expect(m.size === 0);
     expect(Array.from(m)).to.be.empty;
   });
@@ -310,7 +310,7 @@ describe("ImMap", () => {
   it("returns the map directly from a union", () => {
     const maps = createMap(50, randomCollisionKey);
 
-    const m = ImMap.union((a, b) => a + b, maps.imMap);
+    const m = HashMap.union((a, b) => a + b, maps.imMap);
     expect(m).to.equal(maps.imMap);
   });
 
@@ -393,8 +393,8 @@ describe("ImMap", () => {
     }
 
     // create the maps and the expected union
-    let imMap1 = ImMap.empty<CollidingKey, string | null>();
-    let imMap2 = ImMap.empty<CollidingKey, string | null>();
+    let imMap1 = HashMap.empty<CollidingKey, string | null>();
+    let imMap2 = HashMap.empty<CollidingKey, string | null>();
     const jsUnion = new Map<string, [CollidingKey, string | null]>();
     for (const x of unionValues()) {
       if ("map1K" in x) {
@@ -429,12 +429,12 @@ describe("ImMap", () => {
       maps.push(createMap(100 + i * 1000, () => Math.floor(Math.random() * 5000)));
       // add an empty map, which should be filtered out
       maps.push({
-        imMap: ImMap.empty<number, string>(),
+        imMap: HashMap.empty<number, string>(),
         jsMap: new Map(),
       });
     }
 
-    const newImMap = ImMap.union((a, b) => a + b, ...maps.map((i) => i.imMap));
+    const newImMap = HashMap.union((a, b) => a + b, ...maps.map((i) => i.imMap));
 
     const newJsMap = new Map<string, [number, string]>();
     for (const { jsMap } of maps) {
@@ -489,7 +489,7 @@ describe("ImMap", () => {
   });
 
   it("maps the empty map", () => {
-    const m = ImMap.empty<number, string>();
+    const m = HashMap.empty<number, string>();
     const m2 = m.mapValues((v) => v + "!");
     expect(m2.size).to.equal(0);
     expect(m).to.equal(m2);
@@ -533,7 +533,7 @@ describe("ImMap", () => {
   });
 
   it("collects the empty map", () => {
-    const m = ImMap.empty<number, string>();
+    const m = HashMap.empty<number, string>();
     const m2 = m.collectValues((v) => v + "!");
     expectEqual(m2, new Map());
   });
@@ -589,7 +589,7 @@ describe("ImMap", () => {
   });
 
   it("filters a map", () => {
-    let imMap = ImMap.empty<CollidingKey, string | null>();
+    let imMap = HashMap.empty<CollidingKey, string | null>();
     const jsMap = new Map<string, [CollidingKey, string | null]>();
     for (let i = 0; i < 1000; i++) {
       const k = randomCollisionKey();
@@ -615,7 +615,7 @@ describe("ImMap", () => {
   });
 
   it("returns the map unchanged if nothing is filtered", () => {
-    let imMap = ImMap.empty<CollidingKey, string | null>();
+    let imMap = HashMap.empty<CollidingKey, string | null>();
     for (let i = 0; i < 1000; i++) {
       const k = randomCollisionKey();
       const v = randomNullableStr();
@@ -630,7 +630,7 @@ describe("ImMap", () => {
   });
 
   it("returns empty if everyhing filtered", () => {
-    let imMap = ImMap.empty<CollidingKey, string | null>();
+    let imMap = HashMap.empty<CollidingKey, string | null>();
     for (let i = 0; i < 1000; i++) {
       const k = randomCollisionKey();
       const v = randomNullableStr();
@@ -645,7 +645,7 @@ describe("ImMap", () => {
   });
 
   it("returns an empty map from an empty intersection", () => {
-    const m = ImMap.intersection<number, string>((a, b) => a + b);
+    const m = HashMap.intersection<number, string>((a, b) => a + b);
     expect(m.size === 0);
     expect(Array.from(m)).to.be.empty;
   });
@@ -653,17 +653,17 @@ describe("ImMap", () => {
   it("returns the map directly from an intersection", () => {
     const { imMap } = createMap(50, randomCollisionKey);
 
-    const m = ImMap.intersection((a, b) => a + b, imMap);
+    const m = HashMap.intersection((a, b) => a + b, imMap);
     expect(m).to.equal(imMap);
   });
 
   it("returns empty if one side is empty from an intersection", () => {
     const { imMap } = createMap(50, randomCollisionKey);
 
-    let empty = ImMap.intersection((a, b) => a + b, imMap, ImMap.empty<CollidingKey, string>());
+    let empty = HashMap.intersection((a, b) => a + b, imMap, HashMap.empty<CollidingKey, string>());
     expectEqual(empty, new Map());
 
-    empty = ImMap.intersection((a, b) => a + b, ImMap.empty<CollidingKey, string>(), imMap);
+    empty = HashMap.intersection((a, b) => a + b, HashMap.empty<CollidingKey, string>(), imMap);
     expectEqual(empty, new Map());
   });
 
@@ -710,8 +710,8 @@ describe("ImMap", () => {
     }
 
     // create the maps and the expected union
-    let imMap1 = ImMap.empty<CollidingKey, string | null>();
-    let imMap2 = ImMap.empty<CollidingKey, string | null>();
+    let imMap1 = HashMap.empty<CollidingKey, string | null>();
+    let imMap2 = HashMap.empty<CollidingKey, string | null>();
     const jsIntersection = new Map<string, [CollidingKey, string | null]>();
     for (const x of intersectionValues()) {
       if ("map1K" in x) {
@@ -728,11 +728,11 @@ describe("ImMap", () => {
     deepFreeze(imMap1);
     deepFreeze(imMap2);
 
-    const imInter = ImMap.intersection(combineNullableStr, imMap1, imMap2);
+    const imInter = HashMap.intersection(combineNullableStr, imMap1, imMap2);
     expectEqual(imInter, jsIntersection);
 
     // intersection with itself returns unchanged
-    const unionWithIteself = ImMap.intersection((_, b) => b, imMap1, imMap1);
+    const unionWithIteself = HashMap.intersection((_, b) => b, imMap1, imMap1);
     expect(unionWithIteself).is.equal(imMap1);
   });
 });

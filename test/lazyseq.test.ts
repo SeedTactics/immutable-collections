@@ -508,7 +508,7 @@ describe("LazySeq", () => {
       },
     ]);
 
-    const m = seq.toImMap(
+    const m = seq.toHashMap(
       (x) => [x.foo, x.bar],
       (x, y) => x + y
     );
@@ -520,7 +520,7 @@ describe("LazySeq", () => {
     ]);
 
     // try without a merge function
-    const m3 = seq.toImMap((x) => [x.foo, x.bar]);
+    const m3 = seq.toHashMap((x) => [x.foo, x.bar]);
     expect(Array.from(m3).sort(([k1], [k2]) => k1 - k2)).to.deep.equal([
       [1, "world"],
       [2, "!!!"],

@@ -7,6 +7,6 @@ export {
   isComparableObj,
   OrderedMapKey,
 } from "./comparison.js";
-export { ImMap } from "./immap.js";
+export { HashMap } from "./hashmap.js";
 export { ImSet } from "./imset.js";
 export { LazySeq } from "./lazyseq.js";
