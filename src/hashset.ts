@@ -18,7 +18,7 @@ function constTrue() {
   return true;
 }
 
-export class ImSet<T extends HashKey> implements ReadonlySet<T> {
+export class HashSet<T extends HashKey> implements ReadonlySet<T> {
   private cfg: HashConfig<T>;
   private root: HamtNode<T, unknown> | null;
 
@@ -53,7 +53,7 @@ export class ImSet<T extends HashKey> implements ReadonlySet<T> {
     return iterate(this.root, (t) => t);
   }
 
-  forEach(f: (val: T, val2: T, set: ImSet<T>) => void): void {
+  forEach(f: (val: T, val2: T, set: HashSet<T>) => void): void {
     fold(
       this.root,
       (_acc, _v, t) => {
@@ -74,39 +74,39 @@ export class ImSet<T extends HashKey> implements ReadonlySet<T> {
 
   // Methods modifying the map
 
-  add(t: T): ImSet<T> {
+  add(t: T): HashSet<T> {
     const [newRoot, inserted] = insert(this.cfg, t, constTrue, this.root);
     if (newRoot === this.root) {
       return this;
     } else {
-      return new ImSet(this.cfg, newRoot, this.size + (inserted ? 1 : 0));
+      return new HashSet(this.cfg, newRoot, this.size + (inserted ? 1 : 0));
     }
   }
 
-  delete(t: T): ImSet<T> {
+  delete(t: T): HashSet<T> {
     const newRoot = remove(this.cfg, t, this.root);
     if (newRoot === this.root) {
       return this;
     } else {
-      return new ImSet(this.cfg, newRoot, this.size - 1);
+      return new HashSet(this.cfg, newRoot, this.size - 1);
     }
   }
 
   append(items: Iterable<T>) {
-    return ImSet.union(this, ImSet.from(items));
+    return HashSet.union(this, HashSet.from(items));
   }
 
-  union(other: ImSet<T>): ImSet<T> {
-    return ImSet.union(this, other);
+  union(other: HashSet<T>): HashSet<T> {
+    return HashSet.union(this, other);
   }
 
   // Creating new sets
 
-  public static empty<T extends HashKey>(): ImSet<T> {
-    return new ImSet(mkHashConfig(), null, 0);
+  public static empty<T extends HashKey>(): HashSet<T> {
+    return new HashSet(mkHashConfig(), null, 0);
   }
 
-  public static from<T extends HashKey>(items: Iterable<T>): ImSet<T> {
+  public static from<T extends HashKey>(items: Iterable<T>): HashSet<T> {
     let root: MutableHamtNode<T, boolean> | null = null;
     let size = 0;
     const cfg = mkHashConfig();
@@ -121,10 +121,10 @@ export class ImSet<T extends HashKey> implements ReadonlySet<T> {
     for (const t of items) {
       root = mutateInsert(cfg, t, undefined, val, root);
     }
-    return new ImSet(cfg, root, size);
+    return new HashSet(cfg, root, size);
   }
 
-  public static build<T extends HashKey, R>(items: Iterable<R>, key: (v: R) => T): ImSet<T> {
+  public static build<T extends HashKey, R>(items: Iterable<R>, key: (v: R) => T): HashSet<T> {
     let root: MutableHamtNode<T, boolean> | null = null;
     let size = 0;
     const cfg = mkHashConfig();
@@ -140,13 +140,13 @@ export class ImSet<T extends HashKey> implements ReadonlySet<T> {
       root = mutateInsert(cfg, key(t), undefined, val, root);
     }
 
-    return new ImSet(cfg, root, size);
+    return new HashSet(cfg, root, size);
   }
 
-  public static union<T extends HashKey>(...sets: readonly ImSet<T>[]): ImSet<T> {
+  public static union<T extends HashKey>(...sets: readonly HashSet<T>[]): HashSet<T> {
     const nonEmpty = sets.filter((s) => s.size > 0);
     if (nonEmpty.length === 0) {
-      return ImSet.empty();
+      return HashSet.empty();
     } else {
       let root = nonEmpty[0].root;
       let newSize = nonEmpty[0].size;
@@ -159,14 +159,14 @@ export class ImSet<T extends HashKey> implements ReadonlySet<T> {
       if (root === nonEmpty[0].root) {
         return nonEmpty[0];
       } else {
-        return new ImSet(nonEmpty[0].cfg, root, newSize);
+        return new HashSet(nonEmpty[0].cfg, root, newSize);
       }
     }
   }
 
-  public static intersection<T extends HashKey>(...sets: readonly ImSet<T>[]): ImSet<T> {
+  public static intersection<T extends HashKey>(...sets: readonly HashSet<T>[]): HashSet<T> {
     if (sets.length === 0) {
-      return ImSet.empty();
+      return HashSet.empty();
     } else {
       let root = sets[0].root;
       let newSize = 0;
@@ -179,7 +179,7 @@ export class ImSet<T extends HashKey> implements ReadonlySet<T> {
       if (root === sets[0].root) {
         return sets[0];
       } else {
-        return new ImSet(sets[0].cfg, root, newSize);
+        return new HashSet(sets[0].cfg, root, newSize);
       }
     }
   }

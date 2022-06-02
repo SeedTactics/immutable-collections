@@ -8,5 +8,5 @@ export {
   OrderedMapKey,
 } from "./comparison.js";
 export { HashMap } from "./hashmap.js";
-export { ImSet } from "./imset.js";
+export { HashSet } from "./hashset.js";
 export { LazySeq } from "./lazyseq.js";
