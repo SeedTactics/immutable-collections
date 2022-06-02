@@ -6,7 +6,7 @@ import { mkCompareByProperties } from "../src/comparison.js";
 import { CollidingKey, createKeyWithSameHash, distinctKeyWithHash, randomCollisionKey } from "./collision-key.js";
 import { deepFreeze } from "./deepfreeze.js";
 
-interface ImMapAndJsMap<K extends HashKey, V> {
+interface HashMapAndJsMap<K extends HashKey, V> {
   readonly imMap: HashMap<K, V>;
   readonly jsMap: Map<string, [K, V]>;
 }
@@ -37,7 +37,7 @@ function combineNullableStr(a: string | null, b: string | null): string | null {
   return a + b;
 }
 
-function createMap<K extends HashKey>(size: number, key: () => K): ImMapAndJsMap<K, string> {
+function createMap<K extends HashKey>(size: number, key: () => K): HashMapAndJsMap<K, string> {
   let imMap = HashMap.empty<K, string>();
   const jsMap = new Map<string, [K, string]>();
 
@@ -92,8 +92,8 @@ function expectEqual<K extends HashKey, V>(imMap: HashMap<K, V>, jsMap: Map<stri
   expect(sortEntries(foldEntries)).to.deep.equal(entries);
 }
 
-describe("ImMap", () => {
-  it("creates an empty ImMap", () => {
+describe("HashMap", () => {
+  it("creates an empty map", () => {
     const m = HashMap.empty<number, string>();
     expect(m.size).to.equal(0);
 
@@ -102,7 +102,7 @@ describe("ImMap", () => {
     expect(Array.from(m)).to.deep.equal([]);
   });
 
-  it("creates a ImMap", () => {
+  it("creates a hash map", () => {
     const m = HashMap.from([
       [1, "a"],
       [2, "b"],
@@ -160,8 +160,8 @@ describe("ImMap", () => {
     const maps = createMap(5000, () => randomCollisionKey());
 
     for (const [k, v] of maps.imMap.toLazySeq().take(4000)) {
-      const newImMap = maps.imMap.set(k, v);
-      expect(newImMap).to.equal(maps.imMap);
+      const newHashM = maps.imMap.set(k, v);
+      expect(newHashM).to.equal(maps.imMap);
     }
   });
 
@@ -169,25 +169,25 @@ describe("ImMap", () => {
     const maps = createMap(500, () => faker.datatype.string());
 
     for (const [k, v] of maps.imMap.toLazySeq().take(4000)) {
-      const newImMap = maps.imMap.modify(k, (old) => {
+      const newHashM = maps.imMap.modify(k, (old) => {
         expect(old).to.equal(v);
         return v;
       });
-      expect(newImMap).to.equal(maps.imMap);
+      expect(newHashM).to.equal(maps.imMap);
     }
   });
 
   it("overwrites values", () => {
     const maps = createMap(5000, () => randomCollisionKey());
 
-    let newImMap = maps.imMap;
+    let newHashM = maps.imMap;
     const newJsMap = new Map(maps.jsMap);
     for (const [k, v] of maps.imMap.toLazySeq().take(4000)) {
-      newImMap = newImMap.set(k, v + "!!!!");
+      newHashM = newHashM.set(k, v + "!!!!");
       newJsMap.set(k.toString(), [k, v + "!!!!"]);
     }
 
-    expectEqual(newImMap, newJsMap);
+    expectEqual(newHashM, newJsMap);
   });
 
   it("updates values", () => {
@@ -424,7 +424,7 @@ describe("ImMap", () => {
   });
 
   it("unions three maps", () => {
-    const maps = Array<ImMapAndJsMap<number, string>>();
+    const maps = Array<HashMapAndJsMap<number, string>>();
     for (let i = 0; i < 3; i++) {
       maps.push(createMap(100 + i * 1000, () => Math.floor(Math.random() * 5000)));
       // add an empty map, which should be filtered out
