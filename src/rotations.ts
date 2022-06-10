@@ -251,7 +251,7 @@ export function combineAfterLeftIncrease<K, V>(
   }
 
   if (left.size > delta * right.size) {
-    rotateRight(k, v, left, right);
+    return rotateRight(k, v, left, right);
   }
 
   return { key: k, val: v, size: 1 + left.size + right.size, left, right };
@@ -276,7 +276,7 @@ export function combineAfterRightIncrease<K, V>(
   }
 
   if (right.size > delta * left.size) {
-    rotateLeft(k, v, left, right);
+    return rotateLeft(k, v, left, right);
   }
 
   return { key: k, val: v, size: 1 + left.size + right.size, left, right };
