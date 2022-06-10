@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/unbound-method */
 import { expect } from "chai";
-import { TreeNode } from "../src/rotations.js";
-import { insert, lookup, remove } from "../src/tree.js";
+import { insert, iterateAsc, iterateDesc, lookup, remove } from "../src/tree.js";
 import { checkBalanceAndSize } from "./check-balance.js";
 
 const compareNum = {
@@ -89,12 +88,21 @@ describe("Tree", () => {
     checkBalanceAndSize(compareNum, n4!);
   });
 
-  it("insert 100 values", () => {
-    let n: TreeNode<number, string> | undefined;
-    for (let i = 0; i < 100; i++) {
-      n = insert(compareNum, i, () => `${i}`, n);
-    }
+  it("iterates values", () => {
+    const n1 = insert(compareNum, 10, () => "aaa", undefined);
+    const n2 = insert(compareNum, 20, () => "bbb", n1);
+    const n3 = insert(compareNum, 5, () => "ccc", n2);
 
-    checkBalanceAndSize(compareNum, n!);
+    expect([...iterateAsc(n3, (k, v) => [k, v])]).to.deep.equal([
+      [5, "ccc"],
+      [10, "aaa"],
+      [20, "bbb"],
+    ]);
+
+    expect([...iterateDesc(n3, (k, v) => [k, v])]).to.deep.equal([
+      [20, "bbb"],
+      [10, "aaa"],
+      [5, "ccc"],
+    ]);
   });
 });

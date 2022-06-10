@@ -1,8 +1,20 @@
 import { TreeNode } from "../src/rotations.js";
 import { expect } from "chai";
-import { ComparisionConfig } from "../src/comparison.js";
+import { ComparisionConfig, OrderedMapKey } from "../src/comparison.js";
+import { OrderedMap } from "../src/orderedmap.js";
 
-export function checkBalanceAndSize<K, V>({ compare }: ComparisionConfig<K>, root: TreeNode<K, V>) {
+export function checkMapBalanceAndSize<K extends OrderedMapKey, V>(map: OrderedMap<K, V>) {
+  // access private properties
+  const privateMap = map as unknown as { root: TreeNode<K, V> | undefined; cfg: ComparisionConfig<K> };
+  if (privateMap.root) {
+    return checkBalanceAndSize(privateMap.cfg, privateMap.root);
+  }
+}
+
+export function checkBalanceAndSize<K extends OrderedMapKey, V>(
+  { compare }: ComparisionConfig<K>,
+  root: TreeNode<K, V>
+) {
   function loop(node: TreeNode<K, V>, min: K | undefined, max: K | undefined) {
     if (min !== undefined) {
       expect(compare(node.key, min)).to.be.greaterThan(0);
@@ -33,5 +45,5 @@ export function checkBalanceAndSize<K, V>({ compare }: ComparisionConfig<K>, roo
     }
   }
 
-  return loop(root, undefined, undefined);
+  loop(root, undefined, undefined);
 }
