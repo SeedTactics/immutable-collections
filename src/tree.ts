@@ -1,5 +1,5 @@
 import { ComparisionConfig } from "./comparison.js";
-import { balanceL, balanceR, TreeNode } from "./rotations.js";
+import { combineAfterLeftIncrease, combineAfterRightIncrease, glueSizeBalanced, TreeNode } from "./rotations.js";
 
 export function lookup<K, V>({ compare }: ComparisionConfig<K>, k: K, root: TreeNode<K, V> | undefined): V | undefined {
   let node = root;
@@ -40,53 +40,19 @@ export function insert<K, V>(
       if (newLeft === node.left) {
         return node;
       } else {
-        return balanceL(node.key, node.val, newLeft, node.right);
+        return combineAfterLeftIncrease(node.key, node.val, newLeft, node.right);
       }
     } else {
       const newRight = loop(node.right);
       if (newRight === node.right) {
         return node;
       } else {
-        return balanceR(node.key, node.val, node.left, newRight);
+        return combineAfterRightIncrease(node.key, node.val, node.left, newRight);
       }
     }
   }
 
   return loop(root);
-}
-
-export function removeMin<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, V> | undefined } {
-  const left = node.left;
-  if (left === undefined) {
-    return { k: node.key, v: node.val, rest: node.right };
-  } else {
-    const ret = removeMin(left);
-    ret.rest = balanceR(node.key, node.val, ret.rest, node.right);
-    return ret;
-  }
-}
-
-export function removeMax<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, V> | undefined } {
-  const right = node.right;
-  if (right === undefined) {
-    return { k: node.key, v: node.val, rest: node.left };
-  } else {
-    const ret = removeMax(right);
-    ret.rest = balanceL(node.key, node.val, node.left, ret.rest);
-    return ret;
-  }
-}
-
-function glue<K, V>(left: TreeNode<K, V> | undefined, right: TreeNode<K, V> | undefined): TreeNode<K, V> | undefined {
-  if (left === undefined) return right;
-  if (right === undefined) return left;
-  if (left.size > right.size) {
-    const { k, v, rest } = removeMax(left);
-    return balanceR(k, v, rest, right);
-  } else {
-    const { k, v, rest } = removeMin(right);
-    return balanceL(k, v, left, rest);
-  }
 }
 
 export function remove<K, V>(
@@ -98,23 +64,93 @@ export function remove<K, V>(
     if (node === undefined) return undefined;
     const c = compare(k, node.key);
     if (c === 0) {
-      return glue(node.left, node.right);
+      return glueSizeBalanced(node.left, node.right);
     } else if (c < 0) {
       const newLeft = loop(node.left);
       if (newLeft === node.left) {
         return node;
       } else {
-        return balanceR(node.key, node.val, newLeft, node.right);
+        return combineAfterRightIncrease(node.key, node.val, newLeft, node.right);
       }
     } else {
       const newRight = loop(node.right);
       if (newRight === node.right) {
         return node;
       } else {
-        return balanceR(node.key, node.val, node.left, newRight);
+        return combineAfterRightIncrease(node.key, node.val, node.left, newRight);
       }
     }
   }
 
   return loop(root);
+}
+
+export function* iterateAsc<K, V, T>(root: TreeNode<K, V> | undefined, f: (k: K, v: V) => T): IterableIterator<T> {
+  const nodes: Array<TreeNode<K, V>> = [];
+  let node: TreeNode<K, V> | undefined = root;
+  while (node !== undefined || nodes.length > 0) {
+    if (node !== undefined) {
+      nodes.push(node);
+      node = node.left;
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      node = nodes.pop()!;
+      yield f(node.key, node.val);
+      node = node.right;
+    }
+  }
+}
+
+export function* iterateDesc<K, V, T>(root: TreeNode<K, V> | undefined, f: (k: K, v: V) => T): IterableIterator<T> {
+  const nodes: Array<TreeNode<K, V>> = [];
+  let node: TreeNode<K, V> | undefined = root;
+  while (node !== undefined || nodes.length > 0) {
+    if (node !== undefined) {
+      nodes.push(node);
+      node = node.right;
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      node = nodes.pop()!;
+      yield f(node.key, node.val);
+      node = node.left;
+    }
+  }
+}
+
+export function foldl<K, V, T>(f: (acc: T, k: K, v: V) => T, zero: T, root: TreeNode<K, V> | undefined): T {
+  const nodes: Array<TreeNode<K, V>> = [];
+  let node: TreeNode<K, V> | undefined = root;
+  let acc = zero;
+  while (node !== undefined || nodes.length > 0) {
+    if (node !== undefined) {
+      nodes.push(node);
+      node = node.left;
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      node = nodes.pop()!;
+      acc = f(acc, node.key, node.val);
+      node = node.right;
+    }
+  }
+
+  return acc;
+}
+
+export function foldr<K, V, T>(f: (k: K, v: V, acc: T) => T, zero: T, root: TreeNode<K, V> | undefined): T {
+  const nodes: Array<TreeNode<K, V>> = [];
+  let node: TreeNode<K, V> | undefined = root;
+  let acc = zero;
+  while (node !== undefined || nodes.length > 0) {
+    if (node !== undefined) {
+      nodes.push(node);
+      node = node.right;
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      node = nodes.pop()!;
+      acc = f(node.key, node.val, acc);
+      node = node.left;
+    }
+  }
+
+  return acc;
 }

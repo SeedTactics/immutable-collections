@@ -1,5 +1,25 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+/*
+This modules exports a variety of functions to combine two different trees into
+a single tree and maintain the balance invariant.
+
+All the functions assume that the individual trees being combined are balanced already;
+the functions differ on the assumption of the relative sizes of the left vs right.
+
+First, if you want to combine a left tree, a (key, val), and a right tree, use one of the following:
+
+- combineAfterLeftIncrease: use if the left tree has only grown and/or the right tree has only gotten smaller.
+- combineAfterRightIncrease: use if the right tree has only grown and/or the left tree has only gotten smaller.
+- combineAfterInsertOrRemove: use if the sizes of the left or right subtrees has changed by at most 1.
+- combineDifferentSizes: use if the sizes of the left and right subtrees differ by any amount.
+
+Alternatively, if you just want to combine a left and right tree into a single tree, use one of the following:
+
+- glueSizeBalanced: use if the size of the left and right are known to be balanced.
+- glueDifferentSizes: use if the size of the left and right differ by any amount.
+*/
+
 export interface TreeNode<K, V> {
   readonly size: number;
   readonly key: K;
@@ -212,8 +232,58 @@ function rotateRight<K, V>(k: K, v: V, left: TreeNode<K, V>, right: TreeNode<K, 
   };
 }
 
-// call when either left or right has changed size
-export function balance<K, V>(
+// call ths when the left subtree might have been inserted to or the right subtree might have been deleted from
+export function combineAfterLeftIncrease<K, V>(
+  k: K,
+  v: V,
+  left: TreeNode<K, V> | undefined,
+  right: TreeNode<K, V> | undefined
+) {
+  if (right === undefined) {
+    if (left === undefined) {
+      return { key: k, val: v, size: 1 };
+    }
+    return balanceRightUndefined(k, v, left);
+  }
+
+  if (left === undefined) {
+    return { size: 1 + right.size, key: k, val: v, right };
+  }
+
+  if (left.size > delta * right.size) {
+    rotateRight(k, v, left, right);
+  }
+
+  return { key: k, val: v, size: 1 + left.size + right.size, left, right };
+}
+
+// call this when the right subtree might have been inserted to or the left subtree might have been deleted from
+export function combineAfterRightIncrease<K, V>(
+  k: K,
+  v: V,
+  left: TreeNode<K, V> | undefined,
+  right: TreeNode<K, V> | undefined
+) {
+  if (left === undefined) {
+    if (right === undefined) {
+      return { key: k, val: v, size: 1 };
+    }
+    return balanceLeftUndefined(k, v, right);
+  }
+
+  if (right === undefined) {
+    return { size: 1 + left.size, key: k, val: v, left };
+  }
+
+  if (right.size > delta * left.size) {
+    rotateLeft(k, v, left, right);
+  }
+
+  return { key: k, val: v, size: 1 + left.size + right.size, left, right };
+}
+
+// call when either left or right has changed size by at most one
+export function combineAfterInsertOrRemove<K, V>(
   k: K,
   v: V,
   left: TreeNode<K, V> | undefined,
@@ -239,44 +309,89 @@ export function balance<K, V>(
   return { key: k, val: v, size: 1 + left.size + right.size, left, right };
 }
 
-// call ths when the left subtree might have been inserted to or the right subtree might have been deleted from
-export function balanceL<K, V>(k: K, v: V, left: TreeNode<K, V> | undefined, right: TreeNode<K, V> | undefined) {
-  if (right === undefined) {
-    if (left === undefined) {
-      return { key: k, val: v, size: 1 };
-    }
-    return balanceRightUndefined(k, v, left);
-  }
+function insertMin<K, V>(k: K, v: V, root: TreeNode<K, V> | undefined): TreeNode<K, V> {
+  if (root === undefined) return { key: k, val: v, size: 1 };
+  const newLeft = insertMin(k, v, root.left);
+  return combineAfterLeftIncrease(k, v, newLeft, root.right);
+}
 
-  if (left === undefined) {
-    return { size: 1 + right.size, key: k, val: v, right };
-  }
+function insertMax<K, V>(k: K, v: V, root: TreeNode<K, V> | undefined): TreeNode<K, V> {
+  if (root === undefined) return { key: k, val: v, size: 1 };
+  const newRight = insertMax(k, v, root.right);
+  return combineAfterRightIncrease(k, v, root.left, newRight);
+}
 
+// Combines two trees into one and restores balance, no matter the size difference between left and right
+// Assumes each of left and right are individually balanced
+export function combineDifferentSizes<K, V>(
+  k: K,
+  v: V,
+  left: TreeNode<K, V> | undefined,
+  right: TreeNode<K, V> | undefined
+): TreeNode<K, V> {
+  if (left === undefined) return insertMin(k, v, right);
+  if (right === undefined) return insertMax(k, v, left);
+  if (right.size > delta * left.size) {
+    return combineAfterLeftIncrease(right.key, right.val, combineDifferentSizes(k, v, left, right.left), right.right);
+  }
   if (left.size > delta * right.size) {
-    rotateRight(k, v, left, right);
+    return combineAfterRightIncrease(left.key, left.val, left.left, combineDifferentSizes(k, v, left.right, right));
   }
-
   return { key: k, val: v, size: 1 + left.size + right.size, left, right };
 }
 
-// call ths when the right subtree might have been inserted to or the left subtree might have been deleted from
-export function balanceR<K, V>(k: K, v: V, left: TreeNode<K, V> | undefined, right: TreeNode<K, V> | undefined) {
+function removeMin<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, V> | undefined } {
+  const left = node.left;
   if (left === undefined) {
-    if (right === undefined) {
-      return { key: k, val: v, size: 1 };
-    }
-    return balanceLeftUndefined(k, v, right);
+    return { k: node.key, v: node.val, rest: node.right };
+  } else {
+    const ret = removeMin(left);
+    ret.rest = combineAfterRightIncrease(node.key, node.val, ret.rest, node.right);
+    return ret;
   }
+}
 
+function removeMax<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, V> | undefined } {
+  const right = node.right;
   if (right === undefined) {
-    return { size: 1 + left.size, key: k, val: v, left };
+    return { k: node.key, v: node.val, rest: node.left };
+  } else {
+    const ret = removeMax(right);
+    ret.rest = combineAfterLeftIncrease(node.key, node.val, node.left, ret.rest);
+    return ret;
   }
+}
 
+// combines two trees that are individually balanced and also the size is balanced between left and right
+export function glueSizeBalanced<K, V>(
+  left: TreeNode<K, V> | undefined,
+  right: TreeNode<K, V> | undefined
+): TreeNode<K, V> | undefined {
+  if (left === undefined) return right;
+  if (right === undefined) return left;
+  if (left.size > right.size) {
+    const { k, v, rest } = removeMax(left);
+    return combineAfterRightIncrease(k, v, rest, right);
+  } else {
+    const { k, v, rest } = removeMin(right);
+    return combineAfterLeftIncrease(k, v, left, rest);
+  }
+}
+
+// combines two trees that are individually balanced but the size of left compared to right might be unbalanced
+export function glueDifferentSizes<K, V>(
+  left: TreeNode<K, V> | undefined,
+  right: TreeNode<K, V> | undefined
+): TreeNode<K, V> | undefined {
+  if (left === undefined) return right;
+  if (right === undefined) return left;
   if (right.size > delta * left.size) {
-    rotateLeft(k, v, left, right);
+    return combineAfterLeftIncrease(right.key, right.val, glueDifferentSizes(left, right.left), right.right);
   }
-
-  return { key: k, val: v, size: 1 + left.size + right.size, left, right };
+  if (left.size > delta * right.size) {
+    return combineAfterRightIncrease(left.key, left.val, left.left, glueDifferentSizes(left.right, right));
+  }
+  return glueSizeBalanced(left, right);
 }
 
 /*
