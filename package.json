@@ -26,6 +26,7 @@
     "chai": "^4.3.6",
     "eslint": "^8.13.0",
     "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-escompat": "^3.1.0",
     "mocha": "^10.0.0",
     "prettier": "^2.6.2",
     "ts-node": "^10.7.0",
