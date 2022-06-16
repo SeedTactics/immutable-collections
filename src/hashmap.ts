@@ -109,8 +109,22 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     }
   }
 
-  union(other: HashMap<K, V>, merge?: (vThis: V, vOther: V) => V): HashMap<K, V> {
-    return HashMap.union(merge ?? ((_, s) => s), this, other);
+  union(other: HashMap<K, V>, merge?: (vThis: V, vOther: V, k: K) => V): HashMap<K, V> {
+    const [newRoot, size] = union(this.cfg, merge ?? ((_, s) => s), this.root, other.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new HashMap(this.cfg, newRoot, size);
+    }
+  }
+
+  intersection(other: HashMap<K, V>, merge?: (vThis: V, vOther: V, k: K) => V): HashMap<K, V> {
+    const [newRoot, size] = intersection(this.cfg, merge ?? ((_, s) => s), this.root, other.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new HashMap(this.cfg, newRoot, size);
+    }
   }
 
   append(items: Iterable<readonly [K, V]>): HashMap<K, V> {
@@ -225,7 +239,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   }
 
   public static union<K extends HashKey, V>(
-    merge: (v1: V, v2: V) => V,
+    merge: (v1: V, v2: V, k: K) => V,
     ...maps: readonly HashMap<K, V>[]
   ): HashMap<K, V> {
     const nonEmpty = maps.filter((m) => m.size > 0);
@@ -249,7 +263,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   }
 
   public static intersection<K extends HashKey, V>(
-    merge: (v1: V, v2: V) => V,
+    merge: (v1: V, v2: V, k: K) => V,
     ...maps: readonly HashMap<K, V>[]
   ): HashMap<K, V> {
     if (maps.length === 0) {

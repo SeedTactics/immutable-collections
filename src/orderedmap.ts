@@ -170,7 +170,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     return { below: new OrderedMap(this.cfg, s.below), val: s.val, above: new OrderedMap(this.cfg, s.above) };
   }
 
-  union(other: OrderedMap<K, V>, merge?: (vThis: V, vOther: V) => V): OrderedMap<K, V> {
+  union(other: OrderedMap<K, V>, merge?: (vThis: V, vOther: V, k: K) => V): OrderedMap<K, V> {
     const newRoot = union(this.cfg, merge ?? ((_, s) => s), this.root, other.root);
     if (newRoot === this.root) {
       return this;
@@ -179,7 +179,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     }
   }
 
-  intersection(other: OrderedMap<K, V>, merge?: (vThis: V, vOther: V) => V): OrderedMap<K, V> {
+  intersection(other: OrderedMap<K, V>, merge?: (vThis: V, vOther: V, k: K) => V): OrderedMap<K, V> {
     const newRoot = intersection(this.cfg, merge ?? ((_, s) => s), this.root, other.root);
     if (newRoot === this.root) {
       return this;
@@ -230,7 +230,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
   }
 
   public static union<K extends OrderedMapKey, V>(
-    merge: (v1: V, v2: V) => V,
+    merge: (v1: V, v2: V, k: K) => V,
     ...maps: readonly OrderedMap<K, V>[]
   ): OrderedMap<K, V> {
     const nonEmpty = maps.filter((m) => m.size > 0);
@@ -251,7 +251,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
   }
 
   public static intersection<K extends OrderedMapKey, V>(
-    merge: (v1: V, v2: V) => V,
+    merge: (v1: V, v2: V, k: K) => V,
     ...maps: readonly OrderedMap<K, V>[]
   ): OrderedMap<K, V> {
     if (maps.length === 0) {
