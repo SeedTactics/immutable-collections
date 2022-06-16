@@ -408,8 +408,7 @@ export function glueDifferentSizes<K, V>(
   return glueSizeBalanced(left, right);
 }
 
-/*
-function mutateSingleL(node: MutableNode): MutableNode {
+function mutateSingleL<K, V>(node: MutableNode<K, V>): MutableNode<K, V> {
   // right will become the new root
   const right = node.right!;
   const oldRightSize = right.size;
@@ -424,7 +423,7 @@ function mutateSingleL(node: MutableNode): MutableNode {
   return right;
 }
 
-function mutateSingleR(node: MutableNode): MutableNode {
+function mutateSingleR<K, V>(node: MutableNode<K, V>): MutableNode<K, V> {
   // left will become the new root
   const left = node.left!;
   const oldLeftSize = left.size;
@@ -439,4 +438,40 @@ function mutateSingleR(node: MutableNode): MutableNode {
   return left;
 }
 
-*/
+export function mutateBalanceAfterLeftIncrease<K, V>(node: MutableNode<K, V>): MutableNode<K, V> {
+  const leftSize = node.left?.size ?? 0;
+  const rightSize = node.right?.size ?? 0;
+
+  if (leftSize > delta * rightSize) {
+    const llSize = node.left!.left?.size ?? 0;
+    const lrSize = node.left!.right?.size ?? 0;
+    if (lrSize < ratio * llSize) {
+      return mutateSingleR(node);
+    } else {
+      // double rotation
+      node.left = mutateSingleR(node.left!);
+      return mutateSingleR(node);
+    }
+  }
+
+  return node;
+}
+
+export function mutateBalanceAfterRightIncrease<K, V>(node: MutableNode<K, V>): MutableNode<K, V> {
+  const leftSize = node.left?.size ?? 0;
+  const rightSize = node.right?.size ?? 0;
+
+  if (rightSize > delta * leftSize) {
+    const rlSize = node.right!.left?.size ?? 0;
+    const rrSize = node.right!.right?.size ?? 0;
+    if (rlSize < ratio * rrSize) {
+      return mutateSingleL(node);
+    } else {
+      // double rotation
+      node.right = mutateSingleR(node.right!);
+      return mutateSingleL(node);
+    }
+  }
+
+  return node;
+}

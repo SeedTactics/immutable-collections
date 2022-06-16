@@ -2,9 +2,11 @@ import { LazySeq } from "./lazyseq.js";
 import { ComparisionConfig, mkComparisonConfig, OrderedMapKey } from "./comparison.js";
 import { TreeNode } from "./rotations.js";
 import {
+  build,
   collectValues,
   foldl,
   foldr,
+  from,
   insert,
   intersection,
   iterateAsc,
@@ -128,8 +130,6 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     }
   }
 
-  /* TODO: append */
-
   mapValues(f: (v: V, k: K) => V): OrderedMap<K, V> {
     const newRoot = mapValues(f, this.root);
     if (newRoot === this.root) {
@@ -176,7 +176,31 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     return new OrderedMap(mkComparisonConfig(), undefined);
   }
 
-  /* TODO: from, build */
+  public static from<K extends OrderedMapKey, V extends NotUndefined>(
+    items: Iterable<readonly [K, V]>,
+    merge?: (v1: V, v2: V) => V
+  ): OrderedMap<K, V> {
+    const cfg = mkComparisonConfig();
+    return new OrderedMap(cfg, from(cfg, items, merge));
+  }
+
+  public static build<K extends OrderedMapKey, V extends NotUndefined>(
+    items: Iterable<V>,
+    key: (v: V) => K
+  ): OrderedMap<K, V>;
+  public static build<T, K extends OrderedMapKey, V extends NotUndefined>(
+    items: Iterable<T>,
+    key: (v: T) => K,
+    val: (old: V | undefined, t: T) => V
+  ): OrderedMap<K, V>;
+  public static build<T, K extends OrderedMapKey, V extends NotUndefined>(
+    items: Iterable<T>,
+    key: (t: T) => K,
+    val?: (old: V | undefined, t: T) => V
+  ): OrderedMap<K, V> {
+    const cfg = mkComparisonConfig();
+    return new OrderedMap(cfg, build(cfg, items, key, val));
+  }
 
   public static union<K extends OrderedMapKey, V>(
     merge: (v1: V, v2: V) => V,

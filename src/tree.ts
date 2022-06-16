@@ -5,6 +5,9 @@ import {
   combineDifferentSizes,
   glueDifferentSizes,
   glueSizeBalanced,
+  MutableNode,
+  mutateBalanceAfterLeftIncrease,
+  mutateBalanceAfterRightIncrease,
   TreeNode,
 } from "./rotations.js";
 
@@ -60,6 +63,82 @@ export function insert<K, V>(
   }
 
   return loop(root);
+}
+
+export function from<K, V>(
+  { compare }: ComparisionConfig<K>,
+  items: Iterable<readonly [K, V]>,
+  merge?: (v1: V, v2: V) => V
+): TreeNode<K, V> | undefined {
+  let k: K;
+  let v: V;
+  let root = undefined;
+
+  function insertLoop(node: MutableNode<K, V> | undefined): MutableNode<K, V> {
+    if (node === undefined) return { key: k, val: v, size: 1, left: undefined, right: undefined };
+    const c = compare(k, node.key);
+    if (c < 0) {
+      node.left = insertLoop(node.left);
+      return mutateBalanceAfterLeftIncrease(node);
+    } else if (c > 0) {
+      node.right = insertLoop(node.right);
+      return mutateBalanceAfterRightIncrease(node);
+    } else if (v === node.val) {
+      return node;
+    } else {
+      return { key: k, val: merge ? merge(node.val, v) : v, size: node.size, left: node.left, right: node.right };
+    }
+  }
+
+  for ([k, v] of items) {
+    root = insertLoop(root);
+  }
+
+  return root;
+}
+
+export function build<T, K, V>(
+  { compare }: ComparisionConfig<K>,
+  items: Iterable<T>,
+  key: (t: T) => K,
+  val?: (old: V | undefined, t: T) => V
+): TreeNode<K, V> | undefined {
+  let k: K;
+  let t: T;
+  let root = undefined;
+
+  function insertLoop(node: MutableNode<K, V> | undefined): MutableNode<K, V> {
+    if (node === undefined)
+      return { key: k, val: val ? val(undefined, t) : (t as unknown as V), size: 1, left: undefined, right: undefined };
+    const c = compare(k, node.key);
+    if (c < 0) {
+      node.left = insertLoop(node.left);
+      return mutateBalanceAfterLeftIncrease(node);
+    } else if (c > 0) {
+      node.right = insertLoop(node.right);
+      return mutateBalanceAfterRightIncrease(node);
+    } else {
+      const newVal = val ? val(node.val, t) : (t as unknown as V);
+      if (newVal === node.val) {
+        return node;
+      } else {
+        return {
+          key: k,
+          val: newVal,
+          size: node.size,
+          left: node.left,
+          right: node.right,
+        };
+      }
+    }
+  }
+
+  for (t of items) {
+    k = key(t);
+    root = insertLoop(root);
+  }
+
+  return root;
 }
 
 export function remove<K, V>(
