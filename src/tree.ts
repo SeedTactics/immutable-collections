@@ -11,6 +11,13 @@ import {
   TreeNode,
 } from "./rotations.js";
 
+/*
+Implementation of a size-balanced binary tree.
+
+The algorithms here are copied pretty much directly from haskell's containers
+library: https://github.com/haskell/containers/blob/master/containers/src/Data/Map/Internal.hs
+*/
+
 export function lookup<K, V>({ compare }: ComparisionConfig<K>, k: K, root: TreeNode<K, V> | undefined): V | undefined {
   let node = root;
   while (node !== undefined) {

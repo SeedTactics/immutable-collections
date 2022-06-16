@@ -20,6 +20,11 @@ Alternatively, if you just want to combine a left and right tree into a single t
 - glueDifferentSizes: use if the size of the left and right differ by any amount.
 */
 
+/*
+The algorithms here are copied pretty much directly from haskell's containers
+library: https://github.com/haskell/containers/blob/master/containers/src/Data/Map/Internal.hs
+*/
+
 // For javascript optimization, ensure all nodes created share the same shape.
 // This means that each time a node is created, the properties must be initialized
 // in the same order: key, val, size, left, right.
@@ -40,7 +45,11 @@ export interface MutableNode<K, V> {
   right: MutableNode<K, V> | undefined;
 }
 
+// the rotations maintain that the size of the left and right
+// subtrees are within a delta multiple of each other.
 const delta = 3;
+
+// ratio is used to determine if a double or single rotation is used
 const ratio = 2;
 
 function balanceLeftUndefined<K, V>(k: K, v: V, right: TreeNode<K, V>): TreeNode<K, V> {
@@ -246,7 +255,7 @@ function rotateRight<K, V>(k: K, v: V, left: TreeNode<K, V>, right: TreeNode<K, 
   };
 }
 
-// call ths when the left subtree might have been inserted to or the right subtree might have been deleted from
+// call this when the left subtree might have been inserted to or the right subtree might have been deleted from
 export function combineAfterLeftIncrease<K, V>(
   left: TreeNode<K, V> | undefined,
   k: K,

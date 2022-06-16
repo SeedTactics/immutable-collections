@@ -22,6 +22,12 @@ The leaves are either a single leaf node with the key and the value or, if two
 keys hash to the same value, we store a collision array.
 */
 
+/* The algorithms and code here is greatly influenced by
+
+  - Haskell's unordered-collections: https://github.com/haskell-unordered-containers/unordered-containers/blob/master/Data/HashMap/Internal.hs
+  - hamt_plus: https://github.com/mattbierner/hamt_plus
+*/
+
 // A leaf with the hash, key, and value.
 export type LeafNode<K, V> = { readonly hash: number; readonly key: K; readonly val: V };
 export type MutableLeafNode<K, V> = { readonly hash: number; readonly key: K; val: V };
