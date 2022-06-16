@@ -366,3 +366,39 @@ export function intersection<K, V>(
 
   return loop(root1, root2);
 }
+
+export function difference<K, V>(
+  cfg: ComparisionConfig<K>,
+  f: (v1: V, v2: V, k: K) => V | undefined,
+  root1: TreeNode<K, V> | undefined,
+  root2: TreeNode<K, V> | undefined
+): TreeNode<K, V> | undefined {
+  function loop(n1: TreeNode<K, V> | undefined, n2: TreeNode<K, V> | undefined): TreeNode<K, V> | undefined {
+    if (!n1) return undefined;
+    if (!n2) return n1;
+
+    const s = split(cfg, n1.key, n2);
+    const newLeft = loop(n1.left, s.below);
+    const newRight = loop(n1.right, s.above);
+
+    if (s.val !== undefined) {
+      const newVal = f(n1.val, s.val, n1.key);
+      if (newVal === undefined) {
+        // remove node
+        return glueDifferentSizes(newLeft, newRight);
+      } else if (newVal === n1.val && newLeft === n1.left && newRight === n1.right) {
+        return n1;
+      } else {
+        return combineDifferentSizes(newLeft, n1.key, newVal, newRight);
+      }
+    } else {
+      if (newLeft === n1.left && newRight === n1.right) {
+        return n1;
+      } else {
+        return combineDifferentSizes(newLeft, n1.key, n1.val, newRight);
+      }
+    }
+  }
+
+  return loop(root1, root2);
+}

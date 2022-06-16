@@ -4,6 +4,7 @@ import { TreeNode } from "./rotations.js";
 import {
   build,
   collectValues,
+  difference,
   foldl,
   foldr,
   from,
@@ -129,6 +130,14 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     }
   }
 
+  // TODO: alter(k: K, f: (existing: V | undefined) => V | undefined): OrderedMap<K, V>
+
+  // TODO: partition(f: (v: V, k: K) => boolean): readonly [OrderedMap<K, V>, OrderedMap<K, V>]
+
+  // TODO: indexing access: findIndex, lookupIndex, elemAt, take, drop, splitAt, updateAt, deleteAt
+
+  // TODO: min/max values: lookupMin, lookupMax, deleteMin, deleteMax, updateMin, updateMax, minView, maxView
+
   mapValues(f: (v: V, k: K) => V): OrderedMap<K, V> {
     const newRoot = mapValues(f, this.root);
     if (newRoot === this.root) {
@@ -172,6 +181,15 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
 
   intersection(other: OrderedMap<K, V>, merge?: (vThis: V, vOther: V) => V): OrderedMap<K, V> {
     const newRoot = intersection(this.cfg, merge ?? ((_, s) => s), this.root, other.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedMap(this.cfg, newRoot);
+    }
+  }
+
+  difference(other: OrderedMap<K, V>, merge?: (vThis: V, vOther: V, k: K) => V | undefined): OrderedMap<K, V> {
+    const newRoot = difference(this.cfg, merge ?? (() => undefined), this.root, other.root);
     if (newRoot === this.root) {
       return this;
     } else {
