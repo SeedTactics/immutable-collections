@@ -47,14 +47,14 @@ export function insert<K, V>(
       if (newLeft === node.left) {
         return node;
       } else {
-        return combineAfterLeftIncrease(node.key, node.val, newLeft, node.right);
+        return combineAfterLeftIncrease(newLeft, node.key, node.val, node.right);
       }
     } else {
       const newRight = loop(node.right);
       if (newRight === node.right) {
         return node;
       } else {
-        return combineAfterRightIncrease(node.key, node.val, node.left, newRight);
+        return combineAfterRightIncrease(node.left, node.key, node.val, newRight);
       }
     }
   }
@@ -77,14 +77,14 @@ export function remove<K, V>(
       if (newLeft === node.left) {
         return node;
       } else {
-        return combineAfterRightIncrease(node.key, node.val, newLeft, node.right);
+        return combineAfterRightIncrease(newLeft, node.key, node.val, node.right);
       }
     } else {
       const newRight = loop(node.right);
       if (newRight === node.right) {
         return node;
       } else {
-        return combineAfterRightIncrease(node.key, node.val, node.left, newRight);
+        return combineAfterRightIncrease(node.left, node.key, node.val, newRight);
       }
     }
   }
@@ -193,7 +193,7 @@ export function collectValues<K, V>(
     } else if (newVal === n.val && newLeft === n.left && newRight === n.right) {
       return n;
     } else {
-      return combineDifferentSizes(n.key, newVal, newLeft, newRight);
+      return combineDifferentSizes(newLeft, n.key, newVal, newRight);
     }
   }
 
@@ -216,11 +216,11 @@ export function split<K, V>(
     const c = compare(k, n.key);
     if (c < 0) {
       const splitLeft = loop(n.left);
-      const above = combineDifferentSizes(n.key, n.val, splitLeft.above, n.right);
+      const above = combineDifferentSizes(splitLeft.above, n.key, n.val, n.right);
       return { below: splitLeft.below, entry: splitLeft.entry, above };
     } else if (c > 0) {
       const splitRight = loop(n.right);
-      const below = combineDifferentSizes(n.key, n.val, n.left, splitRight.below);
+      const below = combineDifferentSizes(n.left, n.key, n.val, splitRight.below);
       return { below, entry: splitRight.entry, above: splitRight.above };
     } else {
       return { below: n.left, entry: { key: n.key, val: n.val }, above: n.right };
@@ -252,9 +252,9 @@ export function union<K, V>(
     if (newLeft === n1.left && newRight === n1.right && (s.entry === undefined || s.entry.val === n1.val)) {
       return n1;
     } else if (s.entry) {
-      return combineDifferentSizes(n1.key, f(n1.val, s.entry.val, n1.key), newLeft, newRight);
+      return combineDifferentSizes(newLeft, n1.key, f(n1.val, s.entry.val, n1.key), newRight);
     } else {
-      return combineDifferentSizes(n1.key, n1.val, newLeft, newRight);
+      return combineDifferentSizes(newLeft, n1.key, n1.val, newRight);
     }
   }
 

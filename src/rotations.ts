@@ -32,10 +32,12 @@ export interface TreeNode<K, V> {
   readonly right: TreeNode<K, V> | undefined;
 }
 
-export interface MutableNode {
+export interface MutableNode<K, V> {
+  key: K;
+  val: V;
   size: number;
-  left?: MutableNode;
-  right?: MutableNode;
+  left: MutableNode<K, V> | undefined;
+  right: MutableNode<K, V> | undefined;
 }
 
 const delta = 3;
@@ -246,9 +248,9 @@ function rotateRight<K, V>(k: K, v: V, left: TreeNode<K, V>, right: TreeNode<K, 
 
 // call ths when the left subtree might have been inserted to or the right subtree might have been deleted from
 export function combineAfterLeftIncrease<K, V>(
+  left: TreeNode<K, V> | undefined,
   k: K,
   v: V,
-  left: TreeNode<K, V> | undefined,
   right: TreeNode<K, V> | undefined
 ): TreeNode<K, V> {
   if (right === undefined) {
@@ -271,9 +273,9 @@ export function combineAfterLeftIncrease<K, V>(
 
 // call this when the right subtree might have been inserted to or the left subtree might have been deleted from
 export function combineAfterRightIncrease<K, V>(
+  left: TreeNode<K, V> | undefined,
   k: K,
   v: V,
-  left: TreeNode<K, V> | undefined,
   right: TreeNode<K, V> | undefined
 ): TreeNode<K, V> {
   if (left === undefined) {
@@ -296,9 +298,9 @@ export function combineAfterRightIncrease<K, V>(
 
 // call when either left or right has changed size by at most one
 export function combineAfterInsertOrRemove<K, V>(
+  left: TreeNode<K, V> | undefined,
   k: K,
   v: V,
-  left: TreeNode<K, V> | undefined,
   right: TreeNode<K, V> | undefined
 ): TreeNode<K, V> {
   if (left === undefined) {
@@ -324,30 +326,30 @@ export function combineAfterInsertOrRemove<K, V>(
 function insertMin<K, V>(k: K, v: V, root: TreeNode<K, V> | undefined): TreeNode<K, V> {
   if (root === undefined) return { key: k, val: v, size: 1, left: undefined, right: undefined };
   const newLeft = insertMin(k, v, root.left);
-  return combineAfterLeftIncrease(k, v, newLeft, root.right);
+  return combineAfterLeftIncrease(newLeft, k, v, root.right);
 }
 
 function insertMax<K, V>(k: K, v: V, root: TreeNode<K, V> | undefined): TreeNode<K, V> {
   if (root === undefined) return { key: k, val: v, size: 1, left: undefined, right: undefined };
   const newRight = insertMax(k, v, root.right);
-  return combineAfterRightIncrease(k, v, root.left, newRight);
+  return combineAfterRightIncrease(root.left, k, v, newRight);
 }
 
 // Combines two trees into one and restores balance, no matter the size difference between left and right
 // Assumes each of left and right are individually balanced
 export function combineDifferentSizes<K, V>(
+  left: TreeNode<K, V> | undefined,
   k: K,
   v: V,
-  left: TreeNode<K, V> | undefined,
   right: TreeNode<K, V> | undefined
 ): TreeNode<K, V> {
   if (left === undefined) return insertMin(k, v, right);
   if (right === undefined) return insertMax(k, v, left);
   if (right.size > delta * left.size) {
-    return combineAfterLeftIncrease(right.key, right.val, combineDifferentSizes(k, v, left, right.left), right.right);
+    return combineAfterLeftIncrease(combineDifferentSizes(left, k, v, right.left), right.key, right.val, right.right);
   }
   if (left.size > delta * right.size) {
-    return combineAfterRightIncrease(left.key, left.val, left.left, combineDifferentSizes(k, v, left.right, right));
+    return combineAfterRightIncrease(left.left, left.key, left.val, combineDifferentSizes(left.right, k, v, right));
   }
   return { key: k, val: v, size: 1 + left.size + right.size, left, right };
 }
@@ -358,7 +360,7 @@ function removeMin<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, 
     return { k: node.key, v: node.val, rest: node.right };
   } else {
     const ret = removeMin(left);
-    ret.rest = combineAfterRightIncrease(node.key, node.val, ret.rest, node.right);
+    ret.rest = combineAfterRightIncrease(ret.rest, node.key, node.val, node.right);
     return ret;
   }
 }
@@ -369,7 +371,7 @@ function removeMax<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, 
     return { k: node.key, v: node.val, rest: node.left };
   } else {
     const ret = removeMax(right);
-    ret.rest = combineAfterLeftIncrease(node.key, node.val, node.left, ret.rest);
+    ret.rest = combineAfterLeftIncrease(node.left, node.key, node.val, ret.rest);
     return ret;
   }
 }
@@ -383,10 +385,10 @@ export function glueSizeBalanced<K, V>(
   if (right === undefined) return left;
   if (left.size > right.size) {
     const { k, v, rest } = removeMax(left);
-    return combineAfterRightIncrease(k, v, rest, right);
+    return combineAfterRightIncrease(rest, k, v, right);
   } else {
     const { k, v, rest } = removeMin(right);
-    return combineAfterLeftIncrease(k, v, left, rest);
+    return combineAfterLeftIncrease(left, k, v, rest);
   }
 }
 
@@ -398,10 +400,10 @@ export function glueDifferentSizes<K, V>(
   if (left === undefined) return right;
   if (right === undefined) return left;
   if (right.size > delta * left.size) {
-    return combineAfterLeftIncrease(right.key, right.val, glueDifferentSizes(left, right.left), right.right);
+    return combineAfterLeftIncrease(glueDifferentSizes(left, right.left), right.key, right.val, right.right);
   }
   if (left.size > delta * right.size) {
-    return combineAfterRightIncrease(left.key, left.val, left.left, glueDifferentSizes(left.right, right));
+    return combineAfterRightIncrease(left.left, left.key, left.val, glueDifferentSizes(left.right, right));
   }
   return glueSizeBalanced(left, right);
 }
