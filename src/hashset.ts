@@ -13,6 +13,7 @@ import {
   remove,
   union,
 } from "./hamt.js";
+import type { HashMap } from "./hashmap.js";
 
 function constTrue() {
   return true;
@@ -93,17 +94,39 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
   }
 
   append(items: Iterable<T>) {
-    return HashSet.union(this, HashSet.from(items));
+    return this.union(HashSet.from(items));
   }
 
   union(other: HashSet<T>): HashSet<T> {
-    return HashSet.union(this, other);
+    const [newRoot, intersectionSize] = union(this.cfg, constTrue, this.root, other.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new HashSet(this.cfg, newRoot, this.size + other.size - intersectionSize);
+    }
   }
+
+  intersection(other: HashSet<T>): HashSet<T> {
+    const [newRoot, intersectionSize] = intersection(this.cfg, constTrue, this.root, other.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new HashSet(this.cfg, newRoot, intersectionSize);
+    }
+  }
+
+  // TODO: difference
 
   // Creating new sets
 
   public static empty<T extends HashKey>(): HashSet<T> {
     return new HashSet(mkHashConfig(), null, 0);
+  }
+
+  public static ofKeys<K extends HashKey, V>(map: HashMap<K, V>) {
+    // access private properties of HashMap
+    const prvMap = map as unknown as { cfg: HashConfig<K>; root: HamtNode<K, V> | null; size: number };
+    return new HashSet(prvMap.cfg, prvMap.root, prvMap.size);
   }
 
   public static from<T extends HashKey>(items: Iterable<T>): HashSet<T> {

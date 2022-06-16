@@ -14,6 +14,7 @@ import {
 } from "./hamt.js";
 import { HashConfig, HashKey, mkHashConfig } from "./hashing.js";
 import { LazySeq } from "./lazyseq.js";
+import { HashSet } from "./hashset.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 type NotUndefined = {} | null;
@@ -85,6 +86,10 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     return LazySeq.ofIterable(this.values());
   }
 
+  keySet(): HashSet<K> {
+    return HashSet.ofKeys(this);
+  }
+
   // Methods modifying the map
 
   set(k: K, v: V): HashMap<K, V> {
@@ -114,11 +119,11 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   // TODO: partition(f: (v: V, k: K) => boolean): readonly [OrderedMap<K, V>, OrderedMap<K, V>]
 
   union(other: HashMap<K, V>, merge?: (vThis: V, vOther: V, k: K) => V): HashMap<K, V> {
-    const [newRoot, size] = union(this.cfg, merge ?? ((_, s) => s), this.root, other.root);
+    const [newRoot, intersectionSize] = union(this.cfg, merge ?? ((_, s) => s), this.root, other.root);
     if (newRoot === this.root) {
       return this;
     } else {
-      return new HashMap(this.cfg, newRoot, size);
+      return new HashMap(this.cfg, newRoot, this.size + other.size - intersectionSize);
     }
   }
 
