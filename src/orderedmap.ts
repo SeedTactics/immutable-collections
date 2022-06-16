@@ -6,6 +6,7 @@ import {
   foldl,
   foldr,
   insert,
+  intersection,
   iterateAsc,
   iterateDesc,
   lookup,
@@ -175,7 +176,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     return new OrderedMap(mkComparisonConfig(), undefined);
   }
 
-  /* TODO: from, build, intersection */
+  /* TODO: from, build */
 
   public static union<K extends OrderedMapKey, V>(
     merge: (v1: V, v2: V) => V,
@@ -194,6 +195,26 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
         return nonEmpty[0];
       } else {
         return new OrderedMap(nonEmpty[0].cfg, root);
+      }
+    }
+  }
+
+  public static intersection<K extends OrderedMapKey, V>(
+    merge: (v1: V, v2: V) => V,
+    ...maps: readonly OrderedMap<K, V>[]
+  ): OrderedMap<K, V> {
+    if (maps.length === 0) {
+      return OrderedMap.empty();
+    } else {
+      let root = maps[0].root;
+      for (let i = 1; i < maps.length; i++) {
+        const m = maps[i];
+        root = intersection(m.cfg, merge, root, m.root);
+      }
+      if (root === maps[0].root) {
+        return maps[0];
+      } else {
+        return new OrderedMap(maps[0].cfg, root);
       }
     }
   }

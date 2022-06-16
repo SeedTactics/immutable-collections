@@ -202,7 +202,7 @@ export function collectValues<K, V>(
 
 export interface SplitResult<K, V> {
   readonly below: TreeNode<K, V> | undefined;
-  readonly entry: { readonly key: K; readonly val: V } | undefined;
+  readonly val: V | undefined;
   readonly above: TreeNode<K, V> | undefined;
 }
 
@@ -212,18 +212,18 @@ export function split<K, V>(
   root: TreeNode<K, V> | undefined
 ): SplitResult<K, V> {
   function loop(n: TreeNode<K, V> | undefined): SplitResult<K, V> {
-    if (!n) return { below: undefined, entry: undefined, above: undefined };
+    if (!n) return { below: undefined, val: undefined, above: undefined };
     const c = compare(k, n.key);
     if (c < 0) {
       const splitLeft = loop(n.left);
       const above = combineDifferentSizes(splitLeft.above, n.key, n.val, n.right);
-      return { below: splitLeft.below, entry: splitLeft.entry, above };
+      return { below: splitLeft.below, val: splitLeft.val, above };
     } else if (c > 0) {
       const splitRight = loop(n.right);
       const below = combineDifferentSizes(n.left, n.key, n.val, splitRight.below);
-      return { below, entry: splitRight.entry, above: splitRight.above };
+      return { below, val: splitRight.val, above: splitRight.above };
     } else {
-      return { below: n.left, entry: { key: n.key, val: n.val }, above: n.right };
+      return { below: n.left, val: n.val, above: n.right };
     }
   }
 
@@ -249,12 +249,39 @@ export function union<K, V>(
     const s = split(cfg, n1.key, n2);
     const newLeft = loop(n1.left, s.below);
     const newRight = loop(n1.right, s.above);
-    if (newLeft === n1.left && newRight === n1.right && (s.entry === undefined || s.entry.val === n1.val)) {
+    if (newLeft === n1.left && newRight === n1.right && (s.val === undefined || s.val === n1.val)) {
       return n1;
-    } else if (s.entry) {
-      return combineDifferentSizes(newLeft, n1.key, f(n1.val, s.entry.val, n1.key), newRight);
+    } else if (s.val !== undefined) {
+      return combineDifferentSizes(newLeft, n1.key, f(n1.val, s.val, n1.key), newRight);
     } else {
       return combineDifferentSizes(newLeft, n1.key, n1.val, newRight);
+    }
+  }
+
+  return loop(root1, root2);
+}
+
+export function intersection<K, V>(
+  cfg: ComparisionConfig<K>,
+  f: (v1: V, v2: V, k: K) => V,
+  root1: TreeNode<K, V> | undefined,
+  root2: TreeNode<K, V> | undefined
+): TreeNode<K, V> | undefined {
+  function loop(n1: TreeNode<K, V> | undefined, n2: TreeNode<K, V> | undefined): TreeNode<K, V> | undefined {
+    if (!n1) return undefined;
+    if (!n2) return undefined;
+
+    const s = split(cfg, n1.key, n2);
+    const newLeft = loop(n1.left, s.below);
+    const newRight = loop(n1.right, s.above);
+    if (s.val !== undefined) {
+      if (newLeft === n1.left && newRight === n1.right && s.val === n1.val) {
+        return n1;
+      } else {
+        return combineDifferentSizes(newLeft, n1.key, f(n1.val, s.val, n1.key), newRight);
+      }
+    } else {
+      return glueDifferentSizes(newLeft, newRight);
     }
   }
 
