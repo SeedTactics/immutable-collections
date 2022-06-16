@@ -33,14 +33,14 @@ export function insert<K, V>(
   root: TreeNode<K, V> | undefined
 ): TreeNode<K, V> {
   function loop(node: TreeNode<K, V> | undefined): TreeNode<K, V> {
-    if (node === undefined) return { key: k, val: getVal(undefined), size: 1 };
+    if (node === undefined) return { key: k, val: getVal(undefined), size: 1, left: undefined, right: undefined };
     const c = compare(k, node.key);
     if (c === 0) {
       const newVal = getVal(node.val);
       if (newVal === node.val) {
         return node;
       } else {
-        return { ...node, val: newVal };
+        return { key: k, val: newVal, size: node.size, left: node.left, right: node.right };
       }
     } else if (c < 0) {
       const newLeft = loop(node.left);
@@ -171,7 +171,7 @@ export function mapValues<K, V>(f: (v: V, k: K) => V, root: TreeNode<K, V> | und
     if (newVal === n.val && newLeft === n.left && newRight === n.right) {
       return n;
     } else {
-      return { key: n.key, val: newVal, left: newLeft, right: newRight, size: n.size };
+      return { key: n.key, val: newVal, size: n.size, left: newLeft, right: newRight };
     }
   }
 
