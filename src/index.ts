@@ -9,5 +9,6 @@ export {
 } from "./comparison.js";
 export { HashMap } from "./hashmap.js";
 export { HashSet } from "./hashset.js";
+export { SplitResult } from "./tree.js";
 export { OrderedMap } from "./orderedmap.js";
 export { LazySeq } from "./lazyseq.js";

@@ -1,7 +1,20 @@
 import { LazySeq } from "./lazyseq.js";
 import { ComparisionConfig, mkComparisonConfig, OrderedMapKey } from "./comparison.js";
 import { TreeNode } from "./rotations.js";
-import { foldl, foldr, insert, iterateAsc, iterateDesc, lookup, remove } from "./tree.js";
+import {
+  collectValues,
+  foldl,
+  foldr,
+  insert,
+  iterateAsc,
+  iterateDesc,
+  lookup,
+  mapValues,
+  remove,
+  split,
+  SplitResult,
+  union,
+} from "./tree.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 type NotUndefined = {} | null;
@@ -114,7 +127,47 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     }
   }
 
-  /* TODO: union, append, mapValues, collectValues, filter */
+  /* TODO: append */
+
+  mapValues(f: (v: V, k: K) => V): OrderedMap<K, V> {
+    const newRoot = mapValues(f, this.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedMap(this.cfg, newRoot);
+    }
+  }
+
+  collectValues(f: (v: V, k: K) => V | null | undefined): OrderedMap<K, V> {
+    const newRoot = collectValues(f as (v: V, k: K) => V | undefined, true, this.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedMap(this.cfg, newRoot);
+    }
+  }
+
+  filter(f: (v: V, k: K) => boolean): OrderedMap<K, V> {
+    const newRoot = collectValues((v, k) => (f(v, k) ? v : undefined), false, this.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedMap(this.cfg, newRoot);
+    }
+  }
+
+  split(k: K): SplitResult<K, V> {
+    return split(this.cfg, k, this.root);
+  }
+
+  union(other: OrderedMap<K, V>, merge?: (vThis: V, vOther: V) => V): OrderedMap<K, V> {
+    const newRoot = union(this.cfg, merge ?? ((_, s) => s), this.root, other.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedMap(this.cfg, newRoot);
+    }
+  }
 
   // Creating new maps
 
@@ -122,7 +175,28 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     return new OrderedMap(mkComparisonConfig(), undefined);
   }
 
-  /* TODO: from, build, union, intersection */
+  /* TODO: from, build, intersection */
+
+  public static union<K extends OrderedMapKey, V>(
+    merge: (v1: V, v2: V) => V,
+    ...maps: readonly OrderedMap<K, V>[]
+  ): OrderedMap<K, V> {
+    const nonEmpty = maps.filter((m) => m.size > 0);
+    if (nonEmpty.length === 0) {
+      return OrderedMap.empty<K, V>();
+    } else {
+      let root = nonEmpty[0].root;
+      for (let i = 1; i < nonEmpty.length; i++) {
+        const m = nonEmpty[i];
+        root = union(m.cfg, merge, root, m.root);
+      }
+      if (root === nonEmpty[0].root) {
+        return nonEmpty[0];
+      } else {
+        return new OrderedMap(nonEmpty[0].cfg, root);
+      }
+    }
+  }
 
   protected static ["@@__IMMUTABLE_KEYED__@@"]: true;
 }

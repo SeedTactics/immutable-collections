@@ -162,7 +162,7 @@ export function foldr<K, V, T>(f: (k: K, v: V, acc: T) => T, zero: T, root: Tree
   return acc;
 }
 
-export function mapValues<K, V>(f: (v: V, k: K) => V, root: TreeNode<K, V> | undefined) {
+export function mapValues<K, V>(f: (v: V, k: K) => V, root: TreeNode<K, V> | undefined): TreeNode<K, V> | undefined {
   function loop(n: TreeNode<K, V> | undefined): TreeNode<K, V> | undefined {
     if (!n) return undefined;
     const newLeft = loop(n.left);
@@ -175,7 +175,7 @@ export function mapValues<K, V>(f: (v: V, k: K) => V, root: TreeNode<K, V> | und
     }
   }
 
-  loop(root);
+  return loop(root);
 }
 
 export function collectValues<K, V>(
@@ -198,4 +198,65 @@ export function collectValues<K, V>(
   }
 
   return loop(root);
+}
+
+export interface SplitResult<K, V> {
+  readonly below: TreeNode<K, V> | undefined;
+  readonly entry: { readonly key: K; readonly val: V } | undefined;
+  readonly above: TreeNode<K, V> | undefined;
+}
+
+export function split<K, V>(
+  { compare }: ComparisionConfig<K>,
+  k: K,
+  root: TreeNode<K, V> | undefined
+): SplitResult<K, V> {
+  function loop(n: TreeNode<K, V> | undefined): SplitResult<K, V> {
+    if (!n) return { below: undefined, entry: undefined, above: undefined };
+    const c = compare(k, n.key);
+    if (c < 0) {
+      const splitLeft = loop(n.left);
+      const above = combineDifferentSizes(n.key, n.val, splitLeft.above, n.right);
+      return { below: splitLeft.below, entry: splitLeft.entry, above };
+    } else if (c > 0) {
+      const splitRight = loop(n.right);
+      const below = combineDifferentSizes(n.key, n.val, n.left, splitRight.below);
+      return { below, entry: splitRight.entry, above: splitRight.above };
+    } else {
+      return { below: n.left, entry: { key: n.key, val: n.val }, above: n.right };
+    }
+  }
+
+  return loop(root);
+}
+
+export function union<K, V>(
+  cfg: ComparisionConfig<K>,
+  f: (v1: V, v2: V, k: K) => V,
+  root1: TreeNode<K, V> | undefined,
+  root2: TreeNode<K, V> | undefined
+): TreeNode<K, V> | undefined {
+  function loop(n1: TreeNode<K, V> | undefined, n2: TreeNode<K, V> | undefined): TreeNode<K, V> | undefined {
+    if (!n1) return n2;
+    if (!n2) return n1;
+    if (!n1.left && !n1.right) {
+      return insert(cfg, n1.key, (oldVal) => (oldVal === undefined ? n1.val : f(n1.val, oldVal, n1.key)), n2);
+    }
+    if (!n2.left && !n2.right) {
+      return insert(cfg, n2.key, (oldVal) => (oldVal === undefined ? n2.val : f(oldVal, n2.val, n2.key)), n1);
+    }
+
+    const s = split(cfg, n1.key, n2);
+    const newLeft = loop(n1.left, s.below);
+    const newRight = loop(n1.right, s.above);
+    if (newLeft === n1.left && newRight === n1.right && (s.entry === undefined || s.entry.val === n1.val)) {
+      return n1;
+    } else if (s.entry) {
+      return combineDifferentSizes(n1.key, f(n1.val, s.entry.val, n1.key), newLeft, newRight);
+    } else {
+      return combineDifferentSizes(n1.key, n1.val, newLeft, newRight);
+    }
+  }
+
+  return loop(root1, root2);
 }
