@@ -1,5 +1,12 @@
 import { ComparisionConfig } from "./comparison.js";
-import { combineAfterLeftIncrease, combineAfterRightIncrease, glueSizeBalanced, TreeNode } from "./rotations.js";
+import {
+  combineAfterLeftIncrease,
+  combineAfterRightIncrease,
+  combineDifferentSizes,
+  glueDifferentSizes,
+  glueSizeBalanced,
+  TreeNode,
+} from "./rotations.js";
 
 export function lookup<K, V>({ compare }: ComparisionConfig<K>, k: K, root: TreeNode<K, V> | undefined): V | undefined {
   let node = root;
@@ -153,4 +160,42 @@ export function foldr<K, V, T>(f: (k: K, v: V, acc: T) => T, zero: T, root: Tree
   }
 
   return acc;
+}
+
+export function mapValues<K, V>(f: (v: V, k: K) => V, root: TreeNode<K, V> | undefined) {
+  function loop(n: TreeNode<K, V> | undefined): TreeNode<K, V> | undefined {
+    if (!n) return undefined;
+    const newLeft = loop(n.left);
+    const newVal = f(n.val, n.key);
+    const newRight = loop(n.right);
+    if (newVal === n.val && newLeft === n.left && newRight === n.right) {
+      return n;
+    } else {
+      return { key: n.key, val: newVal, left: newLeft, right: newRight, size: n.size };
+    }
+  }
+
+  loop(root);
+}
+
+export function collectValues<K, V>(
+  f: (v: V, k: K) => V | undefined,
+  filterNull: boolean,
+  root: TreeNode<K, V> | undefined
+): TreeNode<K, V> | undefined {
+  function loop(n: TreeNode<K, V> | undefined): TreeNode<K, V> | undefined {
+    if (!n) return undefined;
+    const newLeft = loop(n.left);
+    const newVal = f(n.val, n.key);
+    const newRight = loop(n.right);
+    if (newVal === undefined || (filterNull && newVal === null)) {
+      return glueDifferentSizes(newLeft, newRight);
+    } else if (newVal === n.val && newLeft === n.left && newRight === n.right) {
+      return n;
+    } else {
+      return combineDifferentSizes(n.key, newVal, newLeft, newRight);
+    }
+  }
+
+  return loop(root);
 }
