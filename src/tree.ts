@@ -367,13 +367,13 @@ export function intersection<K, V>(
   return loop(root1, root2);
 }
 
-export function difference<K, V>(
+export function difference<K, V1, V2>(
   cfg: ComparisionConfig<K>,
-  f: (v1: V, v2: V, k: K) => V | undefined,
-  root1: TreeNode<K, V> | undefined,
-  root2: TreeNode<K, V> | undefined
-): TreeNode<K, V> | undefined {
-  function loop(n1: TreeNode<K, V> | undefined, n2: TreeNode<K, V> | undefined): TreeNode<K, V> | undefined {
+  f: (v1: V1, v2: V2, k: K) => V1 | undefined,
+  root1: TreeNode<K, V1> | undefined,
+  root2: TreeNode<K, V2> | undefined
+): TreeNode<K, V1> | undefined {
+  function loop(n1: TreeNode<K, V1> | undefined, n2: TreeNode<K, V2> | undefined): TreeNode<K, V1> | undefined {
     if (!n1) return undefined;
     if (!n2) return n1;
 

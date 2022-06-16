@@ -188,7 +188,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     }
   }
 
-  difference(other: OrderedMap<K, V>, merge?: (vThis: V, vOther: V, k: K) => V | undefined): OrderedMap<K, V> {
+  difference<V2>(other: OrderedMap<K, V2>, merge?: (vThis: V, vOther: V2, k: K) => V | undefined): OrderedMap<K, V> {
     const newRoot = difference(this.cfg, merge ?? (() => undefined), this.root, other.root);
     if (newRoot === this.root) {
       return this;
@@ -196,6 +196,8 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
       return new OrderedMap(this.cfg, newRoot);
     }
   }
+
+  // TODO: withoutKeys(other: OrderedSet<K>): OrderedMap<K, V>  can just use difference once OrderedSet is defined
 
   // Creating new maps
 

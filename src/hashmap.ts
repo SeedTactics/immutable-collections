@@ -109,6 +109,10 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     }
   }
 
+  // TODO: alter(k: K, f: (existing: V | undefined) => V | undefined): OrderedMap<K, V>
+
+  // TODO: partition(f: (v: V, k: K) => boolean): readonly [OrderedMap<K, V>, OrderedMap<K, V>]
+
   union(other: HashMap<K, V>, merge?: (vThis: V, vOther: V, k: K) => V): HashMap<K, V> {
     const [newRoot, size] = union(this.cfg, merge ?? ((_, s) => s), this.root, other.root);
     if (newRoot === this.root) {
@@ -126,6 +130,8 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
       return new HashMap(this.cfg, newRoot, size);
     }
   }
+
+  // TODO: difference, withoutKeys
 
   append(items: Iterable<readonly [K, V]>): HashMap<K, V> {
     const snd: <T>(a: unknown, s: T) => T = (_, s) => s;
