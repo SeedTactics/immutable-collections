@@ -15,7 +15,6 @@ import {
   mapValues,
   remove,
   split,
-  SplitResult,
   union,
 } from "./tree.js";
 
@@ -157,12 +156,22 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     }
   }
 
-  split(k: K): SplitResult<K, V> {
-    return split(this.cfg, k, this.root);
+  split(k: K): { readonly below: OrderedMap<K, V>; readonly val: V | undefined; readonly above: OrderedMap<K, V> } {
+    const s = split(this.cfg, k, this.root);
+    return { below: new OrderedMap(this.cfg, s.below), val: s.val, above: new OrderedMap(this.cfg, s.above) };
   }
 
   union(other: OrderedMap<K, V>, merge?: (vThis: V, vOther: V) => V): OrderedMap<K, V> {
     const newRoot = union(this.cfg, merge ?? ((_, s) => s), this.root, other.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedMap(this.cfg, newRoot);
+    }
+  }
+
+  intersection(other: OrderedMap<K, V>, merge?: (vThis: V, vOther: V) => V): OrderedMap<K, V> {
+    const newRoot = intersection(this.cfg, merge ?? ((_, s) => s), this.root, other.root);
     if (newRoot === this.root) {
       return this;
     } else {
