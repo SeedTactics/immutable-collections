@@ -11,10 +11,7 @@ export function checkMapBalanceAndSize<K extends OrderedMapKey, V>(map: OrderedM
   }
 }
 
-export function checkBalanceAndSize<K extends OrderedMapKey, V>(
-  { compare }: ComparisionConfig<K>,
-  root: TreeNode<K, V>
-) {
+export function checkBalanceAndSize<K, V>({ compare }: ComparisionConfig<K>, root: TreeNode<K, V>) {
   function loop(node: TreeNode<K, V>, min: K | undefined, max: K | undefined) {
     if (min !== undefined) {
       expect(compare(node.key, min)).to.be.greaterThan(0);

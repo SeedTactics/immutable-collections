@@ -80,25 +80,37 @@ export function from<K, V>(
   let k: K;
   let v: V;
   let root = undefined;
+  let newLeaf = true;
 
   function insertLoop(node: MutableNode<K, V> | undefined): MutableNode<K, V> {
     if (node === undefined) return { key: k, val: v, size: 1, left: undefined, right: undefined };
     const c = compare(k, node.key);
     if (c < 0) {
       node.left = insertLoop(node.left);
+      if (newLeaf) node.size += 1;
       return mutateBalanceAfterLeftIncrease(node);
     } else if (c > 0) {
       node.right = insertLoop(node.right);
+      if (newLeaf) node.size += 1;
       return mutateBalanceAfterRightIncrease(node);
     } else if (v === node.val) {
+      newLeaf = false;
       return node;
     } else {
-      return { key: k, val: merge ? merge(node.val, v) : v, size: node.size, left: node.left, right: node.right };
+      newLeaf = false;
+      return {
+        key: node.key,
+        val: merge ? merge(node.val, v) : v,
+        size: node.size,
+        left: node.left,
+        right: node.right,
+      };
     }
   }
 
   for ([k, v] of items) {
     root = insertLoop(root);
+    newLeaf = true;
   }
 
   return root;
@@ -113,6 +125,7 @@ export function build<T, K, V>(
   let k: K;
   let t: T;
   let root = undefined;
+  let newLeaf = true;
 
   function insertLoop(node: MutableNode<K, V> | undefined): MutableNode<K, V> {
     if (node === undefined)
@@ -120,17 +133,20 @@ export function build<T, K, V>(
     const c = compare(k, node.key);
     if (c < 0) {
       node.left = insertLoop(node.left);
+      if (newLeaf) node.size += 1;
       return mutateBalanceAfterLeftIncrease(node);
     } else if (c > 0) {
       node.right = insertLoop(node.right);
+      if (newLeaf) node.size += 1;
       return mutateBalanceAfterRightIncrease(node);
     } else {
+      newLeaf = false;
       const newVal = val ? val(node.val, t) : (t as unknown as V);
       if (newVal === node.val) {
         return node;
       } else {
         return {
-          key: k,
+          key: node.key,
           val: newVal,
           size: node.size,
           left: node.left,
@@ -143,6 +159,7 @@ export function build<T, K, V>(
   for (t of items) {
     k = key(t);
     root = insertLoop(root);
+    newLeaf = true;
   }
 
   return root;

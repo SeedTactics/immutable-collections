@@ -423,7 +423,7 @@ function mutateSingleL<K, V>(node: MutableNode<K, V>): MutableNode<K, V> {
   const oldRightSize = right.size;
   right.size = node.size;
 
-  // node is the new left child of root
+  // node is the new left child of right (the new root)
   node.right = right.left;
   node.size = node.size - oldRightSize + (node.right?.size ?? 0);
 
@@ -451,14 +451,14 @@ export function mutateBalanceAfterLeftIncrease<K, V>(node: MutableNode<K, V>): M
   const leftSize = node.left?.size ?? 0;
   const rightSize = node.right?.size ?? 0;
 
-  if (leftSize > delta * rightSize) {
+  if (leftSize > delta * rightSize && leftSize + rightSize > 1) {
     const llSize = node.left!.left?.size ?? 0;
     const lrSize = node.left!.right?.size ?? 0;
     if (lrSize < ratio * llSize) {
       return mutateSingleR(node);
     } else {
       // double rotation
-      node.left = mutateSingleR(node.left!);
+      node.left = mutateSingleL(node.left!);
       return mutateSingleR(node);
     }
   }
@@ -470,7 +470,7 @@ export function mutateBalanceAfterRightIncrease<K, V>(node: MutableNode<K, V>): 
   const leftSize = node.left?.size ?? 0;
   const rightSize = node.right?.size ?? 0;
 
-  if (rightSize > delta * leftSize) {
+  if (rightSize > delta * leftSize && leftSize + rightSize > 1) {
     const rlSize = node.right!.left?.size ?? 0;
     const rrSize = node.right!.right?.size ?? 0;
     if (rlSize < ratio * rrSize) {
