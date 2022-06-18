@@ -658,7 +658,7 @@ export function* iterate<K, V, R>(root: HamtNode<K, V> | null, f: (k: K, v: V) =
   }
 }
 
-export function fold<K, V, T>(root: HamtNode<K, V> | null, f: (acc: T, val: V, key: K) => T, zero: T): T {
+export function fold<K, V, T>(root: HamtNode<K, V> | null, f: (acc: T, key: K, val: V) => T, zero: T): T {
   let acc = zero;
   if (root === null) return acc;
 
@@ -671,11 +671,11 @@ export function fold<K, V, T>(root: HamtNode<K, V> | null, f: (acc: T, val: V, k
         stack.push(arr[i]);
       }
     } else if ("key" in node) {
-      acc = f(acc, node.val, node.key);
+      acc = f(acc, node.key, node.val);
     } else {
       for (let i = 0, len = node.collision.length; i < len; i++) {
         const x = node.collision[i];
-        acc = f(acc, x.val, x.key);
+        acc = f(acc, x.key, x.val);
       }
     }
   }

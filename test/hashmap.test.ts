@@ -84,7 +84,7 @@ function expectEqual<K extends HashKey, V>(imMap: HashMap<K, V>, jsMap: Map<stri
   expect(sortEntries(forEachEntries)).to.deep.equal(entries);
 
   const foldEntries = new Array<[K, V]>();
-  const foldCnt = imMap.fold((cnt, v, k) => {
+  const foldCnt = imMap.fold((cnt, k, v) => {
     foldEntries.push([k, v]);
     return cnt + 1;
   }, 0);

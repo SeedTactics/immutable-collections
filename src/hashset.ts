@@ -57,7 +57,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
   forEach(f: (val: T, val2: T, set: HashSet<T>) => void): void {
     fold(
       this.root,
-      (_acc, _v, t) => {
+      (_acc, t) => {
         f(t, t, this);
         return undefined;
       },
@@ -66,7 +66,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
   }
 
   fold<R>(f: (acc: R, val: T) => R, zero: R): R {
-    return fold(this.root, (acc, _v, t) => f(acc, t), zero);
+    return fold(this.root, (acc, v) => f(acc, v), zero);
   }
 
   toLazySeq(): LazySeq<T> {

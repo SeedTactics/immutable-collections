@@ -60,7 +60,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   forEach(f: (val: V, k: K, map: HashMap<K, V>) => void): void {
     fold(
       this.root,
-      (_, v, k) => {
+      (_, k, v) => {
         f(v, k, this);
         return undefined;
       },
@@ -70,7 +70,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
 
   // Other read methods
 
-  fold<T>(f: (acc: T, val: V, key: K) => T, zero: T): T {
+  fold<T>(f: (acc: T, key: K, val: V) => T, zero: T): T {
     return fold(this.root, f, zero);
   }
 
@@ -139,8 +139,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   // TODO: difference, withoutKeys
 
   append(items: Iterable<readonly [K, V]>): HashMap<K, V> {
-    const snd: <T>(a: unknown, s: T) => T = (_, s) => s;
-    return HashMap.union(snd, this, HashMap.from(items, snd));
+    return this.union(HashMap.from(items));
   }
 
   mapValues(f: (v: V, k: K) => V): HashMap<K, V> {
