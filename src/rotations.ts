@@ -335,13 +335,13 @@ export function combineAfterInsertOrRemove<K, V>(
 function insertMin<K, V>(k: K, v: V, root: TreeNode<K, V> | undefined): TreeNode<K, V> {
   if (root === undefined) return { key: k, val: v, size: 1, left: undefined, right: undefined };
   const newLeft = insertMin(k, v, root.left);
-  return combineAfterLeftIncrease(newLeft, k, v, root.right);
+  return combineAfterLeftIncrease(newLeft, root.key, root.val, root.right);
 }
 
 function insertMax<K, V>(k: K, v: V, root: TreeNode<K, V> | undefined): TreeNode<K, V> {
   if (root === undefined) return { key: k, val: v, size: 1, left: undefined, right: undefined };
   const newRight = insertMax(k, v, root.right);
-  return combineAfterRightIncrease(root.left, k, v, newRight);
+  return combineAfterRightIncrease(root.left, root.key, root.val, newRight);
 }
 
 // Combines two trees into one and restores balance, no matter the size difference between left and right

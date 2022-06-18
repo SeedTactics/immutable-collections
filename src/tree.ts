@@ -187,7 +187,7 @@ export function remove<K, V>(
       if (newRight === node.right) {
         return node;
       } else {
-        return combineAfterRightIncrease(node.left, node.key, node.val, newRight);
+        return combineAfterLeftIncrease(node.left, node.key, node.val, newRight);
       }
     }
   }

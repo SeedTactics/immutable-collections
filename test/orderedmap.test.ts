@@ -17,12 +17,12 @@ function sortEntries<K extends OrderedMapKey, V>(e: Iterable<readonly [K, V]>): 
   return entries.sort(([k1], [k2]) => cfg.compare(k1, k2));
 }
 
-/*
 function randomNullableStr(): string | null {
   if (Math.random() < 0.1) return null;
   return faker.datatype.string();
 }
 
+/*
 function combineNullableStr(a: string | null, b: string | null): string | null {
   if (a === null) return b;
   if (b === null) return a;
@@ -268,5 +268,191 @@ describe("Ordered Map", () => {
 
     checkMapBalanceAndSize(imMap);
     expectEqual(imMap, jsMap);
+  });
+
+  it("deletes from OrderedMap", () => {
+    const { ordMap, jsMap } = createMap(5000, () => Math.floor(Math.random() * 10_000));
+
+    let newM = ordMap;
+    const newJsMap = new Map(jsMap);
+    for (const [kS, [k]] of jsMap) {
+      const r = Math.random();
+      if (r < 0.4) {
+        newM = newM.delete(k);
+        newJsMap.delete(kS);
+      } else if (r < 0.5) {
+        // delete with key which doesn't exist
+        const m = newM.delete(k + 20_000);
+        expect(m).to.equal(newM);
+      }
+    }
+
+    checkMapBalanceAndSize(newM);
+
+    expectEqual(newM, newJsMap);
+  });
+
+  it("maps the empty map", () => {
+    const m = OrderedMap.empty<number, string>();
+    const m2 = m.mapValues((v) => v + "!");
+    expect(m2.size).to.equal(0);
+    expect(m).to.equal(m2);
+  });
+
+  it("maps values in an OrderedMap", () => {
+    const { ordMap, jsMap } = createMap(5000, () => Math.floor(Math.random() * 10_000));
+
+    const newM = ordMap.mapValues((v, k) => v + "!!!" + k.toString());
+    const newJsMap = new Map<string, [number, string]>();
+    for (const [kS, [k, v]] of jsMap) {
+      newJsMap.set(kS, [k, v + "!!!" + k.toString()]);
+    }
+
+    checkMapBalanceAndSize(newM);
+
+    expectEqual(newM, newJsMap);
+  });
+
+  it("leaves map unchanged when mapping the same value", () => {
+    const { ordMap } = createMap(5000, () => Math.floor(Math.random() * 10_000));
+
+    const newM = ordMap.mapValues((v) => v);
+    expect(newM).to.equal(ordMap);
+  });
+
+  it("only maps some of the values", () => {
+    const { ordMap, jsMap } = createMap(5000, () => Math.floor(Math.random() * 10_000));
+
+    const newJsMap = new Map(jsMap);
+    const newImMap = ordMap.mapValues((v, k) => {
+      if (k > 6000) {
+        const newV = v + "@@" + k.toString();
+        newJsMap.set(k.toString(), [k, newV]);
+        return newV;
+      } else {
+        return v;
+      }
+    });
+
+    checkMapBalanceAndSize(newImMap);
+
+    expectEqual(newImMap, newJsMap);
+  });
+
+  it("collects the empty map", () => {
+    const m = OrderedMap.empty<number, string>();
+    const m2 = m.collectValues((v) => v + "!");
+    expectEqual(m2, new Map());
+  });
+
+  it("collects values in an ImMap", () => {
+    const { ordMap, jsMap } = createMap(5000, () => Math.floor(Math.random() * 10_000));
+
+    const newM = ordMap.collectValues((v, k) => v + "!!!" + k.toString());
+    const newJsMap = new Map<string, [number, string]>();
+    for (const [kS, [k, v]] of jsMap) {
+      newJsMap.set(kS, [k, v + "!!!" + k.toString()]);
+    }
+
+    checkMapBalanceAndSize(newM);
+    expectEqual(newM, newJsMap);
+  });
+
+  it("leaves map unchanged when collecting the same value", () => {
+    const { ordMap } = createMap(5000, () => Math.floor(Math.random() * 10_000));
+
+    const newM = ordMap.collectValues((v) => v);
+    expect(newM).to.equal(ordMap);
+  });
+
+  it("only collects some of the values", () => {
+    const { ordMap, jsMap } = createMap(5000, () => Math.floor(Math.random() * 10_000));
+
+    const newJsMap = new Map(jsMap);
+    const newM = ordMap.collectValues((v, k) => {
+      const r = Math.random();
+      if (r < 0.2) {
+        // modify
+        const newV = v + "@@" + k.toString();
+        newJsMap.set(k.toString(), [k, newV]);
+        return newV;
+      } else if (r < 0.5) {
+        // delete
+        newJsMap.delete(k.toString());
+        return r < 0.4 ? null : undefined;
+      } else {
+        return v;
+      }
+    });
+
+    checkMapBalanceAndSize(newM);
+    expectEqual(newM, newJsMap);
+  });
+
+  it("returns the empty tree when collecting everything", () => {
+    const { ordMap } = createMap(5000, () => Math.floor(Math.random() * 10_000));
+
+    const newM = ordMap.collectValues(() => null);
+    expectEqual(newM, new Map());
+  });
+
+  it("filters a map", () => {
+    let imMap = OrderedMap.empty<number, string | null>();
+    const jsMap = new Map<string, [number, string | null]>();
+    for (let i = 0; i < 1000; i++) {
+      const k = Math.floor(Math.random() * 3000);
+      const v = randomNullableStr();
+      imMap = imMap.set(k, v);
+      jsMap.set(k.toString(), [k, v]);
+    }
+
+    deepFreeze(imMap);
+    checkMapBalanceAndSize(imMap);
+
+    const jsAfterFilter = new Map(jsMap);
+    const newImMap = imMap.filter((v, k) => {
+      expect(jsMap.get(k.toString())).to.deep.equal([k, v]);
+      if (Math.random() < 0.2) {
+        jsAfterFilter.delete(k.toString());
+        return false;
+      } else {
+        return true;
+      }
+    });
+
+    checkMapBalanceAndSize(newImMap);
+    expectEqual(newImMap, jsAfterFilter);
+  });
+
+  it("returns the map unchanged if nothing is filtered", () => {
+    let imMap = OrderedMap.empty<number, string | null>();
+    for (let i = 0; i < 1000; i++) {
+      const k = Math.floor(Math.random() * 3000);
+      const v = randomNullableStr();
+      imMap = imMap.set(k, v);
+    }
+
+    deepFreeze(imMap);
+    checkMapBalanceAndSize(imMap);
+
+    const filterNone = imMap.filter(() => true);
+
+    expect(filterNone).to.equal(imMap);
+  });
+
+  it("returns empty if everyhing filtered", () => {
+    let imMap = OrderedMap.empty<number, string | null>();
+    for (let i = 0; i < 1000; i++) {
+      const k = Math.floor(Math.random() * 3000);
+      const v = randomNullableStr();
+      imMap = imMap.set(k, v);
+    }
+
+    deepFreeze(imMap);
+    checkMapBalanceAndSize(imMap);
+
+    const empty = imMap.filter(() => false);
+
+    expectEqual(empty, new Map());
   });
 });
