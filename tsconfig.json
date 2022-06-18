@@ -8,22 +8,21 @@
 
     "allowJs": false,
     "moduleResolution": "node",
-    "downlevelIteration": true,
     "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
 
     "strict": true,
-    "strictPropertyInitialization": false,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
     "noUnusedLocals": true
   },
   "include": ["src/**/*.ts", "test/**/*.ts"],
   "exclude": ["node_modules", "dist"],
   "ts-node": {
     "files": true
-  },
-  "files": ["src/**/*.ts"]
+  }
 }
