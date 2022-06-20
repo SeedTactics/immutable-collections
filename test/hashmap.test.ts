@@ -732,7 +732,7 @@ describe("HashMap", () => {
     expectEqual(imInter, jsIntersection);
 
     // intersection with itself returns unchanged
-    const unionWithIteself = HashMap.intersection((_, b) => b, imMap1, imMap1);
-    expect(unionWithIteself).is.equal(imMap1);
+    const interWithIteself = HashMap.intersection((_, b) => b, imMap1, imMap1);
+    expect(interWithIteself).is.equal(imMap1);
   });
 });

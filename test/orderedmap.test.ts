@@ -28,6 +28,12 @@ function combineNullableStr(a: string | null, b: string | null): string | null {
   return a + b;
 }
 
+function mkNumKeyGenerator(size: number, offset?: number): () => number {
+  return () => {
+    return Math.floor(Math.random() * size) + (offset === undefined ? 0 : offset);
+  };
+}
+
 function createMap<K extends OrderedMapKey>(size: number, key: () => K): OrderedMapAndJsMap<K, string> {
   let ordMap = OrderedMap.empty<K, string>();
   const jsMap = new Map<string, [K, string]>();
@@ -495,9 +501,13 @@ describe("Ordered Map", () => {
 
     deepFreeze(imMap1);
     deepFreeze(imMap2);
+    checkMapBalanceAndSize(imMap1);
+    checkMapBalanceAndSize(imMap2);
 
     const imUnion = imMap1.union(imMap2, combineNullableStr);
     expectEqual(imUnion, jsUnion);
+
+    checkMapBalanceAndSize(imUnion);
 
     // union with itself returns unchanged
     const unionWithIteself = imMap1.union(imMap1);
@@ -516,6 +526,8 @@ describe("Ordered Map", () => {
     }
 
     const newImMap = OrderedMap.union((a, b) => a + b, ...maps.map((i) => i.ordMap));
+
+    checkMapBalanceAndSize(newImMap);
 
     const newJsMap = new Map<string, [number, string]>();
     for (const { jsMap } of maps) {
@@ -544,13 +556,96 @@ describe("Ordered Map", () => {
 
     const bigOnLeft = bigMap.ordMap.union(smallMap.ordMap);
     expectEqual(bigOnLeft, jsUnion);
+    checkMapBalanceAndSize(bigOnLeft);
 
     const bigOnRight = smallMap.ordMap.union(bigMap.ordMap);
     expectEqual(bigOnRight, jsUnion);
+    checkMapBalanceAndSize(bigOnRight);
   });
 
   it("returns empty from the empty union", () => {
     const m = OrderedMap.union<number, string>((a) => a);
     expect(m.size).to.equal(0);
+  });
+
+  it("returns an empty map from an empty intersection", () => {
+    const m = OrderedMap.intersection<number, string>((a, b) => a + b);
+    expect(m.size === 0);
+    expect(Array.from(m)).to.be.empty;
+  });
+
+  it("returns the map directly from an intersection", () => {
+    const { ordMap } = createMap(50, mkNumKeyGenerator(1000));
+
+    const m = OrderedMap.intersection((a, b) => a + b, ordMap);
+    expect(m).to.equal(ordMap);
+  });
+
+  it("returns empty if one side is empty from an intersection", () => {
+    const { ordMap } = createMap(50, mkNumKeyGenerator(1000));
+
+    let empty = OrderedMap.intersection((a, b) => a + b, ordMap, OrderedMap.empty<number, string>());
+    expectEqual(empty, new Map());
+
+    empty = OrderedMap.intersection((a, b) => a + b, OrderedMap.empty<number, string>(), ordMap);
+    expectEqual(empty, new Map());
+  });
+
+  it("intersects two maps", () => {
+    function* intersectionValues(): Generator<
+      | { map1K: number; map1V: string | null }
+      | { map2K: number; map2V: string | null }
+      | { both: number; val1: string | null; val2: string | null }
+    > {
+      // want a bunch of keys in both maps
+      for (let i = 0; i < 2000; i++) {
+        const k = Math.floor(Math.random() * 10_000);
+        yield { both: k, val1: randomNullableStr(), val2: randomNullableStr() };
+      }
+
+      // want a bunch of keys in distinct in each map
+      for (let i = 0; i < 2000; i++) {
+        const k1 = Math.floor(Math.random() * 10_000 + 20_000);
+        const k2 = Math.floor(Math.random() * 10_000 + 40_000);
+        yield { map1K: k1, map1V: randomNullableStr() };
+        yield { map2K: k2, map2V: randomNullableStr() };
+      }
+    }
+
+    // create the maps and the expected union
+    let imMap1 = OrderedMap.empty<number, string | null>();
+    let imMap2 = OrderedMap.empty<number, string | null>();
+    const jsIntersection = new Map<string, [number, string | null]>();
+    for (const x of intersectionValues()) {
+      if ("map1K" in x) {
+        imMap1 = imMap1.set(x.map1K, x.map1V);
+      } else if ("map2K" in x) {
+        imMap2 = imMap2.set(x.map2K, x.map2V);
+      } else {
+        imMap1 = imMap1.set(x.both, x.val1);
+        imMap2 = imMap2.set(x.both, x.val2);
+        jsIntersection.set(x.both.toString(), [x.both, combineNullableStr(x.val1, x.val2)]);
+      }
+    }
+
+    deepFreeze(imMap1);
+    deepFreeze(imMap2);
+    checkMapBalanceAndSize(imMap1);
+    checkMapBalanceAndSize(imMap2);
+
+    const imInter = OrderedMap.intersection(combineNullableStr, imMap1, imMap2);
+    expectEqual(imInter, jsIntersection);
+    checkMapBalanceAndSize(imInter);
+
+    const imInter2 = imMap1.intersection(imMap2, combineNullableStr);
+    expectEqual(imInter2, jsIntersection);
+    checkMapBalanceAndSize(imInter2);
+
+    // intersection with itself returns unchanged
+    const interWithIteself = OrderedMap.intersection((_, b) => b, imMap1, imMap1);
+    expect(interWithIteself).is.equal(imMap1);
+
+    const interWithItself2 = imMap1.intersection(imMap1);
+    expect(interWithItself2).is.equal(imMap1);
   });
 });
