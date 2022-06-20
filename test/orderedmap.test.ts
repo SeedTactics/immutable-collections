@@ -22,13 +22,11 @@ function randomNullableStr(): string | null {
   return faker.datatype.string();
 }
 
-/*
 function combineNullableStr(a: string | null, b: string | null): string | null {
   if (a === null) return b;
   if (b === null) return a;
   return a + b;
 }
-*/
 
 function createMap<K extends OrderedMapKey>(size: number, key: () => K): OrderedMapAndJsMap<K, string> {
   let ordMap = OrderedMap.empty<K, string>();
@@ -454,5 +452,105 @@ describe("Ordered Map", () => {
     const empty = imMap.filter(() => false);
 
     expectEqual(empty, new Map());
+  });
+
+  it("unions two maps", () => {
+    function* unionValues(): Generator<
+      { map1K: number; map1V: string | null } | { map2K: number; map2V: string | null }
+    > {
+      // want a bunch of keys in both maps
+      for (let i = 0; i < 2000; i++) {
+        const k = Math.floor(Math.random() * 10_000);
+        yield { map1K: k, map1V: randomNullableStr() };
+        yield { map2K: k, map2V: randomNullableStr() };
+      }
+
+      // want a bunch of keys in distinct in each map
+      for (let i = 0; i < 2000; i++) {
+        const k = Math.floor(Math.random() * 10_000);
+        yield { map1K: k, map1V: randomNullableStr() };
+        yield { map2K: k, map2V: randomNullableStr() };
+      }
+    }
+
+    // create the maps and the expected union
+    let imMap1 = OrderedMap.empty<number, string | null>();
+    let imMap2 = OrderedMap.empty<number, string | null>();
+    const jsUnion = new Map<string, [number, string | null]>();
+    for (const x of unionValues()) {
+      if ("map1K" in x) {
+        imMap1 = imMap1.set(x.map1K, x.map1V);
+        jsUnion.set(x.map1K.toString(), [x.map1K, x.map1V]);
+      } else {
+        imMap2 = imMap2.set(x.map2K, x.map2V);
+        const kS = x.map2K.toString();
+        const old = jsUnion.get(kS);
+        if (old) {
+          jsUnion.set(kS, [x.map2K, combineNullableStr(old[1], x.map2V)]);
+        } else {
+          jsUnion.set(kS, [x.map2K, x.map2V]);
+        }
+      }
+    }
+
+    deepFreeze(imMap1);
+    deepFreeze(imMap2);
+
+    const imUnion = imMap1.union(imMap2, combineNullableStr);
+    expectEqual(imUnion, jsUnion);
+
+    // union with itself returns unchanged
+    const unionWithIteself = imMap1.union(imMap1);
+    expect(unionWithIteself).is.equal(imMap1);
+  });
+
+  it("unions three maps", () => {
+    const maps = Array<OrderedMapAndJsMap<number, string>>();
+    for (let i = 0; i < 3; i++) {
+      maps.push(createMap(100 + i * 1000, () => Math.floor(Math.random() * 5000)));
+      // add an empty map, which should be filtered out
+      maps.push({
+        ordMap: OrderedMap.empty<number, string>(),
+        jsMap: new Map(),
+      });
+    }
+
+    const newImMap = OrderedMap.union((a, b) => a + b, ...maps.map((i) => i.ordMap));
+
+    const newJsMap = new Map<string, [number, string]>();
+    for (const { jsMap } of maps) {
+      for (const [kS, [k, v]] of jsMap) {
+        const oldV = newJsMap.get(kS);
+        newJsMap.set(kS, [k, oldV === undefined ? v : oldV[1] + v]);
+      }
+    }
+
+    expectEqual(newImMap, newJsMap);
+
+    // unchanged when unioning with itself
+    const unionWithItself = OrderedMap.union((a) => a, maps[0].ordMap, maps[0].ordMap);
+    expect(unionWithItself).is.equal(maps[0].ordMap);
+  });
+
+  it("unions a small map with a big map", () => {
+    const bigMap = createMap(5000, () => Math.floor(Math.random() * 3000));
+
+    const smallMap = createMap(5, () => Math.floor(Math.random() * 3000) + 10_000);
+
+    const jsUnion = new Map(bigMap.jsMap);
+    for (const [k, v] of smallMap.jsMap) {
+      jsUnion.set(k, v);
+    }
+
+    const bigOnLeft = bigMap.ordMap.union(smallMap.ordMap);
+    expectEqual(bigOnLeft, jsUnion);
+
+    const bigOnRight = smallMap.ordMap.union(bigMap.ordMap);
+    expectEqual(bigOnRight, jsUnion);
+  });
+
+  it("returns empty from the empty union", () => {
+    const m = OrderedMap.union<number, string>((a) => a);
+    expect(m.size).to.equal(0);
   });
 });
