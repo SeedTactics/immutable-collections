@@ -1,5 +1,6 @@
 import { ComparisionConfig } from "./comparison.js";
 import {
+  combineAfterInsertOrRemove,
   combineAfterLeftIncrease,
   combineAfterRightIncrease,
   combineDifferentSizes,
@@ -188,6 +189,52 @@ export function remove<K, V>(
         return node;
       } else {
         return combineAfterLeftIncrease(node.left, node.key, node.val, newRight);
+      }
+    }
+  }
+
+  return loop(root);
+}
+
+export function alter<K, V>(
+  { compare }: ComparisionConfig<K>,
+  k: K,
+  f: (oldV: V | undefined) => V | undefined,
+  root: TreeNode<K, V> | undefined
+): TreeNode<K, V> | undefined {
+  function loop(node: TreeNode<K, V> | undefined): TreeNode<K, V> | undefined {
+    if (node === undefined) {
+      const newVal = f(undefined);
+      if (newVal === undefined) {
+        return undefined;
+      } else {
+        return { key: k, val: newVal, size: 1, left: undefined, right: undefined };
+      }
+    }
+
+    const c = compare(k, node.key);
+    if (c === 0) {
+      const newVal = f(node.val);
+      if (newVal === undefined) {
+        return glueSizeBalanced(node.left, node.right);
+      } else if (newVal === node.val) {
+        return node;
+      } else {
+        return { key: k, val: newVal, size: node.size, left: node.left, right: node.right };
+      }
+    } else if (c < 0) {
+      const newLeft = loop(node.left);
+      if (newLeft === node.left) {
+        return node;
+      } else {
+        return combineAfterInsertOrRemove(newLeft, node.key, node.val, node.right);
+      }
+    } else {
+      const newRight = loop(node.right);
+      if (newRight === node.right) {
+        return node;
+      } else {
+        return combineAfterInsertOrRemove(node.left, node.key, node.val, newRight);
       }
     }
   }

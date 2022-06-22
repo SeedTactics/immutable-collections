@@ -3,6 +3,7 @@ import { ComparisionConfig, mkComparisonConfig, OrderedMapKey } from "./comparis
 import { TreeNode } from "./rotations.js";
 import {
   adjust,
+  alter,
   build,
   collectValues,
   difference,
@@ -38,7 +39,6 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
   }
 
   get(k: K): V | undefined {
-    if (this.root === null) return undefined;
     return lookup(this.cfg, k, this.root);
   }
 
@@ -131,7 +131,14 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     }
   }
 
-  // TODO: alter(k: K, f: (existing: V | undefined) => V | undefined): OrderedMap<K, V>
+  alter(k: K, f: (existing: V | undefined) => V | undefined): OrderedMap<K, V> {
+    const newRoot = alter(this.cfg, k, f, this.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedMap(this.cfg, newRoot);
+    }
+  }
 
   // TODO: partition(f: (v: V, k: K) => boolean): readonly [OrderedMap<K, V>, OrderedMap<K, V>]
 

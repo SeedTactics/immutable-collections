@@ -232,6 +232,45 @@ describe("Ordered Map", () => {
       newJsMap.set(k.toString(), [k, v + "!!!!"]);
     }
 
+    checkMapBalanceAndSize(newM);
+    expectEqual(newM, newJsMap);
+  });
+
+  it("alters values", () => {
+    const keygen = mkNumKeyGenerator(10_000);
+    const { ordMap, jsMap } = createMap(5000, () => keygen() * 2);
+
+    let newM = ordMap;
+    const newJsMap = new Map(jsMap);
+    for (const [k, v] of ordMap.toAscLazySeq().take(4000)) {
+      const todo = Math.random();
+
+      if (todo < 0.3) {
+        // modify existing value
+        newM = newM.alter(k, (oldV) => {
+          expect(oldV).to.equal(v);
+          return v + "!!!!";
+        });
+        newJsMap.set(k.toString(), [k, v + "!!!!"]);
+      } else if (todo < 0.6) {
+        // delete existing value
+        newM = newM.alter(k, (oldV) => {
+          expect(oldV).to.equal(v);
+          return undefined;
+        });
+        newJsMap.delete(k.toString());
+      } else {
+        // add new value (use odd key)
+        const newVal = faker.datatype.string();
+        newM = newM.alter(k + 1, (oldV) => {
+          expect(oldV).to.be.undefined;
+          return newVal;
+        });
+        newJsMap.set((k + 1).toString(), [k + 1, newVal]);
+      }
+    }
+
+    checkMapBalanceAndSize(newM);
     expectEqual(newM, newJsMap);
   });
 
