@@ -181,43 +181,6 @@ describe("HAMT insert and lookup", () => {
     }
   });
 
-  it("creates a collision node", () => {
-    const cfg = mkHashConfig<Key>();
-    const k1 = new Key(10, 25);
-    const k2 = new Key(10, 30);
-    const k3 = new Key(10, 40);
-
-    const [node1, inserted1] = insert(cfg, k1, setNewVal(100), null);
-    const [node2, inserted2] = insert(cfg, k2, setNewVal(200), node1);
-    const [node3, inserted3] = insert(cfg, k3, setNewVal(300), node2);
-
-    expect(inserted1).to.be.true;
-    expect(inserted2).to.be.true;
-    expect(inserted3).to.be.true;
-
-    expect(node2).to.deep.equal({
-      hash: 10,
-      collision: [
-        { key: k2, val: 200 },
-        { key: k1, val: 100 },
-      ],
-    });
-
-    expect(node3).to.deep.equal({
-      hash: 10,
-      collision: [
-        { key: k3, val: 300 },
-        { key: k2, val: 200 },
-        { key: k1, val: 100 },
-      ],
-    });
-
-    expect(lookup(cfg, cfg.hash(k1), 0, k1, node3)).to.equal(100);
-    expect(lookup(cfg, cfg.hash(k2), 0, k2, node3)).to.equal(200);
-    expect(lookup(cfg, 10, 0, new Key(10, 50), node3)).to.be.undefined;
-    expect(lookup(cfg, 30, 0, new Key(30, 25), node3)).to.be.undefined;
-  });
-
   it("merges existing value", () => {
     const cfg = mkHashConfig<Key>();
     const k1 = new Key(10, 25);

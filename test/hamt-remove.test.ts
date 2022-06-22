@@ -173,34 +173,4 @@ describe("HAMT Remove", () => {
       ],
     });
   });
-
-  it("removes from collision node", () => {
-    const k1 = new CollidingKey(20, 1);
-    const k2 = new CollidingKey(20, 2);
-    const k3 = new CollidingKey(20, 3);
-
-    const cfg = mkHashConfig<CollidingKey>();
-    const [node1] = insert(cfg, k1, setNewVal(100), null);
-    const [node2] = insert(cfg, k2, setNewVal(200), node1);
-    const [node3] = insert(cfg, k3, setNewVal(300), node2);
-
-    const afterRemove1 = remove(cfg, k1, node3);
-    expect(afterRemove1).to.deep.equal({
-      hash: 20,
-      collision: [
-        { key: k3, val: 300 },
-        { key: k2, val: 200 },
-      ],
-    });
-
-    expect(lookup(cfg, cfg.hash(k1), 0, k1, node3)).to.equal(100);
-
-    expect(remove(cfg, k2, afterRemove1)).to.deep.equal({
-      hash: 20,
-      key: k3,
-      val: 300,
-    });
-
-    expect(lookup(cfg, cfg.hash(k2), 0, k2, node2)).to.equal(200);
-  });
 });

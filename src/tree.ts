@@ -8,7 +8,7 @@ import {
   combineDifferentSizes,
   glueDifferentSizes,
   glueSizeBalanced,
-  MutableNode,
+  MutableTreeNode,
   mutateBalanceAfterLeftIncrease,
   mutateBalanceAfterRightIncrease,
   TreeNode,
@@ -75,6 +75,78 @@ export function insert<K, V>(
   return loop(root);
 }
 
+export function two<K, V>(cmp: number, k1: K, v1: V, k2: K, v2: V): TreeNode<K, V> {
+  if (cmp < 0) {
+    return {
+      key: k1,
+      val: v1,
+      size: 2,
+      left: undefined,
+      right: {
+        key: k2,
+        val: v2,
+        size: 1,
+        left: undefined,
+        right: undefined,
+      },
+    };
+  } else {
+    return {
+      key: k1,
+      val: v1,
+      size: 2,
+      left: {
+        key: k2,
+        val: v2,
+        size: 1,
+        left: undefined,
+        right: undefined,
+      },
+      right: undefined,
+    };
+  }
+}
+
+export function mutateInsert<K, V, T>(
+  { compare }: ComparisionConfig<K>,
+  k: K,
+  t: T,
+  getVal: (old: V | undefined, t: T) => V,
+  root: MutableTreeNode<K, V>
+): MutableTreeNode<K, V> {
+  let newLeaf = true;
+  function insertLoop(node: MutableTreeNode<K, V> | undefined): MutableTreeNode<K, V> {
+    if (node === undefined) return { key: k, val: getVal(undefined, t), size: 1, left: undefined, right: undefined };
+    const c = compare(k, node.key);
+    if (c < 0) {
+      node.left = insertLoop(node.left);
+      if (newLeaf) node.size += 1;
+      return mutateBalanceAfterLeftIncrease(node);
+    } else if (c > 0) {
+      node.right = insertLoop(node.right);
+      if (newLeaf) node.size += 1;
+      return mutateBalanceAfterRightIncrease(node);
+    } else {
+      const newVal = getVal(node.val, t);
+      if (newVal === node.val) {
+        newLeaf = false;
+        return node;
+      } else {
+        newLeaf = false;
+        return {
+          key: node.key,
+          val: newVal,
+          size: node.size,
+          left: node.left,
+          right: node.right,
+        };
+      }
+    }
+  }
+
+  return insertLoop(root);
+}
+
 export function from<K, V>(
   { compare }: ComparisionConfig<K>,
   items: Iterable<readonly [K, V]>,
@@ -85,7 +157,7 @@ export function from<K, V>(
   let root = undefined;
   let newLeaf = true;
 
-  function insertLoop(node: MutableNode<K, V> | undefined): MutableNode<K, V> {
+  function insertLoop(node: MutableTreeNode<K, V> | undefined): MutableTreeNode<K, V> {
     if (node === undefined) return { key: k, val: v, size: 1, left: undefined, right: undefined };
     const c = compare(k, node.key);
     if (c < 0) {
@@ -130,7 +202,7 @@ export function build<T, K, V>(
   let root = undefined;
   let newLeaf = true;
 
-  function insertLoop(node: MutableNode<K, V> | undefined): MutableNode<K, V> {
+  function insertLoop(node: MutableTreeNode<K, V> | undefined): MutableTreeNode<K, V> {
     if (node === undefined)
       return { key: k, val: val ? val(undefined, t) : (t as unknown as V), size: 1, left: undefined, right: undefined };
     const c = compare(k, node.key);

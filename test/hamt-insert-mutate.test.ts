@@ -151,29 +151,6 @@ describe("hamt mutate insert", () => {
     });
   });
 
-  it("creates a collision node", () => {
-    const cfg = mkHashConfig<Key>();
-    const k1 = new Key(10, 25);
-    const k2 = new Key(10, 30);
-    const k3 = new Key(10, 40);
-
-    const node1 = mutateInsert(cfg, k1, "AB", setNewVal("AB", 100), null);
-    const node2 = mutateInsert(cfg, k2, "CD", setNewVal("CD", 200), node1);
-    const node3 = mutateInsert(cfg, k3, "EF", setNewVal("EF", 300), node2);
-
-    expect(node2).to.equal(node3);
-
-    // note, checking node2 deep equals the result of inserting k3 since it should have been mutated
-    expect(node2).to.deep.equal({
-      hash: 10,
-      collision: [
-        { key: k3, val: 300 },
-        { key: k2, val: 200 },
-        { key: k1, val: 100 },
-      ],
-    });
-  });
-
   it("merges in an existing value", () => {
     const cfg = mkHashConfig<Key>();
     const k1 = new Key(10, 25);

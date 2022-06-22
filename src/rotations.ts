@@ -39,12 +39,12 @@ export interface TreeNode<K, V> {
   readonly right: TreeNode<K, V> | undefined;
 }
 
-export interface MutableNode<K, V> {
+export interface MutableTreeNode<K, V> {
   key: K;
   val: V;
   size: number;
-  left: MutableNode<K, V> | undefined;
-  right: MutableNode<K, V> | undefined;
+  left: MutableTreeNode<K, V> | undefined;
+  right: MutableTreeNode<K, V> | undefined;
 }
 
 // the rotations maintain that the size of the left and right
@@ -419,7 +419,7 @@ export function glueDifferentSizes<K, V>(
   return glueSizeBalanced(left, right);
 }
 
-function mutateRotateLeft<K, V>(node: MutableNode<K, V>): MutableNode<K, V> {
+function mutateRotateLeft<K, V>(node: MutableTreeNode<K, V>): MutableTreeNode<K, V> {
   // right will become the new root
   const right = node.right!;
   const oldRightSize = right.size;
@@ -434,7 +434,7 @@ function mutateRotateLeft<K, V>(node: MutableNode<K, V>): MutableNode<K, V> {
   return right;
 }
 
-function mutateRotateRight<K, V>(node: MutableNode<K, V>): MutableNode<K, V> {
+function mutateRotateRight<K, V>(node: MutableTreeNode<K, V>): MutableTreeNode<K, V> {
   // left will become the new root
   const left = node.left!;
   const oldLeftSize = left.size;
@@ -449,7 +449,7 @@ function mutateRotateRight<K, V>(node: MutableNode<K, V>): MutableNode<K, V> {
   return left;
 }
 
-export function mutateBalanceAfterLeftIncrease<K, V>(node: MutableNode<K, V>): MutableNode<K, V> {
+export function mutateBalanceAfterLeftIncrease<K, V>(node: MutableTreeNode<K, V>): MutableTreeNode<K, V> {
   const leftSize = node.left?.size ?? 0;
   const rightSize = node.right?.size ?? 0;
 
@@ -468,7 +468,7 @@ export function mutateBalanceAfterLeftIncrease<K, V>(node: MutableNode<K, V>): M
   return node;
 }
 
-export function mutateBalanceAfterRightIncrease<K, V>(node: MutableNode<K, V>): MutableNode<K, V> {
+export function mutateBalanceAfterRightIncrease<K, V>(node: MutableTreeNode<K, V>): MutableTreeNode<K, V> {
   const leftSize = node.left?.size ?? 0;
   const rightSize = node.right?.size ?? 0;
 

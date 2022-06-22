@@ -1,6 +1,8 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
-import { HashConfig } from "./hashing";
+import { HashConfig } from "./hashing.js";
+import { MutableTreeNode, TreeNode } from "./rotations.js";
+import * as tree from "./tree.js";
 
 /*
 A Hash Array Mapped Trie (HAMT)
@@ -21,7 +23,7 @@ children and they are the positions of the 1s.  Only the four non-null children 
 stored and some fancy bit operations are used to determine which ones they are.
 
 The leaves are either a single leaf node with the key and the value or, if two
-keys hash to the same value, we store a collision array.
+keys hash to the same value, we store the collisions in a balanced tree.
 */
 
 /* The algorithms and code here is greatly influenced by
@@ -37,11 +39,11 @@ export type MutableLeafNode<K, V> = { readonly hash: number; readonly key: K; va
 // A leaf node with the hash and an array of keys and values with this same hash.
 export type CollisionNode<K, V> = {
   readonly hash: number;
-  readonly collision: ReadonlyArray<{ readonly key: K; readonly val: V }>;
+  readonly collision: TreeNode<K, V>;
 };
 export type MutableCollisionNode<K, V> = {
   readonly hash: number;
-  readonly collision: Array<{ readonly key: K; val: V }>;
+  collision: MutableTreeNode<K, V>;
 };
 
 export type InternalNode<K, V> = {
@@ -127,14 +129,7 @@ export function lookup<K, V>(
       }
     } else {
       if (hash === node.hash) {
-        const arr = node.collision;
-        for (let i = 0, len = arr.length; i < len; i++) {
-          const n = arr[i];
-          if (cfg.compare(k, n.key) === 0) {
-            return n.val;
-          }
-        }
-        return undefined;
+        return tree.lookup(cfg, k, node.collision);
       } else {
         return undefined;
       }
@@ -292,7 +287,8 @@ export function insert<K, V>(
       let newNode: HamtNode<K, V>;
       let inserted = true;
       if (hash === curNode.hash) {
-        if (cfg.compare(k, curNode.key) === 0) {
+        const cmp = cfg.compare(k, curNode.key);
+        if (cmp === 0) {
           const newVal = getVal(curNode.val);
           if (newVal === curNode.val) {
             // return the original root node because nothing changed
@@ -306,10 +302,7 @@ export function insert<K, V>(
           // a collision
           newNode = {
             hash,
-            collision: [
-              { key: k, val: getVal(undefined) },
-              { key: curNode.key, val: curNode.val },
-            ],
+            collision: tree.two(cmp, k, getVal(undefined), curNode.key, curNode.val),
           };
         }
       } else {
@@ -328,26 +321,16 @@ export function insert<K, V>(
       let inserted = true;
       if (hash === curNode.hash) {
         // check and extend the existing collision node
-        for (let i = 0, collision = curNode.collision, len = collision.length; i < len; i++) {
-          const c = collision[i];
-          if (cfg.compare(k, c.key) === 0) {
-            const newVal = getVal(c.val);
-            if (c.val === newVal) {
-              // return the original root node because nothing changed
-              return [rootNode, false];
-            }
-            // create a copy of the collision node
-            const newArr = [...collision];
-            newArr[i] = { key: k, val: newVal };
-            newNode = { hash, collision: newArr };
-            inserted = false;
-            break;
-          }
+        const newRoot = tree.insert(cfg, k, getVal, curNode.collision);
+        if (newRoot === curNode.collision) {
+          // return the original root node because nothing changed
+          return [rootNode, false];
         }
-        if (newNode === undefined) {
-          // node not in the collision list, add it
-          newNode = { hash, collision: [{ key: k, val: getVal(undefined) }, ...curNode.collision] };
-        }
+        inserted = newRoot.size !== curNode.collision.size;
+        newNode = {
+          hash,
+          collision: newRoot,
+        };
       } else {
         // create a new bitmap indexed node with a new leaf and the collision node as children
         newNode = two(shift, curNode, { hash, key: k, val: getVal(undefined) });
@@ -416,6 +399,7 @@ export function mutateInsert<K, T, V>(
       // node is a leaf, check if key is equal or there is a collision
       let newNode: MutableHamtNode<K, V>;
       if (hash === curNode.hash) {
+        const cmp = cfg.compare(k, curNode.key);
         if (cfg.compare(k, curNode.key) === 0) {
           // replace the value
           curNode.val = getVal(curNode.val, t);
@@ -424,10 +408,7 @@ export function mutateInsert<K, T, V>(
           // a collision
           newNode = {
             hash,
-            collision: [
-              { key: k, val: getVal(undefined, t) },
-              { key: curNode.key, val: curNode.val },
-            ],
+            collision: tree.two(cmp, k, getVal(undefined, t), curNode.key, curNode.val),
           };
         }
       } else {
@@ -444,17 +425,7 @@ export function mutateInsert<K, T, V>(
       return rootNode;
     } else {
       if (hash === curNode.hash) {
-        // check if already in current collision node
-        for (let i = 0, collision = curNode.collision, len = collision.length; i < len; i++) {
-          const c = collision[i];
-          if (cfg.compare(k, c.key) === 0) {
-            // replace the value
-            c.val = getVal(c.val, t);
-            return rootNode;
-          }
-        }
-        // need to extend the collision node
-        curNode.collision.unshift({ key: k, val: getVal(undefined, t) });
+        curNode.collision = tree.mutateInsert(cfg, k, t, getVal, curNode.collision);
         return rootNode;
       } else {
         // create a new bitmap indexed node with a new leaf and the collision node as children
@@ -549,10 +520,6 @@ function addToSpine<K, V>(
   spine.push({ node, childIdx });
 }
 
-function copyAndRemoveFromArray<T>(arr: ReadonlyArray<T>, idx: number): Array<T> {
-  return [...arr.slice(0, idx), ...arr.slice(idx + 1)];
-}
-
 export function remove<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V> | null): HamtNode<K, V> | null {
   if (rootNode === null) {
     return null;
@@ -608,26 +575,26 @@ export function remove<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V> 
     } else {
       // collision
       if (hash === curNode.hash) {
-        for (let i = 0, collision = curNode.collision, len = collision.length; i < len; i++) {
-          if (cfg.compare(k, collision[i].key) === 0) {
-            let newNode: HamtNode<K, V>;
-            if (collision.length === 2) {
-              // switch back to a leaf node
-              const other = i === 0 ? 1 : 0;
-              newNode = { hash, key: collision[other].key, val: collision[other].val };
-            } else {
-              newNode = { hash, collision: copyAndRemoveFromArray(collision, i) };
-            }
-            if (spine.length > 0) {
-              const n = spine[spine.length - 1];
-              n.node.children[n.childIdx] = newNode;
-              return spine[0].node;
-            } else {
-              return newNode;
-            }
-          }
+        // collision node always has at least two nodes, so removing one will still leave non-empty tree
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const newRoot = tree.remove(cfg, k, curNode.collision)!;
+        if (newRoot === curNode.collision) {
+          return rootNode;
         }
-        return rootNode;
+        let newNode: HamtNode<K, V>;
+        if (newRoot.size === 1) {
+          // switch back to a leaf node
+          newNode = { hash, key: newRoot.key, val: newRoot.val };
+        } else {
+          newNode = { hash, collision: newRoot };
+        }
+        if (spine.length > 0) {
+          const n = spine[spine.length - 1];
+          n.node.children[n.childIdx] = newNode;
+          return spine[0].node;
+        } else {
+          return newNode;
+        }
       } else {
         // hashes are different, no match
         return rootNode;
@@ -652,10 +619,7 @@ export function* iterate<K, V, R>(root: HamtNode<K, V> | null, f: (k: K, v: V) =
     } else if ("key" in node) {
       yield f(node.key, node.val);
     } else {
-      for (let i = 0, len = node.collision.length; i < len; i++) {
-        const x = node.collision[i];
-        yield f(x.key, x.val);
-      }
+      yield* tree.iterateAsc(node.collision, f);
     }
   }
 }
@@ -675,10 +639,7 @@ export function fold<K, V, T>(root: HamtNode<K, V> | null, f: (acc: T, key: K, v
     } else if ("key" in node) {
       acc = f(acc, node.key, node.val);
     } else {
-      for (let i = 0, len = node.collision.length; i < len; i++) {
-        const x = node.collision[i];
-        acc = f(acc, x.key, x.val);
-      }
+      acc = tree.foldl(f, acc, node.collision);
     }
   }
   return acc;
@@ -718,26 +679,13 @@ export function mapValues<K, V>(root: HamtNode<K, V> | null, f: (v: V, k: K) => 
         return node;
       }
     } else {
-      let newArr: Array<{ readonly key: K; readonly val: V }> | undefined = undefined;
-      for (let i = 0, arr = node.collision, len = arr.length; i < len; i++) {
-        const n = arr[i];
-        const newV = f(n.val, n.key);
-        if (!newArr) {
-          if (n.val !== newV) {
-            newArr = [...arr.slice(0, i), { key: n.key, val: newV }];
-          }
-        } else {
-          if (n.val !== newV) {
-            newArr.push({ key: n.key, val: newV });
-          } else {
-            newArr.push(n);
-          }
-        }
-      }
-      if (newArr) {
-        return { hash: node.hash, collision: newArr };
-      } else {
+      const newRoot = tree.mapValues(f, node.collision);
+      if (newRoot === node.collision) {
         return node;
+      } else {
+        // mapValues on a non-null tree produces a non-null tree
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return { hash: node.hash, collision: newRoot! };
       }
     }
   }
@@ -819,46 +767,19 @@ export function collectValues<K, V>(
         return node;
       }
     } else {
-      let newArr: Array<{ readonly key: K; readonly val: V }> | undefined = undefined;
-      for (let i = 0, arr = node.collision, len = arr.length; i < len; i++) {
-        const n = arr[i];
-        const newV = f(n.val, n.key);
-        if (!newArr) {
-          // check if we need to create a copy of the node
-          if (newV === undefined || (filterNull && newV === null)) {
-            // filter out the value
-            newArr = [...arr.slice(0, i)];
-          } else {
-            newSize++;
-            if (n.val !== newV) {
-              newArr = [...arr.slice(0, i), { key: n.key, val: newV }];
-            }
-          }
-        } else {
-          // an earlier node was modified so we copied the node, add or filter the new value
-          if (newV === undefined || (filterNull && newV === null)) {
-            // do nothing, element will be filtered
-          } else {
-            newSize++;
-            if (n.val !== newV) {
-              newArr.push({ key: n.key, val: newV });
-            } else {
-              newArr.push(n);
-            }
-          }
-        }
-      }
-      if (newArr) {
-        if (newArr.length === 0) {
-          return null;
-        } else if (newArr.length === 1) {
-          // switch from collision back to just a leaf
-          return { hash: node.hash, key: newArr[0].key, val: newArr[0].val };
-        } else {
-          return { hash: node.hash, collision: newArr };
-        }
-      } else {
+      const newCol = tree.collectValues(f, filterNull, node.collision);
+      if (newCol === node.collision) {
+        newSize += node.collision.size;
         return node;
+      } else if (newCol === undefined) {
+        return null;
+      } else if (newCol.size === 1) {
+        // switch from collision back to just a leaf
+        newSize += 1;
+        return { hash: node.hash, key: newCol.key, val: newCol.val };
+      } else {
+        newSize += newCol.size;
+        return { hash: node.hash, collision: newCol };
       }
     }
   }
@@ -882,6 +803,7 @@ export function union<K, V>(
     // Leaf vs Leaf
     if ("key" in node1 && "key" in node2) {
       if (node1.hash === node2.hash) {
+        const cmp = cfg.compare(node1.key, node2.key);
         if (cfg.compare(node1.key, node2.key) === 0) {
           intersectionSize++;
           const newVal = f(node1.val, node2.val, node1.key);
@@ -896,10 +818,7 @@ export function union<K, V>(
           // collision
           return {
             hash: node1.hash,
-            collision: [
-              { key: node1.key, val: node1.val },
-              { key: node2.key, val: node2.val },
-            ],
+            collision: tree.two(cmp, node1.key, node1.val, node2.key, node2.val),
           };
         }
       } else {
@@ -907,80 +826,60 @@ export function union<K, V>(
       }
     } else if ("key" in node1 && "collision" in node2) {
       if (node1.hash === node2.hash) {
-        for (let i = 0, arr = node2.collision, len = arr.length; i < len; i++) {
-          const n = arr[i];
-          if (cfg.compare(node1.key, n.key) === 0) {
-            intersectionSize++;
-            const newVal = f(node1.val, n.val, n.key);
-            if (newVal === n.val) {
-              // no change needed
-              return node2;
+        const newRoot = tree.insert(
+          cfg,
+          node1.key,
+          (v2) => {
+            if (v2 === undefined) {
+              return node1.val;
             } else {
-              // replace the value in the collision array
-              const newArr = [...arr];
-              newArr[i] = { key: n.key, val: newVal };
-              return { hash: node1.hash, collision: newArr };
+              intersectionSize++;
+              return f(node1.val, v2, node1.key);
             }
-          }
+          },
+          node2.collision
+        );
+        if (newRoot === node2.collision) {
+          return node2;
+        } else {
+          return { hash: node1.hash, collision: newRoot };
         }
-        // not found, add node1 to collision
-        return { hash: node1.hash, collision: [{ key: node1.key, val: node1.val }, ...node2.collision] };
       } else {
         return two(shift, node1, node2);
       }
     } else if ("collision" in node1 && "key" in node2) {
       if (node1.hash === node2.hash) {
-        for (let i = 0, arr = node1.collision, len = arr.length; i < len; i++) {
-          const n = arr[i];
-          if (cfg.compare(n.key, node2.key) === 0) {
-            intersectionSize++;
-            const newVal = f(n.val, node2.val, n.key);
-            if (newVal === n.val) {
-              // no change needed
-              return node1;
+        const newRoot = tree.insert(
+          cfg,
+          node2.key,
+          (v1) => {
+            if (v1 === undefined) {
+              return node2.val;
             } else {
-              const newArr = [...arr];
-              newArr[i] = { key: n.key, val: newVal };
-              return { hash: node1.hash, collision: newArr };
+              intersectionSize++;
+              return f(v1, node2.val, node2.key);
             }
-          }
+          },
+          node1.collision
+        );
+        if (newRoot === node1.collision) {
+          return node1;
+        } else {
+          return { hash: node2.hash, collision: newRoot };
         }
-        return { hash: node1.hash, collision: [...node1.collision, { key: node2.key, val: node2.val }] };
       } else {
         return two(shift, node1, node2);
       }
     } else if ("collision" in node1 && "collision" in node2) {
       if (node1.hash === node2.hash) {
-        const newArr = [...node1.collision];
-        // when checking duplicates, only need to check newArr up to origNode1ColLength even
-        // if more collisions are added to to the array
-        const origNode1ColLength = newArr.length;
-        let modifiedNode1Col = false;
-        for (let i = 0, node2col = node2.collision, node2len = node2col.length; i < node2len; i++) {
-          const node2entry = node2col[i];
-          let found = false;
-          for (let j = 0; j < origNode1ColLength; j++) {
-            const existing1 = newArr[j];
-            if (cfg.compare(existing1.key, node2entry.key) === 0) {
-              intersectionSize++;
-              const newVal = f(existing1.val, node2entry.val, node2entry.key);
-              if (newVal !== existing1.val) {
-                modifiedNode1Col = true;
-                newArr[j] = { key: node2entry.key, val: newVal };
-              }
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-            modifiedNode1Col = true;
-            newArr.push(node2entry);
-          }
-        }
-        if (modifiedNode1Col) {
-          return { hash: node1.hash, collision: newArr };
-        } else {
+        // union of non-empty trees is non-empty
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const newRoot = tree.union(cfg, f, node1.collision, node2.collision)!;
+        if (newRoot === node1.collision) {
           return node1;
+        } else {
+          intersectionSize += node1.collision.size + node2.collision.size - newRoot.size;
+          return { hash: node1.hash, collision: newRoot };
         }
       } else {
         return two(shift, node1, node2);
@@ -1169,45 +1068,18 @@ export function intersection<K, V>(
 
     // Collision vs Collision
     else if ("collision" in node1 && "collision" in node2) {
-      let newCol: Array<{ key: K; val: V }> | undefined;
-      for (let i = 0, col1 = node1.collision, len1 = col1.length; i < len1; i++) {
-        const x = col1[i];
-        let found = false;
-        for (let j = 0, col2 = node2.collision, len2 = col2.length; j < len2; j++) {
-          const y = col2[j];
-          if (cfg.compare(x.key, y.key) === 0) {
-            intersectionSize++;
-            const newVal = f(x.val, y.val, x.key);
-            if (newCol) {
-              if (newVal === x.val) {
-                newCol.push(x);
-              } else if (newVal === y.val) {
-                newCol.push(y);
-              } else {
-                newCol.push({ key: x.key, val: newVal });
-              }
-            } else {
-              if (newVal !== x.val) {
-                newCol = [...col1.slice(0, i), { key: x.key, val: newVal }];
-              }
-            }
-            found = true;
-            break;
-          }
-        }
-        if (!newCol && !found) {
-          newCol = [...col1.slice(0, i)];
-        }
-      }
-
-      if (newCol === undefined) {
+      const newRoot = tree.intersection(cfg, f, node1.collision, node2.collision);
+      if (newRoot === node1.collision) {
+        intersectionSize += node1.collision.size;
         return node1;
-      } else if (newCol.length === 0) {
+      } else if (newRoot === undefined) {
         return null;
-      } else if (newCol.length === 1) {
-        return { hash: node1.hash, key: newCol[0].key, val: newCol[0].val };
+      } else if (newRoot.size === 1) {
+        intersectionSize += 1;
+        return { hash: node1.hash, key: newRoot.key, val: newRoot.val };
       } else {
-        return { hash: node1.hash, collision: newCol };
+        intersectionSize += newRoot.size;
+        return { hash: node1.hash, collision: newRoot };
       }
     }
 
