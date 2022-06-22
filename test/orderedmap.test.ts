@@ -684,4 +684,63 @@ describe("Ordered Map", () => {
     const interWithItself2 = imMap1.intersection(imMap1);
     expect(interWithItself2).is.equal(imMap1);
   });
+
+  it("splits a map on an existing key", () => {
+    const { ordMap, jsMap } = createMap(1000, mkNumKeyGenerator(5000));
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const [kToSplit, vToSplit] = ordMap.toAscLazySeq().drop(300).head()!;
+
+    const s = ordMap.split(kToSplit);
+
+    checkMapBalanceAndSize(s.below);
+    checkMapBalanceAndSize(s.above);
+
+    expect(s.val).to.equal(vToSplit);
+
+    // construct expected jsMaps
+    const jsBelow = new Map<string, [number, string]>();
+    const jsAbove = new Map<string, [number, string]>();
+    for (const [kS, [k, v]] of jsMap) {
+      if (k < kToSplit) {
+        jsBelow.set(kS, [k, v]);
+      } else if (k === kToSplit) {
+        // is in
+      } else {
+        jsAbove.set(kS, [k, v]);
+      }
+    }
+
+    expectEqual(s.above, jsAbove);
+    expectEqual(s.below, jsBelow);
+  });
+
+  it("splits a map on a non-existing key", () => {
+    const keygen = mkNumKeyGenerator(5000);
+    // make all keys even
+    const { ordMap, jsMap } = createMap(1000, () => keygen() * 2);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const kToSplit = ordMap.keysToAscLazySeq().drop(300).head()!;
+
+    // split on an odd
+    const s = ordMap.split(kToSplit + 1);
+
+    checkMapBalanceAndSize(s.below);
+    checkMapBalanceAndSize(s.above);
+
+    expect(s.val).to.be.undefined;
+
+    // construct expected jsMaps
+    const jsBelow = new Map<string, [number, string]>();
+    const jsAbove = new Map<string, [number, string]>();
+    for (const [kS, [k, v]] of jsMap) {
+      if (k <= kToSplit) {
+        jsBelow.set(kS, [k, v]);
+      } else {
+        jsAbove.set(kS, [k, v]);
+      }
+    }
+
+    expectEqual(s.above, jsAbove);
+    expectEqual(s.below, jsBelow);
+  });
 });
