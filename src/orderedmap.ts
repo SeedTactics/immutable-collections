@@ -2,6 +2,7 @@ import { LazySeq } from "./lazyseq.js";
 import { ComparisionConfig, mkComparisonConfig, OrderedMapKey } from "./comparison.js";
 import { TreeNode } from "./rotations.js";
 import {
+  adjust,
   build,
   collectValues,
   difference,
@@ -138,19 +139,19 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
 
   // TODO: min/max values: lookupMin, lookupMax, deleteMin, deleteMax, updateMin, updateMax, minView, maxView
 
-  mapValues(f: (v: V, k: K) => V): OrderedMap<K, V> {
+  mapValues<V2>(f: (v: V, k: K) => V2): OrderedMap<K, V2> {
     const newRoot = mapValues(f, this.root);
     if (newRoot === this.root) {
-      return this;
+      return this as unknown as OrderedMap<K, V2>;
     } else {
       return new OrderedMap(this.cfg, newRoot);
     }
   }
 
-  collectValues(f: (v: V, k: K) => V | null | undefined): OrderedMap<K, V> {
-    const newRoot = collectValues(f as (v: V, k: K) => V | undefined, true, this.root);
+  collectValues<V2>(f: (v: V, k: K) => V2 | null | undefined): OrderedMap<K, V2> {
+    const newRoot = collectValues(f as (v: V, k: K) => V2 | undefined, true, this.root);
     if (newRoot === this.root) {
-      return this;
+      return this as unknown as OrderedMap<K, V2>;
     } else {
       return new OrderedMap(this.cfg, newRoot);
     }
@@ -188,8 +189,8 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     }
   }
 
-  difference<V2>(other: OrderedMap<K, V2>, merge?: (vThis: V, vOther: V2, k: K) => V | undefined): OrderedMap<K, V> {
-    const newRoot = difference(this.cfg, merge ?? (() => undefined), this.root, other.root);
+  difference<V2>(other: OrderedMap<K, V2>): OrderedMap<K, V> {
+    const newRoot = difference(this.cfg, this.root, other.root);
     if (newRoot === this.root) {
       return this;
     } else {
@@ -198,6 +199,18 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
   }
 
   // TODO: withoutKeys(other: OrderedSet<K>): OrderedMap<K, V>  can just use difference once OrderedSet is defined
+
+  adjust<V2>(
+    keysToAdjust: OrderedMap<K, V2>,
+    adjustVal: (existingVal: V | undefined, helperVal: V2, k: K) => V | undefined
+  ): OrderedMap<K, V> {
+    const newRoot = adjust(this.cfg, adjustVal, this.root, keysToAdjust.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedMap(this.cfg, newRoot);
+    }
+  }
 
   // Creating new maps
 

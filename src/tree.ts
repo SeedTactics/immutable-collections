@@ -265,14 +265,21 @@ export function foldr<K, V, T>(f: (k: K, v: V, acc: T) => T, zero: T, root: Tree
   return acc;
 }
 
-export function mapValues<K, V>(f: (v: V, k: K) => V, root: TreeNode<K, V> | undefined): TreeNode<K, V> | undefined {
-  function loop(n: TreeNode<K, V> | undefined): TreeNode<K, V> | undefined {
+export function mapValues<K, V1, V2>(
+  f: (v: V1, k: K) => V2,
+  root: TreeNode<K, V1> | undefined
+): TreeNode<K, V2> | undefined {
+  function loop(n: TreeNode<K, V1> | undefined): TreeNode<K, V2> | undefined {
     if (!n) return undefined;
     const newLeft = loop(n.left);
     const newVal = f(n.val, n.key);
     const newRight = loop(n.right);
-    if (newVal === n.val && newLeft === n.left && newRight === n.right) {
-      return n;
+
+    // typescript won't let us compare V1 with V2, but if the types V1 are equal to V2 and the values are equal, we want to
+    // return the tree unchanged.
+    if ((newVal as unknown) === (n.val as unknown) && newLeft === n.left && newRight === n.right) {
+      // if the values are equal, the types must be equal as well
+      return n as unknown as TreeNode<K, V2>;
     } else {
       return { key: n.key, val: newVal, size: n.size, left: newLeft, right: newRight };
     }
@@ -281,20 +288,24 @@ export function mapValues<K, V>(f: (v: V, k: K) => V, root: TreeNode<K, V> | und
   return loop(root);
 }
 
-export function collectValues<K, V>(
-  f: (v: V, k: K) => V | undefined,
+export function collectValues<K, V1, V2>(
+  f: (v: V1, k: K) => V2 | undefined,
   filterNull: boolean,
-  root: TreeNode<K, V> | undefined
-): TreeNode<K, V> | undefined {
-  function loop(n: TreeNode<K, V> | undefined): TreeNode<K, V> | undefined {
+  root: TreeNode<K, V1> | undefined
+): TreeNode<K, V2> | undefined {
+  function loop(n: TreeNode<K, V1> | undefined): TreeNode<K, V2> | undefined {
     if (!n) return undefined;
     const newLeft = loop(n.left);
     const newVal = f(n.val, n.key);
     const newRight = loop(n.right);
     if (newVal === undefined || (filterNull && newVal === null)) {
       return glueDifferentSizes(newLeft, newRight);
-    } else if (newVal === n.val && newLeft === n.left && newRight === n.right) {
-      return n;
+    }
+    // typescript won't let us compare V1 with V2, but if the types V1 are equal to V2 and the values are equal, we want to
+    // return the tree unchanged.
+    else if ((newVal as unknown) === (n.val as unknown) && newLeft === n.left && newRight === n.right) {
+      // if the values are equal, the types must be equal as well
+      return n as unknown as TreeNode<K, V2>;
     } else {
       return combineDifferentSizes(newLeft, n.key, newVal, newRight);
     }
@@ -393,13 +404,45 @@ export function intersection<K, V>(
 
 export function difference<K, V1, V2>(
   cfg: ComparisionConfig<K>,
-  f: (v1: V1, v2: V2, k: K) => V1 | undefined,
   root1: TreeNode<K, V1> | undefined,
   root2: TreeNode<K, V2> | undefined
 ): TreeNode<K, V1> | undefined {
   function loop(n1: TreeNode<K, V1> | undefined, n2: TreeNode<K, V2> | undefined): TreeNode<K, V1> | undefined {
     if (!n1) return undefined;
     if (!n2) return n1;
+
+    const s = split(cfg, n1.key, n2);
+    const newLeft = loop(n1.left, s.below);
+    const newRight = loop(n1.right, s.above);
+
+    if (s.val !== undefined) {
+      // remove node
+      return glueDifferentSizes(newLeft, newRight);
+    } else {
+      if (newLeft === n1.left && newRight === n1.right) {
+        return n1;
+      } else {
+        return combineDifferentSizes(newLeft, n1.key, n1.val, newRight);
+      }
+    }
+  }
+
+  return loop(root1, root2);
+}
+
+export function adjust<K, V1, V2>(
+  cfg: ComparisionConfig<K>,
+  f: (v1: V1 | undefined, v2: V2, k: K) => V1 | undefined,
+  root1: TreeNode<K, V1> | undefined,
+  root2: TreeNode<K, V2> | undefined
+): TreeNode<K, V1> | undefined {
+  function fWithUndefined(v2: V2, k: K): V1 | undefined {
+    return f(undefined, v2, k);
+  }
+
+  function loop(n1: TreeNode<K, V1> | undefined, n2: TreeNode<K, V2> | undefined): TreeNode<K, V1> | undefined {
+    if (!n2) return n1;
+    if (!n1) return collectValues(fWithUndefined, false, n2);
 
     const s = split(cfg, n1.key, n2);
     const newLeft = loop(n1.left, s.below);

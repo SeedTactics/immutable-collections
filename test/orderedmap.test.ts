@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
 import { mkComparisonConfig, OrderedMapKey } from "../src/comparison.js";
@@ -128,6 +129,12 @@ function expectEqual<K extends OrderedMapKey, V>(ordMap: OrderedMap<K, V>, jsMap
   expect(foldrCnt).to.equal(jsMap.size);
   expect(foldrEntries).to.deep.equal(revEntries);
 }
+
+type AdjustType =
+  | { type: "delete" }
+  | { type: "leave unchanged" }
+  | { type: "mergeWith"; val: string | null }
+  | { type: "expect missing"; val: string | null };
 
 describe("Ordered Map", () => {
   it("creates an empty map", () => {
@@ -687,7 +694,6 @@ describe("Ordered Map", () => {
 
   it("splits a map on an existing key", () => {
     const { ordMap, jsMap } = createMap(1000, mkNumKeyGenerator(5000));
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const [kToSplit, vToSplit] = ordMap.toAscLazySeq().drop(300).head()!;
 
     const s = ordMap.split(kToSplit);
@@ -718,7 +724,6 @@ describe("Ordered Map", () => {
     const keygen = mkNumKeyGenerator(5000);
     // make all keys even
     const { ordMap, jsMap } = createMap(1000, () => keygen() * 2);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const kToSplit = ordMap.keysToAscLazySeq().drop(300).head()!;
 
     // split on an odd
@@ -742,5 +747,176 @@ describe("Ordered Map", () => {
 
     expectEqual(s.above, jsAbove);
     expectEqual(s.below, jsBelow);
+  });
+
+  it("computes difference", () => {
+    function* diffValues(): Generator<
+      { map1K: number; map1V: string | null } | { map2K: number; map2V: { foo: number } }
+    > {
+      // want a bunch of keys in both maps
+      const keygen = mkNumKeyGenerator(10_000);
+      for (let i = 0; i < 2000; i++) {
+        // keys are multiple of three
+        const k = keygen() * 3;
+        yield { map1K: k, map1V: randomNullableStr() };
+        yield { map2K: k, map2V: { foo: Math.random() } };
+      }
+
+      // want a bunch of keys in distinct in each map
+      for (let i = 0; i < 2000; i++) {
+        // to keep distinct, use keys congruent to 1 mod 3 and 2 mod 3
+        const k = keygen();
+        yield { map1K: k * 3 + 1, map1V: randomNullableStr() };
+        yield { map2K: k * 3 + 2, map2V: { foo: Math.random() } };
+      }
+    }
+
+    // create the maps
+    let imMap1 = OrderedMap.empty<number, string | null>();
+    let imMap2 = OrderedMap.empty<number, { foo: number }>();
+    const jsMap1 = new Map<string, [number, string | null]>();
+    const jsKeys2 = new Set<number>();
+    for (const x of diffValues()) {
+      if ("map1K" in x) {
+        imMap1 = imMap1.set(x.map1K, x.map1V);
+        const kS = x.map1K.toString();
+        jsMap1.set(kS, [x.map1K, x.map1V]);
+      } else {
+        imMap2 = imMap2.set(x.map2K, x.map2V);
+        jsKeys2.add(x.map2K);
+      }
+    }
+
+    deepFreeze(imMap1);
+    deepFreeze(imMap2);
+    checkMapBalanceAndSize(imMap1);
+    checkMapBalanceAndSize(imMap2);
+
+    // update jsMap1 to be the difference
+    for (const k2 of jsKeys2) {
+      jsMap1.delete(k2.toString());
+    }
+
+    const imDiff = imMap1.difference(imMap2);
+    expectEqual(imDiff, jsMap1);
+
+    checkMapBalanceAndSize(imDiff);
+  });
+
+  it("difference with itself is the empty map", () => {
+    const { ordMap } = createMap(500, mkNumKeyGenerator(5000));
+
+    const empty = ordMap.difference(ordMap);
+
+    checkMapBalanceAndSize(empty);
+    expectEqual(empty, new Map());
+  });
+
+  it("difference with the empty map is unchanged", () => {
+    const { ordMap } = createMap(500, mkNumKeyGenerator(5000));
+
+    const diff = ordMap.difference(OrderedMap.empty());
+    expect(diff).to.equal(ordMap);
+  });
+
+  it("adjusts a map", () => {
+    function* adjValues(): Generator<{ map1K: number; map1V: string | null } | { map2K: number; map2V: AdjustType }> {
+      const keygen = mkNumKeyGenerator(10_000);
+
+      // want a bunch of keys to be deleted
+      for (let i = 0; i < 500; i++) {
+        const k = keygen() * 5;
+        yield { map1K: k, map1V: randomNullableStr() };
+        yield { map2K: k, map2V: { type: "delete" } };
+      }
+
+      // want a bunch of keys to be merged
+      for (let i = 0; i < 500; i++) {
+        const k = keygen() * 5 + 1;
+        yield { map1K: k, map1V: randomNullableStr() };
+        yield { map2K: k, map2V: { type: "mergeWith", val: randomNullableStr() } };
+      }
+
+      // want a bunch of keys to be left unchanged
+      for (let i = 0; i < 500; i++) {
+        const k = keygen() * 5 + 2;
+        yield { map1K: k, map1V: randomNullableStr() };
+        yield { map2K: k, map2V: { type: "leave unchanged" } };
+      }
+
+      // want a bunch of keys in map1 to not appear in keysToAdjust
+      for (let i = 0; i < 500; i++) {
+        const k = keygen() * 5 + 3;
+        yield { map1K: k, map1V: randomNullableStr() };
+      }
+
+      // want a bunch of keys only in map2
+      for (let i = 0; i < 500; i++) {
+        const k = keygen() * 5 + 4;
+        yield { map2K: k, map2V: { type: "expect missing", val: randomNullableStr() } };
+      }
+    }
+
+    // create the maps
+    let imMap1 = OrderedMap.empty<number, string | null>();
+    let imMap2 = OrderedMap.empty<number, AdjustType>();
+    const jsMap1 = new Map<string, [number, string | null]>();
+    const jsMap2 = new Map<number, AdjustType>();
+    for (const x of adjValues()) {
+      if ("map1K" in x) {
+        imMap1 = imMap1.set(x.map1K, x.map1V);
+        const kS = x.map1K.toString();
+        jsMap1.set(kS, [x.map1K, x.map1V]);
+      } else {
+        imMap2 = imMap2.set(x.map2K, x.map2V);
+        jsMap2.set(x.map2K, x.map2V);
+      }
+    }
+
+    deepFreeze(imMap1);
+    deepFreeze(imMap2);
+    checkMapBalanceAndSize(imMap1);
+    checkMapBalanceAndSize(imMap2);
+
+    // update jsMap1 to be the difference
+    for (const [k2, adj2] of jsMap2) {
+      switch (adj2.type) {
+        case "delete":
+          jsMap1.delete(k2.toString());
+          break;
+        case "mergeWith": {
+          const kS = k2.toString();
+          const [oldK, oldV] = jsMap1.get(kS)!;
+          jsMap1.set(kS, [oldK, combineNullableStr(oldV, adj2.val)]);
+          break;
+        }
+        case "expect missing": {
+          const kS = k2.toString();
+          expect(jsMap1.has(kS)).to.be.false;
+          jsMap1.set(kS, [k2, adj2.val]);
+        }
+        // do nothing on type === "leave unchanged"
+      }
+    }
+
+    const imDiff = imMap1.adjust(imMap2, (oldVal, adj, k) => {
+      expect(adj).to.equal(jsMap2.get(k));
+      switch (adj.type) {
+        case "delete":
+          expect(oldVal).not.to.be.undefined;
+          return undefined;
+        case "expect missing":
+          expect(oldVal).to.be.undefined;
+          return adj.val;
+        case "leave unchanged":
+          expect(oldVal).not.to.be.undefined;
+          return oldVal;
+        case "mergeWith":
+          return combineNullableStr(oldVal!, adj.val);
+      }
+    });
+
+    expectEqual(imDiff, jsMap1);
+    checkMapBalanceAndSize(imDiff);
   });
 });
