@@ -29,9 +29,35 @@ function combineNullableStr(a: string | null, b: string | null): string | null {
 }
 
 function mkNumKeyGenerator(size: number, offset?: number): () => number {
-  return () => {
-    return Math.floor(Math.random() * size) + (offset === undefined ? 0 : offset);
-  };
+  const n = Math.random();
+  if (n < 0.33) {
+    // balanced
+    return () => {
+      return Math.floor(Math.random() * size) + (offset === undefined ? 0 : offset);
+    };
+  } else if (n < 0.66) {
+    // more small numbers than large
+    return () => {
+      if (Math.random() < 0.8) {
+        // small number
+        return Math.floor((Math.random() * size) / 2) + (offset === undefined ? 0 : offset);
+      } else {
+        // large number
+        return Math.floor((Math.random() * size) / 2) + size / 2 + (offset === undefined ? 0 : offset);
+      }
+    };
+  } else {
+    // more large numbers than small
+    return () => {
+      if (Math.random() < 0.2) {
+        // small number
+        return Math.floor((Math.random() * size) / 2) + (offset === undefined ? 0 : offset);
+      } else {
+        // large number
+        return Math.floor((Math.random() * size) / 2) + size / 2 + (offset === undefined ? 0 : offset);
+      }
+    };
+  }
 }
 
 function createMap<K extends OrderedMapKey>(size: number, key: () => K): OrderedMapAndJsMap<K, string> {
@@ -153,7 +179,7 @@ describe("Ordered Map", () => {
   });
 
   it("leaves map unchanged when setting the same value", () => {
-    const { ordMap } = createMap(10000, () => Math.floor(Math.random() * 10000));
+    const { ordMap } = createMap(10_000, mkNumKeyGenerator(20_000));
 
     for (const [k, v] of ordMap.toAscLazySeq().take(4000)) {
       const newM = ordMap.set(k, v);
@@ -174,7 +200,7 @@ describe("Ordered Map", () => {
   });
 
   it("overwrites values", () => {
-    const { ordMap, jsMap } = createMap(5000, () => Math.floor(Math.random() * 10000));
+    const { ordMap, jsMap } = createMap(5000, mkNumKeyGenerator(10_000));
 
     let newM = ordMap;
     const newJsMap = new Map(jsMap);
@@ -187,7 +213,7 @@ describe("Ordered Map", () => {
   });
 
   it("updates values", () => {
-    const { ordMap, jsMap } = createMap(5000, () => Math.floor(Math.random() * 10000));
+    const { ordMap, jsMap } = createMap(5000, mkNumKeyGenerator(10_000));
 
     let newM = ordMap;
     const newJsMap = new Map(jsMap);
@@ -275,7 +301,7 @@ describe("Ordered Map", () => {
   });
 
   it("deletes from OrderedMap", () => {
-    const { ordMap, jsMap } = createMap(5000, () => Math.floor(Math.random() * 10_000));
+    const { ordMap, jsMap } = createMap(5000, mkNumKeyGenerator(10_000));
 
     let newM = ordMap;
     const newJsMap = new Map(jsMap);
@@ -304,7 +330,7 @@ describe("Ordered Map", () => {
   });
 
   it("maps values in an OrderedMap", () => {
-    const { ordMap, jsMap } = createMap(5000, () => Math.floor(Math.random() * 10_000));
+    const { ordMap, jsMap } = createMap(5000, mkNumKeyGenerator(10_000));
 
     const newM = ordMap.mapValues((v, k) => v + "!!!" + k.toString());
     const newJsMap = new Map<string, [number, string]>();
@@ -318,14 +344,14 @@ describe("Ordered Map", () => {
   });
 
   it("leaves map unchanged when mapping the same value", () => {
-    const { ordMap } = createMap(5000, () => Math.floor(Math.random() * 10_000));
+    const { ordMap } = createMap(5000, mkNumKeyGenerator(10_000));
 
     const newM = ordMap.mapValues((v) => v);
     expect(newM).to.equal(ordMap);
   });
 
   it("only maps some of the values", () => {
-    const { ordMap, jsMap } = createMap(5000, () => Math.floor(Math.random() * 10_000));
+    const { ordMap, jsMap } = createMap(5000, mkNumKeyGenerator(10_000));
 
     const newJsMap = new Map(jsMap);
     const newImMap = ordMap.mapValues((v, k) => {
@@ -350,7 +376,7 @@ describe("Ordered Map", () => {
   });
 
   it("collects values in an ImMap", () => {
-    const { ordMap, jsMap } = createMap(5000, () => Math.floor(Math.random() * 10_000));
+    const { ordMap, jsMap } = createMap(5000, mkNumKeyGenerator(10_000));
 
     const newM = ordMap.collectValues((v, k) => v + "!!!" + k.toString());
     const newJsMap = new Map<string, [number, string]>();
@@ -363,14 +389,14 @@ describe("Ordered Map", () => {
   });
 
   it("leaves map unchanged when collecting the same value", () => {
-    const { ordMap } = createMap(5000, () => Math.floor(Math.random() * 10_000));
+    const { ordMap } = createMap(5000, mkNumKeyGenerator(10_000));
 
     const newM = ordMap.collectValues((v) => v);
     expect(newM).to.equal(ordMap);
   });
 
   it("only collects some of the values", () => {
-    const { ordMap, jsMap } = createMap(5000, () => Math.floor(Math.random() * 10_000));
+    const { ordMap, jsMap } = createMap(5000, mkNumKeyGenerator(10_000));
 
     const newJsMap = new Map(jsMap);
     const newM = ordMap.collectValues((v, k) => {
@@ -394,7 +420,7 @@ describe("Ordered Map", () => {
   });
 
   it("returns the empty tree when collecting everything", () => {
-    const { ordMap } = createMap(5000, () => Math.floor(Math.random() * 10_000));
+    const { ordMap } = createMap(5000, mkNumKeyGenerator(10_000));
 
     const newM = ordMap.collectValues(() => null);
     expectEqual(newM, new Map());
@@ -444,7 +470,7 @@ describe("Ordered Map", () => {
     expect(filterNone).to.equal(imMap);
   });
 
-  it("returns empty if everyhing filtered", () => {
+  it("returns empty if everything filtered", () => {
     let imMap = OrderedMap.empty<number, string | null>();
     for (let i = 0; i < 1000; i++) {
       const k = Math.floor(Math.random() * 3000);
@@ -465,37 +491,37 @@ describe("Ordered Map", () => {
       { map1K: number; map1V: string | null } | { map2K: number; map2V: string | null }
     > {
       // want a bunch of keys in both maps
+      const keygen = mkNumKeyGenerator(10_000);
       for (let i = 0; i < 2000; i++) {
-        const k = Math.floor(Math.random() * 10_000);
+        // keys are multiple of three
+        const k = keygen() * 3;
         yield { map1K: k, map1V: randomNullableStr() };
         yield { map2K: k, map2V: randomNullableStr() };
       }
 
       // want a bunch of keys in distinct in each map
       for (let i = 0; i < 2000; i++) {
-        const k = Math.floor(Math.random() * 10_000);
-        yield { map1K: k, map1V: randomNullableStr() };
-        yield { map2K: k, map2V: randomNullableStr() };
+        // to keep distinct, use keys congruent to 1 mod 3 and 2 mod 3
+        const k = keygen();
+        yield { map1K: k * 3 + 1, map1V: randomNullableStr() };
+        yield { map2K: k * 3 + 2, map2V: randomNullableStr() };
       }
     }
 
-    // create the maps and the expected union
+    // create the maps
     let imMap1 = OrderedMap.empty<number, string | null>();
     let imMap2 = OrderedMap.empty<number, string | null>();
-    const jsUnion = new Map<string, [number, string | null]>();
+    const jsMap1 = new Map<string, [number, string | null]>();
+    const jsMap2 = new Map<string, [number, string | null]>();
     for (const x of unionValues()) {
       if ("map1K" in x) {
         imMap1 = imMap1.set(x.map1K, x.map1V);
-        jsUnion.set(x.map1K.toString(), [x.map1K, x.map1V]);
+        const kS = x.map1K.toString();
+        jsMap1.set(kS, [x.map1K, x.map1V]);
       } else {
         imMap2 = imMap2.set(x.map2K, x.map2V);
         const kS = x.map2K.toString();
-        const old = jsUnion.get(kS);
-        if (old) {
-          jsUnion.set(kS, [x.map2K, combineNullableStr(old[1], x.map2V)]);
-        } else {
-          jsUnion.set(kS, [x.map2K, x.map2V]);
-        }
+        jsMap2.set(kS, [x.map2K, x.map2V]);
       }
     }
 
@@ -504,8 +530,18 @@ describe("Ordered Map", () => {
     checkMapBalanceAndSize(imMap1);
     checkMapBalanceAndSize(imMap2);
 
+    // create the union into jsMap1
+    for (const [kS, [k, v]] of jsMap2) {
+      const old = jsMap1.get(kS);
+      if (old) {
+        jsMap1.set(kS, [k, combineNullableStr(old[1], v)]);
+      } else {
+        jsMap1.set(kS, [k, v]);
+      }
+    }
+
     const imUnion = imMap1.union(imMap2, combineNullableStr);
-    expectEqual(imUnion, jsUnion);
+    expectEqual(imUnion, jsMap1);
 
     checkMapBalanceAndSize(imUnion);
 
@@ -517,7 +553,7 @@ describe("Ordered Map", () => {
   it("unions three maps", () => {
     const maps = Array<OrderedMapAndJsMap<number, string>>();
     for (let i = 0; i < 3; i++) {
-      maps.push(createMap(100 + i * 1000, () => Math.floor(Math.random() * 5000)));
+      maps.push(createMap(100 + i * 1000, mkNumKeyGenerator(5000)));
       // add an empty map, which should be filtered out
       maps.push({
         ordMap: OrderedMap.empty<number, string>(),
@@ -545,9 +581,9 @@ describe("Ordered Map", () => {
   });
 
   it("unions a small map with a big map", () => {
-    const bigMap = createMap(5000, () => Math.floor(Math.random() * 3000));
+    const bigMap = createMap(5000, mkNumKeyGenerator(10_000));
 
-    const smallMap = createMap(5, () => Math.floor(Math.random() * 3000) + 10_000);
+    const smallMap = createMap(10, mkNumKeyGenerator(10_000));
 
     const jsUnion = new Map(bigMap.jsMap);
     for (const [k, v] of smallMap.jsMap) {
@@ -558,7 +594,7 @@ describe("Ordered Map", () => {
     expectEqual(bigOnLeft, jsUnion);
     checkMapBalanceAndSize(bigOnLeft);
 
-    const bigOnRight = smallMap.ordMap.union(bigMap.ordMap);
+    const bigOnRight = smallMap.ordMap.union(bigMap.ordMap, (s) => s);
     expectEqual(bigOnRight, jsUnion);
     checkMapBalanceAndSize(bigOnRight);
   });
@@ -597,18 +633,18 @@ describe("Ordered Map", () => {
       | { map2K: number; map2V: string | null }
       | { both: number; val1: string | null; val2: string | null }
     > {
+      const keygen = mkNumKeyGenerator(10_000);
       // want a bunch of keys in both maps
       for (let i = 0; i < 2000; i++) {
-        const k = Math.floor(Math.random() * 10_000);
+        const k = keygen() * 3;
         yield { both: k, val1: randomNullableStr(), val2: randomNullableStr() };
       }
 
       // want a bunch of keys in distinct in each map
       for (let i = 0; i < 2000; i++) {
-        const k1 = Math.floor(Math.random() * 10_000 + 20_000);
-        const k2 = Math.floor(Math.random() * 10_000 + 40_000);
-        yield { map1K: k1, map1V: randomNullableStr() };
-        yield { map2K: k2, map2V: randomNullableStr() };
+        const k = keygen();
+        yield { map1K: k * 3 + 1, map1V: randomNullableStr() };
+        yield { map2K: k * 3 + 2, map2V: randomNullableStr() };
       }
     }
 
