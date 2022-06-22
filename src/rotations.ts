@@ -9,8 +9,8 @@ the functions differ on the assumption of the relative sizes of the left vs righ
 
 First, if you want to combine a left tree, a (key, val), and a right tree, use one of the following:
 
-- combineAfterLeftIncrease: use if the left tree has only grown and/or the right tree has only gotten smaller.
-- combineAfterRightIncrease: use if the right tree has only grown and/or the left tree has only gotten smaller.
+- combineAfterLeftIncrease: use if the left tree has only grown and/or the right tree has only gotten smaller by 1.
+- combineAfterRightIncrease: use if the right tree has only grown and/or the left tree has only gotten smaller by 1.
 - combineAfterInsertOrRemove: use if the sizes of the left or right subtrees has changed by at most 1.
 - combineDifferentSizes: use if the sizes of the left and right subtrees differ by any amount.
 
@@ -417,7 +417,7 @@ export function glueDifferentSizes<K, V>(
   return glueSizeBalanced(left, right);
 }
 
-function mutateSingleL<K, V>(node: MutableNode<K, V>): MutableNode<K, V> {
+function mutateRotateLeft<K, V>(node: MutableNode<K, V>): MutableNode<K, V> {
   // right will become the new root
   const right = node.right!;
   const oldRightSize = right.size;
@@ -432,7 +432,7 @@ function mutateSingleL<K, V>(node: MutableNode<K, V>): MutableNode<K, V> {
   return right;
 }
 
-function mutateSingleR<K, V>(node: MutableNode<K, V>): MutableNode<K, V> {
+function mutateRotateRight<K, V>(node: MutableNode<K, V>): MutableNode<K, V> {
   // left will become the new root
   const left = node.left!;
   const oldLeftSize = left.size;
@@ -455,11 +455,11 @@ export function mutateBalanceAfterLeftIncrease<K, V>(node: MutableNode<K, V>): M
     const llSize = node.left!.left?.size ?? 0;
     const lrSize = node.left!.right?.size ?? 0;
     if (lrSize < ratio * llSize) {
-      return mutateSingleR(node);
+      return mutateRotateRight(node);
     } else {
       // double rotation
-      node.left = mutateSingleL(node.left!);
-      return mutateSingleR(node);
+      node.left = mutateRotateLeft(node.left!);
+      return mutateRotateRight(node);
     }
   }
 
@@ -474,11 +474,11 @@ export function mutateBalanceAfterRightIncrease<K, V>(node: MutableNode<K, V>): 
     const rlSize = node.right!.left?.size ?? 0;
     const rrSize = node.right!.right?.size ?? 0;
     if (rlSize < ratio * rrSize) {
-      return mutateSingleL(node);
+      return mutateRotateLeft(node);
     } else {
       // double rotation
-      node.right = mutateSingleR(node.right!);
-      return mutateSingleL(node);
+      node.right = mutateRotateRight(node.right!);
+      return mutateRotateLeft(node);
     }
   }
 
