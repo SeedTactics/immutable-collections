@@ -1,5 +1,7 @@
+/* Copyright John Lenz, BSD license, see LICENSE file for details */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/unbound-method */
+
 import { expect } from "chai";
 import { insert, iterateAsc, iterateDesc, lookup, remove } from "../src/tree.js";
 import { checkBalanceAndSize } from "./check-balance.js";

@@ -1,3 +1,5 @@
+/* Copyright John Lenz, BSD license, see LICENSE file for details */
+
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
 import { HashKey } from "../src/hashing.js";

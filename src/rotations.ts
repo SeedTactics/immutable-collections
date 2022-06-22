@@ -1,3 +1,5 @@
+/* Copyright John Lenz, BSD license, see LICENSE file for details */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 /*

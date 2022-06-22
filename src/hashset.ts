@@ -1,3 +1,5 @@
+/* Copyright John Lenz, BSD license, see LICENSE file for details */
+
 import { HashConfig, HashKey } from "./hashing.js";
 import { LazySeq } from "./lazyseq.js";
 import { mkHashConfig } from "./hashing.js";

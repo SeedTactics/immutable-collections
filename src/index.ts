@@ -1,3 +1,5 @@
+/* Copyright John Lenz, BSD license, see LICENSE file for details */
+
 export { HashKey, HashableObj, isHashableObj, hashValues } from "./hashing.js";
 export {
   mkCompareByProperties,

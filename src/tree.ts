@@ -1,3 +1,5 @@
+/* Copyright John Lenz, BSD license, see LICENSE file for details */
+
 import { ComparisionConfig } from "./comparison.js";
 import {
   combineAfterInsertOrRemove,

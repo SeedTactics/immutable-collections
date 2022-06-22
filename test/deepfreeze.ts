@@ -1,3 +1,5 @@
+/* Copyright John Lenz, BSD license, see LICENSE file for details */
+
 export function deepFreeze<T extends object>(object: T): T {
   const propNames = Object.getOwnPropertyNames(object);
   for (const name of propNames) {

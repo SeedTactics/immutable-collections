@@ -1,3 +1,5 @@
+/* Copyright John Lenz, BSD license, see LICENSE file for details */
+
 export type ComparableObj = {
   compare(other: ComparableObj): number;
 };

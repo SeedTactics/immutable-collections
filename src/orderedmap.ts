@@ -1,3 +1,5 @@
+/* Copyright John Lenz, BSD license, see LICENSE file for details */
+
 import { LazySeq } from "./lazyseq.js";
 import { ComparisionConfig, mkComparisonConfig, OrderedMapKey } from "./comparison.js";
 import { TreeNode } from "./rotations.js";

@@ -1,3 +1,5 @@
+/* Copyright John Lenz, BSD license, see LICENSE file for details */
+
 import { TreeNode } from "../src/rotations.js";
 import { expect } from "chai";
 import { ComparisionConfig, OrderedMapKey } from "../src/comparison.js";

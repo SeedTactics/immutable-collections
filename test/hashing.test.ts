@@ -1,4 +1,6 @@
+/* Copyright John Lenz, BSD license, see LICENSE file for details */
 /* eslint-disable @typescript-eslint/unbound-method */
+
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
 import { hashValues, isHashableObj, mkHashConfig } from "../src/hashing.js";

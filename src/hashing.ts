@@ -1,3 +1,5 @@
+/* Copyright John Lenz, BSD license, see LICENSE file for details */
+
 import { ComparableObj, ComparisionConfig, dateCompare, objCompare, primCompare, stringCompare } from "./comparison.js";
 
 export type HashableObj = {

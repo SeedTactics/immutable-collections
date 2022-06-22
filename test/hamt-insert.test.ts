@@ -1,3 +1,5 @@
+/* Copyright John Lenz, BSD license, see LICENSE file for details */
+
 import { expect } from "chai";
 import { CollidingKey as Key } from "./collision-key.js";
 import { mkHashConfig } from "../src/hashing.js";

@@ -1,3 +1,5 @@
+/* Copyright John Lenz, BSD license, see LICENSE file for details */
+
 import { mkCompareByProperties } from "../src/comparison.js";
 
 // a key type that can generate hash collisions
