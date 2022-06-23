@@ -1,8 +1,8 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
-import { LazySeq } from "./lazyseq.js";
-import { ComparisionConfig, mkComparisonConfig, OrderedMapKey } from "./comparison.js";
-import { TreeNode } from "./rotations.js";
+import { LazySeq } from "../lazyseq.js";
+import { ComparisionConfig, mkComparisonConfig, OrderedMapKey } from "../data-structures/comparison.js";
+import { TreeNode } from "../data-structures/rotations.js";
 import {
   adjust,
   alter,
@@ -21,7 +21,7 @@ import {
   remove,
   split,
   union,
-} from "./tree.js";
+} from "../data-structures/tree.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 type NotUndefined = {} | null;

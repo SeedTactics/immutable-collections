@@ -1,6 +1,6 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
-import { mkCompareByProperties } from "../src/comparison.js";
+import { mkCompareByProperties } from "../src/data-structures/comparison.js";
 
 // a key type that can generate hash collisions
 export class CollidingKey {

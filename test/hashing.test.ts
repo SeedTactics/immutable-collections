@@ -3,7 +3,7 @@
 
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
-import { hashValues, isHashableObj, mkHashConfig } from "../src/hashing.js";
+import { hashValues, isHashableObj, mkHashConfig } from "../src/data-structures/hashing.js";
 
 export class IntStrKey {
   readonly i: number;

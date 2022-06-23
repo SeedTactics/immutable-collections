@@ -2,9 +2,9 @@
 
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
-import { HashKey } from "../src/hashing.js";
-import { HashMap } from "../src/hashmap.js";
-import { mkCompareByProperties } from "../src/comparison.js";
+import { HashKey } from "../src/data-structures/hashing.js";
+import { HashMap } from "../src/api/hashmap.js";
+import { mkCompareByProperties } from "../src/data-structures/comparison.js";
 import { CollidingKey, createKeyWithSameHash, distinctKeyWithHash, randomCollisionKey } from "./collision-key.js";
 import { deepFreeze } from "./deepfreeze.js";
 

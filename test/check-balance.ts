@@ -1,9 +1,9 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
-import { TreeNode } from "../src/rotations.js";
+import { TreeNode } from "../src/data-structures/rotations.js";
 import { expect } from "chai";
-import { ComparisionConfig, OrderedMapKey } from "../src/comparison.js";
-import { OrderedMap } from "../src/orderedmap.js";
+import { ComparisionConfig, OrderedMapKey } from "../src/data-structures/comparison.js";
+import { OrderedMap } from "../src/api/orderedmap.js";
 
 export function checkMapBalanceAndSize<K extends OrderedMapKey, V>(map: OrderedMap<K, V>) {
   // access private properties

@@ -1,6 +1,6 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
-export { HashKey, HashableObj, isHashableObj, hashValues } from "./hashing.js";
+export { HashKey, HashableObj, isHashableObj, hashValues } from "../data-structures/hashing.js";
 export {
   mkCompareByProperties,
   ToComparableDirection,
@@ -8,8 +8,8 @@ export {
   ComparableObj,
   isComparableObj,
   OrderedMapKey,
-} from "./comparison.js";
+} from "../data-structures/comparison.js";
 export { HashMap } from "./hashmap.js";
 export { HashSet } from "./hashset.js";
 export { OrderedMap } from "./orderedmap.js";
-export { LazySeq } from "./lazyseq.js";
+export { LazySeq } from "../lazyseq.js";

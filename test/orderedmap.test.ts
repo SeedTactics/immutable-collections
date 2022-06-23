@@ -3,9 +3,9 @@
 
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
-import { mkComparisonConfig, OrderedMapKey } from "../src/comparison.js";
+import { mkComparisonConfig, OrderedMapKey } from "../src/data-structures/comparison.js";
 import { deepFreeze } from "./deepfreeze.js";
-import { OrderedMap } from "../src/orderedmap.js";
+import { OrderedMap } from "../src/api/orderedmap.js";
 import { checkMapBalanceAndSize } from "./check-balance.js";
 import { randomCollisionKey } from "./collision-key.js";
 

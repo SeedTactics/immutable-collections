@@ -2,8 +2,8 @@
 
 import { expect } from "chai";
 import { CollidingKey as Key } from "./collision-key.js";
-import { mkHashConfig } from "../src/hashing.js";
-import { InternalNode, mutateInsert } from "../src/hamt.js";
+import { mkHashConfig } from "../src/data-structures/hashing.js";
+import { InternalNode, mutateInsert } from "../src/data-structures/hamt.js";
 import { LazySeq } from "../src/lazyseq.js";
 
 function setNewVal(str: string, val: number): (old: number | undefined, t: string) => number {

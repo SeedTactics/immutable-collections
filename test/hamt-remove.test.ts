@@ -3,8 +3,8 @@
 
 import { expect } from "chai";
 //import { faker } from "@faker-js/faker";
-import { HamtNode, insert, lookup, remove } from "../src/hamt.js";
-import { mkHashConfig } from "../src/hashing.js";
+import { HamtNode, insert, lookup, remove } from "../src/data-structures/hamt.js";
+import { mkHashConfig } from "../src/data-structures/hashing.js";
 import { LazySeq } from "../src/lazyseq.js";
 import { CollidingKey } from "./collision-key.js";
 

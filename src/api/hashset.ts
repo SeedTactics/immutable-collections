@@ -1,8 +1,8 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
-import { HashConfig, HashKey } from "./hashing.js";
-import { LazySeq } from "./lazyseq.js";
-import { mkHashConfig } from "./hashing.js";
+import { HashConfig, HashKey } from "../data-structures/hashing.js";
+import { LazySeq } from "../lazyseq.js";
+import { mkHashConfig } from "../data-structures/hashing.js";
 import {
   fold,
   HamtNode,
@@ -14,7 +14,7 @@ import {
   mutateInsert,
   remove,
   union,
-} from "./hamt.js";
+} from "../data-structures/hamt.js";
 import type { HashMap } from "./hashmap.js";
 
 function constTrue() {

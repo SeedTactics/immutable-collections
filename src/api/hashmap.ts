@@ -13,9 +13,9 @@ import {
   mutateInsert,
   remove,
   union,
-} from "./hamt.js";
-import { HashConfig, HashKey, mkHashConfig } from "./hashing.js";
-import { LazySeq } from "./lazyseq.js";
+} from "../data-structures/hamt.js";
+import { HashConfig, HashKey, mkHashConfig } from "../data-structures/hashing.js";
+import { LazySeq } from "../lazyseq.js";
 import { HashSet } from "./hashset.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-types

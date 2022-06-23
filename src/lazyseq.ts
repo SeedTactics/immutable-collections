@@ -1,8 +1,8 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
-import { HashKey } from "./hashing.js";
-import { HashMap } from "./hashmap.js";
-import { ToComparableDirection, mkCompareByProperties, ToComparable } from "./comparison.js";
+import { HashKey } from "./data-structures/hashing.js";
+import { ToComparableDirection, mkCompareByProperties, ToComparable } from "./data-structures/comparison.js";
+import { HashMap } from "./api/hashmap.js";
 
 type JsMapKey = number | string | boolean;
 

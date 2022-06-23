@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 
 import { expect } from "chai";
-import { insert, iterateAsc, iterateDesc, lookup, remove } from "../src/tree.js";
+import { insert, iterateAsc, iterateDesc, lookup, remove } from "../src/data-structures/tree.js";
 import { checkBalanceAndSize } from "./check-balance.js";
 
 const compareNum = {
