@@ -192,6 +192,36 @@ describe("Ordered Map", () => {
     expectEqual(ordMap, jsMap);
   });
 
+  it("balances the tree when adding in ascending order", () => {
+    let ordMap = OrderedMap.empty<number, string>();
+    const jsMap = new Map<string, [number, string]>();
+    for (let i = 0; i < 1000; i++) {
+      const v = faker.datatype.string();
+      ordMap = ordMap.set(i, v);
+      jsMap.set(i.toString(), [i, v]);
+    }
+
+    deepFreeze(ordMap);
+    checkMapBalanceAndSize(ordMap);
+
+    expectEqual(ordMap, jsMap);
+  });
+
+  it("balances the tree when adding in descending order", () => {
+    let ordMap = OrderedMap.empty<number, string>();
+    const jsMap = new Map<string, [number, string]>();
+    for (let i = 1000; i >= 0; i--) {
+      const v = faker.datatype.string();
+      ordMap = ordMap.set(i, v);
+      jsMap.set(i.toString(), [i, v]);
+    }
+
+    deepFreeze(ordMap);
+    checkMapBalanceAndSize(ordMap);
+
+    expectEqual(ordMap, jsMap);
+  });
+
   it("leaves map unchanged when setting the same value", () => {
     const { ordMap } = createMap(10_000, mkNumKeyGenerator(20_000));
 
@@ -301,6 +331,34 @@ describe("Ordered Map", () => {
       const k = Math.floor(Math.random() * 5000);
       const v = faker.datatype.string();
       entries[i] = [k, v];
+    }
+    const imMap = OrderedMap.from(entries);
+    const jsMap = new Map<string, [number, string]>(entries.map(([k, v]) => [k.toString(), [k, v]]));
+
+    checkMapBalanceAndSize(imMap);
+    expectEqual(imMap, jsMap);
+  });
+
+  it("creates via from in ascending order", () => {
+    const size = 1000;
+    const entries = new Array<[number, string]>(size);
+    for (let i = 0; i < size; i++) {
+      const v = faker.datatype.string();
+      entries[i] = [i, v];
+    }
+    const imMap = OrderedMap.from(entries);
+    const jsMap = new Map<string, [number, string]>(entries.map(([k, v]) => [k.toString(), [k, v]]));
+
+    checkMapBalanceAndSize(imMap);
+    expectEqual(imMap, jsMap);
+  });
+
+  it("creates via from in descending order", () => {
+    const size = 1000;
+    const entries = new Array<[number, string]>(size);
+    for (let i = size; i >= 0; i--) {
+      const v = faker.datatype.string();
+      entries[i] = [i, v];
     }
     const imMap = OrderedMap.from(entries);
     const jsMap = new Map<string, [number, string]>(entries.map(([k, v]) => [k.toString(), [k, v]]));
