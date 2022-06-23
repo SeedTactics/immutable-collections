@@ -95,14 +95,12 @@ type InternalComparisonConfig<K> = {
   -readonly [k in keyof ComparisionConfig<K>]: ComparisionConfig<K>[k];
 };
 
-export function primCompare<T extends number | string | boolean | Date>(a: T, b: T): number {
-  if (a === b) {
-    return 0;
-  } else if (a < b) {
-    return -1;
-  } else {
-    return 1;
-  }
+export function boolCompare(a: boolean, b: boolean): number {
+  return a === b ? 0 : a ? 1 : -1;
+}
+
+export function numCompare(a: number, b: number): number {
+  return a - b;
 }
 
 export function stringCompare(a: string, b: string): number {
@@ -143,8 +141,12 @@ export function mkComparisonConfig<K extends OrderedMapKey>(): ComparisionConfig
         m.compare = stringCompare as unknown as (a: K, b: K) => number;
         return;
 
-      default:
-        m.compare = primCompare as unknown as (a: K, b: K) => number;
+      case "number":
+        m.compare = numCompare as unknown as (a: K, b: K) => number;
+        return;
+
+      case "boolean":
+        m.compare = boolCompare as unknown as (a: K, b: K) => number;
         return;
     }
   }

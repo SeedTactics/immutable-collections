@@ -33,7 +33,8 @@
     "typescript": "^4.6.3"
   },
   "mocha": {
-    "loader": "ts-node/esm"
+    "loader": "ts-node/esm",
+    "slow": "2000"
   },
   "files": [
     "dist/**/*"

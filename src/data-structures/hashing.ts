@@ -1,6 +1,14 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
-import { ComparableObj, ComparisionConfig, dateCompare, objCompare, primCompare, stringCompare } from "./comparison.js";
+import {
+  ComparableObj,
+  ComparisionConfig,
+  dateCompare,
+  objCompare,
+  numCompare,
+  boolCompare,
+  stringCompare,
+} from "./comparison.js";
 
 export type HashableObj = {
   hash(): number;
@@ -129,14 +137,14 @@ export function mkHashConfig<K extends HashKey>(): HashConfig<K> {
         m.hash = stringHash as unknown as (k: K) => number;
         return;
 
-      case "boolean":
-        m.compare = primCompare as unknown as (k1: K, k2: K) => number;
-        m.hash = boolHash as unknown as (k: K) => number;
+      case "number":
+        m.compare = numCompare as unknown as (k1: K, k2: K) => number;
+        m.hash = numHash as unknown as (k: K) => number;
         return;
 
-      case "number":
-        m.compare = primCompare as unknown as (k1: K, k2: K) => number;
-        m.hash = numHash as unknown as (k: K) => number;
+      case "boolean":
+        m.compare = boolCompare as unknown as (k1: K, k2: K) => number;
+        m.hash = boolHash as unknown as (k: K) => number;
         return;
     }
   }
