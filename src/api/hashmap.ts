@@ -296,6 +296,5 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
       }
     }
   }
-
-  protected static ["@@__IMMUTABLE_KEYED__@@"]: true;
 }
+Object.defineProperty(HashMap.prototype, "@@__IMMUTABLE_KEYED__@@", { value: true });

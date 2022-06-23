@@ -39,7 +39,7 @@ function combineNullableStr(a: string | null, b: string | null): string | null {
   return a + b;
 }
 
-function createMap<K extends HashKey>(size: number, key: () => K): HashMapAndJsMap<K, string> {
+export function createMap<K extends HashKey>(size: number, key: () => K): HashMapAndJsMap<K, string> {
   let imMap = HashMap.empty<K, string>();
   const jsMap = new Map<string, [K, string]>();
 
@@ -101,7 +101,13 @@ describe("HashMap", () => {
 
     expect(m.get(100)).to.be.undefined;
     expect(m.has(100)).to.be.false;
-    expect(Array.from(m)).to.deep.equal([]);
+
+    expectEqual(m, new Map());
+  });
+
+  it("has immutable keyed property", () => {
+    const m = HashMap.empty<number, string>().set(2, "2");
+    expect(m).to.have.a.property("@@__IMMUTABLE_KEYED__@@");
   });
 
   it("creates a hash map", () => {
@@ -466,7 +472,7 @@ describe("HashMap", () => {
     expectEqual(bigOnRight, jsUnion);
   });
 
-  it("deletes from ImMap", () => {
+  it("deletes from the map", () => {
     const m = createMap(5_000, () => randomCollisionKey());
 
     let newImMap = m.imMap;
@@ -659,13 +665,19 @@ describe("HashMap", () => {
     expect(m).to.equal(imMap);
   });
 
+  it("returns unchanged when intersecting with itself", () => {
+    const { imMap } = createMap(50, randomCollisionKey);
+    const m = imMap.intersection(imMap);
+    expect(m).to.equal(imMap);
+  });
+
   it("returns empty if one side is empty from an intersection", () => {
     const { imMap } = createMap(50, randomCollisionKey);
 
     let empty = HashMap.intersection((a, b) => a + b, imMap, HashMap.empty<CollidingKey, string>());
     expectEqual(empty, new Map());
 
-    empty = HashMap.intersection((a, b) => a + b, HashMap.empty<CollidingKey, string>(), imMap);
+    empty = imMap.intersection(HashMap.empty<CollidingKey, string>());
     expectEqual(empty, new Map());
   });
 

@@ -4,6 +4,7 @@ import { HashConfig, HashKey } from "../data-structures/hashing.js";
 import { LazySeq } from "../lazyseq.js";
 import { mkHashConfig } from "../data-structures/hashing.js";
 import {
+  collectValues,
   fold,
   HamtNode,
   insert,
@@ -37,7 +38,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
 
   has(t: T): boolean {
     if (this.root === null) return false;
-    return lookup(this.cfg, this.cfg.hash(t), 0, t, this.root) === true;
+    return lookup(this.cfg, this.cfg.hash(t), 0, t, this.root) !== undefined;
   }
 
   [Symbol.iterator](): IterableIterator<T> {
@@ -95,10 +96,6 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
     }
   }
 
-  append(items: Iterable<T>) {
-    return this.union(HashSet.from(items));
-  }
-
   union(other: HashSet<T>): HashSet<T> {
     const [newRoot, intersectionSize] = union(this.cfg, constTrue, this.root, other.root);
     if (newRoot === this.root) {
@@ -118,6 +115,19 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
   }
 
   // TODO: difference
+
+  append(items: Iterable<T>): HashSet<T> {
+    return this.union(HashSet.from(items));
+  }
+
+  filter(f: (k: T) => boolean): HashSet<T> {
+    const [newRoot, newSize] = collectValues(this.root, (v, k) => (f(k) ? v : undefined), false);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new HashSet(this.cfg, newRoot, newSize);
+    }
+  }
 
   // Creating new sets
 
@@ -209,3 +219,4 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
     }
   }
 }
+Object.defineProperty(HashSet.prototype, "@@__IMMUTABLE_KEYED__@@", { value: true });

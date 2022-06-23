@@ -145,7 +145,12 @@ describe("Ordered Map", () => {
 
     expect(m.get(100)).to.be.undefined;
     expect(m.has(100)).to.be.false;
-    expect(Array.from(m)).to.deep.equal([]);
+    expectEqual(m, new Map());
+  });
+
+  it("has immutable keyed property", () => {
+    const m = OrderedMap.empty<number, string>().set(2, "2");
+    expect(m).to.have.a.property("@@__IMMUTABLE_KEYED__@@");
   });
 
   it("creates a string key map", () => {
@@ -274,6 +279,19 @@ describe("Ordered Map", () => {
 
     checkMapBalanceAndSize(newM);
     expectEqual(newM, newJsMap);
+  });
+
+  it("returns unchanged if nothing is altered", () => {
+    const { ordMap } = createMap(1000, mkNumKeyGenerator(10_000));
+
+    const k = ordMap.keysToAscLazySeq().drop(200).head()!;
+    const v = ordMap.get(k)!;
+    const m = ordMap.alter(k, (existingV) => {
+      expect(existingV).to.equal(v);
+      return v;
+    });
+
+    expect(m).to.equal(ordMap);
   });
 
   it("creates via from", () => {
@@ -959,5 +977,25 @@ describe("Ordered Map", () => {
 
     expectEqual(imDiff, jsMap1);
     checkMapBalanceAndSize(imDiff);
+  });
+
+  it("returns unchanged if nothing adjusted", () => {
+    const { ordMap } = createMap(1000, mkNumKeyGenerator(5000));
+
+    const keys = faker.helpers.arrayElements([...ordMap.keys()], 20);
+
+    const toAdjust = OrderedMap.build(
+      keys,
+      (k) => k,
+      (_, k) => k.toString()
+    );
+
+    const m = ordMap.adjust(toAdjust, (existingVal, helperVal, k) => {
+      expect(existingVal).to.equal(ordMap.get(k));
+      expect(helperVal).to.equal(toAdjust.get(k));
+      return existingVal;
+    });
+
+    expect(m).to.equal(ordMap);
   });
 });

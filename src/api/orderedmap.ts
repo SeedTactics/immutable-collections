@@ -293,6 +293,6 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
       }
     }
   }
-
-  protected static ["@@__IMMUTABLE_KEYED__@@"]: true;
 }
+
+Object.defineProperty(OrderedMap.prototype, "@@__IMMUTABLE_KEYED__@@", { value: true });
