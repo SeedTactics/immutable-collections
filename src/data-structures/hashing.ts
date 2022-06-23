@@ -119,7 +119,7 @@ export function mkHashConfig<K extends HashKey>(): HashConfig<K> {
           m.hash = (k) => (k as HashableObj).hash();
           return;
         } else {
-          throw new Error("key type must have equals and hash methods");
+          throw new Error("key type must have compare and hash methods");
         }
 
       case "string":
