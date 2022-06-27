@@ -138,6 +138,7 @@ describe("HAMT insert and lookup", () => {
     });
 
     expect(tree).to.deep.equal({
+      bitmap: ~0,
       children: LazySeq.ofRange(0, 32)
         .map((i) => ({
           hash: i,
@@ -151,6 +152,7 @@ describe("HAMT insert and lookup", () => {
 
     expect(inserted).to.be.true;
     expect(after).to.deep.equal({
+      bitmap: ~0,
       children: [
         // first child of the full node now as two leaves
         {

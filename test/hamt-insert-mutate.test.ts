@@ -116,6 +116,7 @@ describe("hamt mutate insert", () => {
     expect((node1 as InternalNode<Key, number>).children).to.equal((tree as InternalNode<Key, number>).children);
 
     expect(tree).to.deep.equal({
+      bitmap: ~0,
       children: LazySeq.ofRange(0, 32)
         .map((i) => ({
           hash: i,
@@ -133,6 +134,7 @@ describe("hamt mutate insert", () => {
 
     // note, checking tree deep equals the result of inserting 32 since it should have been mutated
     expect(tree).to.deep.equal({
+      bitmap: ~0,
       children: [
         // first child of the full node now as two leaves
         {

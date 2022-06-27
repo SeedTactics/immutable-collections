@@ -47,19 +47,21 @@ export type MutableCollisionNode<K, V> = {
 };
 
 export type InternalNode<K, V> = {
+  // bitmap stores which children are non-null and stored in the children array.
+  // Technically, we don't need to store the bitmap in a full node, but javascript
+  // optimizers work well when objects have the same shape.  Thus also ensure
+  // to always create nodes with the property bitmap first, then children.
+  // https://mathiasbynens.be/notes/shapes-ics
+  readonly bitmap: number;
   readonly children: ReadonlyArray<HamtNode<K, V>>;
-
-  // If bitmap is present, the node is missing some children.  Which children are present is specified in the bitmap and then
-  // all present children are stored in the array.
-  readonly bitmap?: number;
 };
 export type MutableInternalNode<K, V> = {
+  bitmap: number;
   readonly children: Array<MutableHamtNode<K, V>>;
-  bitmap?: number;
 };
 type MutableSpineInternalNode<K, V> = {
+  bitmap: number;
   readonly children: Array<HamtNode<K, V>>;
-  bitmap?: number;
 };
 type MutableSpineNode<K, V> = {
   readonly node: MutableSpineInternalNode<K, V>;
@@ -107,13 +109,14 @@ export function lookup<K, V>(
   let node = rootNode;
   do {
     if ("children" in node) {
-      if (node.bitmap) {
+      const bitmap = node.bitmap;
+      if (bitmap !== fullBitmap) {
         const m = mask(hash, shift);
-        if ((node.bitmap & m) === 0) {
+        if ((bitmap & m) === 0) {
           return undefined;
         } else {
           // recurse
-          node = node.children[sparseIndex(node.bitmap, m)];
+          node = node.children[sparseIndex(bitmap, m)];
           shift += bitsPerSubkey;
         }
       } else {
@@ -238,22 +241,18 @@ export function insert<K, V>(
     if ("children" in curNode) {
       let idx: number;
       let copyOfNode: MutableSpineInternalNode<K, V>;
-      if (curNode.bitmap) {
+      const bitmap = curNode.bitmap;
+      if (bitmap !== fullBitmap) {
         const m = mask(hash, shift);
-        idx = sparseIndex(curNode.bitmap, m);
+        idx = sparseIndex(bitmap, m);
 
-        if ((curNode.bitmap & m) === 0) {
+        if ((bitmap & m) === 0) {
           // child is not present in the bitmap so can be added as a leaf
 
           // create the new node
           const leaf = { hash, key: k, val: getVal(undefined) };
           const newArr = copyAndInsertToArray(curNode.children, idx, leaf);
-          let newNode: HamtNode<K, V>;
-          if (newArr.length === maxChildren) {
-            newNode = { children: newArr };
-          } else {
-            newNode = { bitmap: curNode.bitmap | m, children: newArr };
-          }
+          const newNode = { bitmap: bitmap | m, children: newArr };
 
           // set it in the parent and return
           if (parent !== undefined) {
@@ -262,10 +261,10 @@ export function insert<K, V>(
           return [newRoot ?? newNode, true];
         }
         // if we get here, the child is present in the bitmap, so we need to recurse
-        copyOfNode = { bitmap: curNode.bitmap, children: [...curNode.children] };
+        copyOfNode = { bitmap: bitmap, children: [...curNode.children] };
       } else {
         idx = fullIndex(hash, shift);
-        copyOfNode = { children: [...curNode.children] };
+        copyOfNode = { bitmap: fullBitmap, children: [...curNode.children] };
       }
 
       // need to recurse
@@ -367,22 +366,17 @@ export function mutateInsert<K, T, V>(
   do {
     if ("children" in curNode) {
       let idx: number;
-      if (curNode.bitmap) {
+      const bitmap = curNode.bitmap;
+      if (bitmap !== fullBitmap) {
         const m = mask(hash, shift);
-        idx = sparseIndex(curNode.bitmap, m);
+        idx = sparseIndex(bitmap, m);
 
-        if ((curNode.bitmap & m) === 0) {
+        if ((bitmap & m) === 0) {
           // child is not present in the bitmap so can be added as a leaf
-
           const leaf = { hash, key: k, val: getVal(undefined, t) };
           const arr = curNode.children;
           arr.splice(idx, 0, leaf);
-          if (arr.length === maxChildren) {
-            // switch to a full node
-            delete curNode.bitmap;
-          } else {
-            curNode.bitmap |= m;
-          }
+          curNode.bitmap |= m;
           return rootNode;
         }
         // if we reach here, need to recurse
@@ -469,16 +463,16 @@ function removeChildFromEndOfSpine<K, V>(spine: ReadonlyArray<MutableSpineNode<K
   // Returns the new root node for the whole tree
 
   const last = spine[spine.length - 1];
-  if (!last.node.bitmap) {
+  if (last.node.bitmap === fullBitmap) {
     // transform the full node into a bitmap node
     const arr = last.node.children;
     arr.splice(last.childIdx, 1);
     const bitmap = ~(1 << last.childIdx);
     if (spine.length === 1) {
-      return { bitmap, children: arr };
+      return { bitmap: bitmap, children: arr };
     } else {
       const n = spine[spine.length - 2];
-      n.node.children[n.childIdx] = { bitmap, children: arr };
+      n.node.children[n.childIdx] = { bitmap: bitmap, children: arr };
       return spine[0].node;
     }
   }
@@ -535,21 +529,22 @@ export function remove<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V> 
   do {
     if ("children" in curNode) {
       let idx: number;
-      if (curNode.bitmap) {
+      const bitmap = curNode.bitmap;
+      if (bitmap !== fullBitmap) {
         const m = mask(hash, shift);
-        if ((curNode.bitmap & m) === 0) {
+        if ((bitmap & m) === 0) {
           // element is not present
           return rootNode;
         } else {
           // recurse
-          idx = sparseIndex(curNode.bitmap, m);
+          idx = sparseIndex(bitmap, m);
         }
       } else {
         idx = fullIndex(hash, shift);
       }
 
       // create a new node
-      const newNode = { bitmap: curNode.bitmap, children: [...curNode.children] };
+      const newNode = { bitmap: bitmap, children: [...curNode.children] };
       addToSpine(spine, newNode, idx);
 
       //recurse
@@ -663,11 +658,7 @@ export function mapValues<K, V>(root: HamtNode<K, V> | null, f: (v: V, k: K) => 
         }
       }
       if (newArr) {
-        if (newArr.length === maxChildren) {
-          return { children: newArr };
-        } else {
-          return { bitmap: node.bitmap, children: newArr };
-        }
+        return { bitmap: node.bitmap, children: newArr };
       } else {
         return node;
       }
@@ -703,7 +694,7 @@ export function collectValues<K, V>(
   let newSize = 0;
   function loop(node: HamtNode<K, V>): HamtNode<K, V> | null {
     if ("children" in node) {
-      const origBitmap = node.bitmap ?? fullBitmap;
+      const origBitmap = node.bitmap;
       let newArr: Array<HamtNode<K, V>> | undefined = undefined;
       let newBitmap = origBitmap;
 
@@ -747,8 +738,6 @@ export function collectValues<K, V>(
           } else {
             return { bitmap: newBitmap, children: newArr };
           }
-        } else if (newArr.length === maxChildren) {
-          return { children: newArr };
         } else {
           return { bitmap: newBitmap, children: newArr };
         }
@@ -888,8 +877,8 @@ export function union<K, V>(
 
     // Branch vs Branch
     else if ("children" in node1 && "children" in node2) {
-      const node1bitmap = node1.bitmap ?? fullBitmap;
-      const node2bitmap = node2.bitmap ?? fullBitmap;
+      const node1bitmap = node1.bitmap;
+      const node2bitmap = node2.bitmap;
       const intersectionBitmap = node1bitmap & node2bitmap;
 
       // merge the two nodes, but don't create a copy until we find something different between
@@ -932,8 +921,6 @@ export function union<K, V>(
 
       if (!newArr) {
         return node1;
-      } else if (newArr.length === maxChildren) {
-        return { children: newArr };
       } else {
         return { bitmap: node1bitmap | node2bitmap, children: newArr };
       }
@@ -943,77 +930,66 @@ export function union<K, V>(
     else if ("children" in node1) {
       // node2 is guaranteed to be leaf or collision, but typescript doesn't know that
       const hash2: number = (node2 as LeafNode<K, V> | CollisionNode<K, V>).hash;
+      const node1bitmap = node1.bitmap;
 
-      if (node1.bitmap === undefined) {
-        // loop and replace in this full node
-        const idx = fullIndex(hash2, shift);
-        const newNode = loop(shift + bitsPerSubkey, node1.children[idx], node2);
-        if (newNode === node1.children[idx]) {
-          return node1;
+      let idx: number;
+      if (node1bitmap === fullBitmap) {
+        idx = fullIndex(hash2, shift);
+      } else {
+        const m = mask(hash2, shift);
+        if (node1bitmap & m) {
+          idx = sparseIndex(node1bitmap, m);
         } else {
-          const newArr = [...node1.children];
-          newArr[idx] = newNode;
-          return { children: newArr };
+          // no need to recurse, add directly
+          // add the node into the bitmap-indexed node
+          const idx = sparseIndex(node1bitmap, m);
+          const newArr = copyAndInsertToArray(node1.children, idx, node2);
+          return { bitmap: node1bitmap | m, children: newArr };
         }
       }
 
-      const m = mask(hash2, shift);
-      if (node1.bitmap & m) {
-        // loop and replace in this bitmap-indexed node
-        const idx = sparseIndex(node1.bitmap, m);
-        const newNode = loop(shift + bitsPerSubkey, node1.children[idx], node2);
-        if (newNode === node1.children[idx]) {
-          return node1;
-        } else {
-          const newArr = [...node1.children];
-          newArr[idx] = newNode;
-          return { bitmap: node1.bitmap, children: newArr };
-        }
+      // loop and replace in this node
+      const oldArr = node1.children;
+      const oldChild = oldArr[idx];
+      const newNode = loop(shift + bitsPerSubkey, oldChild, node2);
+      if (newNode === oldChild) {
+        return node1;
       } else {
-        // add the node into the bitmap-indexed node
-        const idx = sparseIndex(node1.bitmap, m);
-        const newArr = copyAndInsertToArray(node1.children, idx, node2);
-        if (newArr.length === maxChildren) {
-          return { children: newArr };
-        } else {
-          return { bitmap: node1.bitmap | m, children: newArr };
-        }
+        const newArr = [...oldArr];
+        newArr[idx] = newNode;
+        return { bitmap: node1bitmap, children: newArr };
       }
     } else if ("children" in node2) {
       // same as above but with node1 and node2 swapped
       const hash1: number = node1.hash;
+      const node2bitmap = node2.bitmap;
 
-      if (node2.bitmap === undefined) {
-        const idx = fullIndex(hash1, shift);
-        const newNode = loop(shift + bitsPerSubkey, node1, node2.children[idx]);
-        if (newNode === node2.children[idx]) {
-          return node2;
+      let idx: number;
+      if (node2bitmap === fullBitmap) {
+        idx = fullIndex(hash1, shift);
+      } else {
+        const m = mask(hash1, shift);
+        if (node2bitmap & m) {
+          idx = sparseIndex(node2bitmap, m);
         } else {
-          const newArr = [...node2.children];
-          newArr[idx] = newNode;
-          return { children: newArr };
+          // no need to recurse, add directly
+          // add the node into the bitmap-indexed node
+          const idx = sparseIndex(node2bitmap, m);
+          const newArr = copyAndInsertToArray(node2.children, idx, node1);
+          return { bitmap: node2bitmap | m, children: newArr };
         }
       }
 
-      const m = mask(hash1, shift);
-      if (node2.bitmap & m) {
-        const idx = sparseIndex(node2.bitmap, m);
-        const newNode = loop(shift + bitsPerSubkey, node1, node2.children[idx]);
-        if (newNode === node2.children[idx]) {
-          return node2;
-        } else {
-          const newArr = [...node2.children];
-          newArr[idx] = newNode;
-          return { bitmap: node2.bitmap, children: newArr };
-        }
+      // loop and replace in this node
+      const oldArr = node2.children;
+      const oldChild = oldArr[idx];
+      const newNode = loop(shift + bitsPerSubkey, node1, oldChild);
+      if (newNode === oldChild) {
+        return node2;
       } else {
-        const idx = sparseIndex(node2.bitmap, m);
-        const newArr = copyAndInsertToArray(node2.children, idx, node1);
-        if (newArr.length === maxChildren) {
-          return { children: newArr };
-        } else {
-          return { bitmap: node2.bitmap | m, children: newArr };
-        }
+        const newArr = [...oldArr];
+        newArr[idx] = newNode;
+        return { bitmap: node2bitmap, children: newArr };
       }
     }
 
@@ -1085,8 +1061,8 @@ export function intersection<K, V>(
 
     // Branch vs Branch
     else if ("children" in node1 && "children" in node2) {
-      const node1bitmap = node1.bitmap ?? fullBitmap;
-      const node2bitmap = node2.bitmap ?? fullBitmap;
+      const node1bitmap = node1.bitmap;
+      const node2bitmap = node2.bitmap;
       const intersectionBitmap = node1bitmap & node2bitmap;
 
       // merge the two nodes, but don't create a copy until we find something different between
@@ -1140,8 +1116,6 @@ export function intersection<K, V>(
         return null;
       } else if (newArr.length === 1) {
         return hasSingleLeafOrCollision(newArr[0]) ?? { bitmap: newBitmap, children: newArr };
-      } else if (newArr.length === maxChildren) {
-        return { children: newArr };
       } else {
         return { bitmap: newBitmap, children: newArr };
       }
@@ -1151,15 +1125,16 @@ export function intersection<K, V>(
     else if ("children" in node1) {
       // node2 is guaranteed to be collision, but typescript doesn't know that
       const hash2: number = (node2 as CollisionNode<K, V>).hash;
+      const node1bitmap = node1.bitmap;
 
       // find the index where hash2 will live (if any)
       let idx: number;
-      if (node1.bitmap === undefined) {
+      if (node1bitmap === fullBitmap) {
         idx = fullIndex(hash2, shift);
       } else {
         const m = mask(hash2, shift);
-        if (m & node1.bitmap) {
-          idx = sparseIndex(node1.bitmap, m);
+        if (m & node1bitmap) {
+          idx = sparseIndex(node1bitmap, m);
         } else {
           return null;
         }
@@ -1172,15 +1147,16 @@ export function intersection<K, V>(
     // Collision vs Branch
     else if ("children" in node2) {
       const hash1: number = node1.hash;
+      const node2bitmap = node2.bitmap;
 
       // find the index where hash1 will live (if any)
       let idx: number;
-      if (node2.bitmap === undefined) {
+      if (node2bitmap === undefined) {
         idx = fullIndex(hash1, shift);
       } else {
         const m = mask(hash1, shift);
-        if (m & node2.bitmap) {
-          idx = sparseIndex(node2.bitmap, m);
+        if (m & node2bitmap) {
+          idx = sparseIndex(node2bitmap, m);
         } else {
           return null;
         }
