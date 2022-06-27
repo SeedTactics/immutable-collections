@@ -1,6 +1,7 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
 import {
+  alter,
   collectValues,
   fold,
   HamtNode,
@@ -116,9 +117,16 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     }
   }
 
-  // TODO: alter(k: K, f: (existing: V | undefined) => V | undefined): OrderedMap<K, V>
+  alter(k: K, f: (existing: V | undefined) => V | undefined): HashMap<K, V> {
+    const [newRoot, sizeChange] = alter(this.cfg, k, f, this.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new HashMap(this.cfg, newRoot, this.size + sizeChange);
+    }
+  }
 
-  // TODO: partition(f: (v: V, k: K) => boolean): readonly [OrderedMap<K, V>, OrderedMap<K, V>]
+  // TODO: partition(f: (v: V, k: K) => boolean): readonly [HashMap<K, V>, HashMap<K, V>]
 
   union(other: HashMap<K, V>, merge?: (vThis: V, vOther: V, k: K) => V): HashMap<K, V> {
     const [newRoot, intersectionSize] = union(this.cfg, merge ?? ((_, s) => s), this.root, other.root);
@@ -138,7 +146,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     }
   }
 
-  // TODO: difference, withoutKeys
+  // TODO: difference, adjust, withoutKeys
 
   append(items: Iterable<readonly [K, V]>): HashMap<K, V> {
     return this.union(HashMap.from(items));

@@ -600,6 +600,168 @@ export function remove<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V> 
   throw new Error("Internal immutable-collections violation: hamt remove reached null");
 }
 
+export function alter<K, V>(
+  cfg: HashConfig<K>,
+  k: K,
+  f: (oldV: V | undefined) => V | undefined,
+  rootNode: HamtNode<K, V> | null
+): [HamtNode<K, V> | null, number] {
+  if (rootNode === null) {
+    const newVal = f(undefined);
+    if (newVal === undefined) {
+      return [null, 0];
+    } else {
+      return [{ hash: cfg.hash(k), key: k, val: newVal }, 1];
+    }
+  }
+
+  const hash = cfg.hash(k);
+
+  const spine: Array<MutableSpineNode<K, V>> = [];
+
+  let shift = 0;
+  let curNode = rootNode;
+
+  do {
+    if ("children" in curNode) {
+      let idx: number;
+      const bitmap = curNode.bitmap;
+      if (bitmap !== fullBitmap) {
+        const m = mask(hash, shift);
+        if ((bitmap & m) === 0) {
+          // element is not present
+          const newVal = f(undefined);
+          if (newVal === undefined) {
+            return [rootNode, 0];
+          } else {
+            // add as a leaf
+            const newArr = copyAndInsertToArray(curNode.children, sparseIndex(bitmap, m), {
+              hash,
+              key: k,
+              val: newVal,
+            });
+            const newNode = { bitmap: bitmap | m, children: newArr };
+            if (spine.length > 0) {
+              const parent = spine[spine.length - 1];
+              parent.node.children[parent.childIdx] = newNode;
+              return [spine[0].node, 1];
+            } else {
+              return [newNode, 1];
+            }
+          }
+        } else {
+          // recurse
+          idx = sparseIndex(bitmap, m);
+        }
+      } else {
+        idx = fullIndex(hash, shift);
+      }
+
+      // create a new node
+      const newNode = { bitmap: bitmap, children: [...curNode.children] };
+      addToSpine(spine, newNode, idx);
+
+      //recurse
+      shift = shift + bitsPerSubkey;
+      curNode = newNode.children[idx];
+    } else if ("key" in curNode) {
+      let newNode: HamtNode<K, V>;
+      let sizeChange: number;
+      if (hash === curNode.hash) {
+        const cmp = cfg.compare(k, curNode.key);
+        if (cmp === 0) {
+          const newVal = f(curNode.val);
+          if (newVal === undefined) {
+            if (spine.length === 0) {
+              // this leaf is the root, so removing it will make the tree empty
+              return [null, -1];
+            } else {
+              return [removeChildFromEndOfSpine(spine, hash), -1];
+            }
+          } else if (newVal === curNode.val) {
+            return [rootNode, 0];
+          } else {
+            // replace value
+            newNode = { hash, key: k, val: newVal };
+            sizeChange = 0;
+          }
+        } else {
+          // a collision, but key is not present
+          const newVal = f(undefined);
+          if (newVal === undefined) {
+            return [rootNode, 0];
+          } else {
+            newNode = {
+              hash,
+              collision: tree.two(cmp, k, newVal, curNode.key, curNode.val),
+            };
+            sizeChange = 1;
+          }
+        }
+      } else {
+        // hashes are different
+        const newVal = f(undefined);
+        if (newVal === undefined) {
+          return [rootNode, 0];
+        } else {
+          // insert
+          newNode = two(shift, { hash, key: k, val: newVal }, curNode);
+          sizeChange = 1;
+        }
+      }
+
+      // set the new node
+      if (spine.length > 0) {
+        const parent = spine[spine.length - 1];
+        parent.node.children[parent.childIdx] = newNode;
+        return [spine[0].node, sizeChange];
+      } else {
+        return [newNode, sizeChange];
+      }
+    } else {
+      // collision
+      let newNode: HamtNode<K, V> | undefined;
+      let sizeChange: number;
+      if (hash === curNode.hash) {
+        // collision node always has at least two nodes, so removing one will still leave non-empty tree
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const newRoot = tree.alter(cfg, k, f, curNode.collision)!;
+        if (newRoot === curNode.collision) {
+          return [rootNode, 0];
+        }
+        sizeChange = newRoot.size - curNode.collision.size;
+        if (newRoot.size === 1) {
+          // switch back to a leaf node
+          newNode = { hash, key: newRoot.key, val: newRoot.val };
+        } else {
+          newNode = { hash, collision: newRoot };
+        }
+      } else {
+        // hashes are different, key does not exist
+        const newVal = f(undefined);
+        if (newVal === undefined) {
+          return [rootNode, 0];
+        } else {
+          // insert
+          const newLeaf = { hash, key: k, val: newVal };
+          newNode = two(shift, newLeaf, curNode);
+          sizeChange = 1;
+        }
+      }
+
+      if (spine.length > 0) {
+        const n = spine[spine.length - 1];
+        n.node.children[n.childIdx] = newNode;
+        return [spine[0].node, sizeChange];
+      } else {
+        return [newNode, sizeChange];
+      }
+    }
+  } while (curNode);
+
+  throw new Error("Internal immutable-collections violation: hamt alter reached null");
+}
+
 export function* iterate<K, V, R>(root: HamtNode<K, V> | null, f: (k: K, v: V) => R): IterableIterator<R> {
   if (root === null) return;
 
