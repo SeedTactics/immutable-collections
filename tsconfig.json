@@ -20,7 +20,7 @@
     "noPropertyAccessFromIndexSignature": true,
     "noUnusedLocals": true
   },
-  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "include": ["src/**/*.ts", "test/**/*.ts", "bench/**/*.ts"],
   "exclude": ["node_modules", "dist"],
   "ts-node": {
     "files": true
