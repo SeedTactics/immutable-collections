@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 
 import { expect } from "chai";
-import { insert, iterateAsc, iterateDesc, lookup, remove } from "../src/data-structures/tree.js";
+import { modify, iterateAsc, iterateDesc, lookup } from "../src/data-structures/tree.js";
 import { checkBalanceAndSize } from "./check-balance.js";
 
 const compareNum = {
@@ -12,9 +12,9 @@ const compareNum = {
 
 describe("Tree", () => {
   it("inserts some values", () => {
-    const n1 = insert(compareNum, 10, () => "aaa", undefined);
-    const n2 = insert(compareNum, 20, () => "bbb", n1);
-    const n3 = insert(compareNum, 5, () => "ccc", n2);
+    const n1 = modify(compareNum, 10, () => "aaa", undefined)!;
+    const n2 = modify(compareNum, 20, () => "bbb", n1)!;
+    const n3 = modify(compareNum, 5, () => "ccc", n2)!;
 
     expect(lookup(compareNum, 10, n1)).to.equal("aaa");
     expect(lookup(compareNum, 10, n2)).to.equal("aaa");
@@ -34,7 +34,7 @@ describe("Tree", () => {
   });
 
   it("replaces a value", () => {
-    const n1 = insert(
+    const n1 = modify(
       compareNum,
       10,
       (old) => {
@@ -42,11 +42,11 @@ describe("Tree", () => {
         return "aaa";
       },
       undefined
-    );
-    const n2 = insert(compareNum, 20, () => "bbb", n1);
+    )!;
+    const n2 = modify(compareNum, 20, () => "bbb", n1)!;
 
     // insert the same value
-    const n3 = insert(
+    const n3 = modify(
       compareNum,
       10,
       (old) => {
@@ -54,11 +54,11 @@ describe("Tree", () => {
         return "aaa";
       },
       n2
-    );
+    )!;
     expect(n2).to.equal(n3);
 
     // insert a new value
-    const n4 = insert(
+    const n4 = modify(
       compareNum,
       10,
       (old) => {
@@ -66,7 +66,7 @@ describe("Tree", () => {
         return "aaa2";
       },
       n2
-    );
+    )!;
 
     expect(lookup(compareNum, 10, n1)).to.equal("aaa");
     expect(lookup(compareNum, 10, n2)).to.equal("aaa");
@@ -78,11 +78,11 @@ describe("Tree", () => {
   });
 
   it("removes a value", () => {
-    const n1 = insert(compareNum, 10, () => "aaa", undefined);
-    const n2 = insert(compareNum, 20, () => "bbb", n1);
-    const n3 = insert(compareNum, 5, () => "ccc", n2);
+    const n1 = modify(compareNum, 10, () => "aaa", undefined);
+    const n2 = modify(compareNum, 20, () => "bbb", n1);
+    const n3 = modify(compareNum, 5, () => "ccc", n2);
 
-    const n4 = remove(compareNum, 20, n3);
+    const n4 = modify(compareNum, 20, () => undefined, n3);
 
     expect(lookup(compareNum, 20, n3)).to.equal("bbb");
     expect(lookup(compareNum, 20, n4)).to.be.undefined;
@@ -91,9 +91,9 @@ describe("Tree", () => {
   });
 
   it("iterates values", () => {
-    const n1 = insert(compareNum, 10, () => "aaa", undefined);
-    const n2 = insert(compareNum, 20, () => "bbb", n1);
-    const n3 = insert(compareNum, 5, () => "ccc", n2);
+    const n1 = modify(compareNum, 10, () => "aaa", undefined);
+    const n2 = modify(compareNum, 20, () => "bbb", n1);
+    const n3 = modify(compareNum, 5, () => "ccc", n2);
 
     expect([...iterateAsc(n3, (k, v) => [k, v])]).to.deep.equal([
       [5, "ccc"],

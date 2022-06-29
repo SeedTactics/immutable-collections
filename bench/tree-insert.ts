@@ -2,18 +2,7 @@ import type { Event } from "benchmark";
 import Benchmark from "benchmark";
 import { mkComparisonConfig } from "../src/data-structures/comparison.js";
 import { MutableTreeNode, TreeNode } from "../src/data-structures/rotations.js";
-import {
-  alter,
-  alterFullRecursive,
-  build,
-  from,
-  insert,
-  insertArrayStack,
-  insertFullRecursive,
-  insertLLStack,
-  insertSet,
-  mutateInsert,
-} from "../src/data-structures/tree.js";
+import { build, from, modify, mutateInsert } from "../src/data-structures/tree.js";
 
 const size = 50_000;
 const suite = new Benchmark.Suite("Tree Insert");
@@ -28,59 +17,11 @@ for (let i = 0; i < size; i++) {
   nums[i] = i;
 }
 
-suite.add("insert", () => {
+suite.add("modify", () => {
   let n: TreeNode<number, string> | undefined = undefined;
   const compare = mkComparisonConfig();
   for (let i = 0; i < size; i++) {
-    n = insert(compare, i, () => i.toString(), n);
-  }
-});
-
-suite.add("insert full recursive", () => {
-  let n: TreeNode<number, string> | undefined = undefined;
-  const compare = mkComparisonConfig();
-  for (let i = 0; i < size; i++) {
-    n = insertFullRecursive(compare, i, () => i.toString(), n);
-  }
-});
-
-suite.add("insert Array Stack", () => {
-  let n: TreeNode<number, string> | undefined = undefined;
-  const compare = mkComparisonConfig();
-  for (let i = 0; i < size; i++) {
-    n = insertArrayStack(compare, i, () => i.toString(), n);
-  }
-});
-
-suite.add("insert LL Stack", () => {
-  let n: TreeNode<number, string> | undefined = undefined;
-  const compare = mkComparisonConfig();
-  for (let i = 0; i < size; i++) {
-    n = insertLLStack(compare, i, () => i.toString(), n);
-  }
-});
-
-suite.add("insert set", () => {
-  let n: TreeNode<number, string> | undefined = undefined;
-  const compare = mkComparisonConfig();
-  for (let i = 0; i < size; i++) {
-    n = insertSet(compare, i, i.toString(), n);
-  }
-});
-
-suite.add("alter recursive", () => {
-  let n: TreeNode<number, string> | undefined = undefined;
-  const compare = mkComparisonConfig();
-  for (let i = 0; i < size; i++) {
-    n = alter(compare, i, () => i.toString(), n);
-  }
-});
-
-suite.add("alter full recursive", () => {
-  let n: TreeNode<number, string> | undefined = undefined;
-  const compare = mkComparisonConfig();
-  for (let i = 0; i < size; i++) {
-    n = alterFullRecursive(compare, i, () => i.toString(), n);
+    n = modify(compare, i, () => i.toString(), n);
   }
 });
 

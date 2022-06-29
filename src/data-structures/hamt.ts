@@ -99,6 +99,10 @@ function fullIndex(hash: number, shift: number): number {
   return (hash >>> shift) & subkeyMask;
 }
 
+function constUndefined() {
+  return undefined;
+}
+
 export function lookup<K, V>(
   cfg: HashConfig<K>,
   hash: number,
@@ -320,7 +324,8 @@ export function insert<K, V>(
       let inserted = true;
       if (hash === curNode.hash) {
         // check and extend the existing collision node
-        const newRoot = tree.insert(cfg, k, getVal, curNode.collision);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const newRoot = tree.modify(cfg, k, getVal, curNode.collision)!;
         if (newRoot === curNode.collision) {
           // return the original root node because nothing changed
           return [rootNode, false];
@@ -572,7 +577,7 @@ export function remove<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V> 
       if (hash === curNode.hash) {
         // collision node always has at least two nodes, so removing one will still leave non-empty tree
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const newRoot = tree.remove(cfg, k, curNode.collision)!;
+        const newRoot = tree.modify(cfg, k, constUndefined, curNode.collision)!;
         if (newRoot === curNode.collision) {
           return rootNode;
         }
@@ -725,7 +730,7 @@ export function alter<K, V>(
       if (hash === curNode.hash) {
         // collision node always has at least two nodes, so removing one will still leave non-empty tree
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const newRoot = tree.alter(cfg, k, f, curNode.collision)!;
+        const newRoot = tree.modify(cfg, k, f, curNode.collision)!;
         if (newRoot === curNode.collision) {
           return [rootNode, 0];
         }
@@ -977,7 +982,8 @@ export function union<K, V>(
       }
     } else if ("key" in node1 && "collision" in node2) {
       if (node1.hash === node2.hash) {
-        const newRoot = tree.insert(
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const newRoot = tree.modify(
           cfg,
           node1.key,
           (v2) => {
@@ -989,7 +995,7 @@ export function union<K, V>(
             }
           },
           node2.collision
-        );
+        )!;
         if (newRoot === node2.collision) {
           return node2;
         } else {
@@ -1000,7 +1006,8 @@ export function union<K, V>(
       }
     } else if ("collision" in node1 && "key" in node2) {
       if (node1.hash === node2.hash) {
-        const newRoot = tree.insert(
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const newRoot = tree.modify(
           cfg,
           node2.key,
           (v1) => {
@@ -1012,7 +1019,7 @@ export function union<K, V>(
             }
           },
           node1.collision
-        );
+        )!;
         if (newRoot === node1.collision) {
           return node1;
         } else {

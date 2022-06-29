@@ -3,8 +3,6 @@
 import { ComparisionConfig } from "./comparison.js";
 import {
   combineAfterInsertOrRemove,
-  combineAfterLeftIncrease,
-  combineAfterRightIncrease,
   combineDifferentSizes,
   glueDifferentSizes,
   glueSizeBalanced,
@@ -39,18 +37,32 @@ export function lookup<K, V>({ compare }: ComparisionConfig<K>, k: K, root: Tree
 
 // TODO: lookupLT, lookupLE, lookupGT, lookupGE
 
-export function insert<K, V>(
+/* Benchmarking a variety of implementation strategies (see  commit 785942937019aa44527605bb4231d68f2692ec56)
+   showed that a recursive function was faster than a loop+stack, and that dedicated insert/remove
+   functions had roughly the same performance as the generalized modify function.
+*/
+export function modify<K, V>(
   { compare }: ComparisionConfig<K>,
   k: K,
-  getVal: (v: V | undefined) => V,
+  f: (oldV: V | undefined) => V | undefined,
   root: TreeNode<K, V> | undefined
-): TreeNode<K, V> {
-  function loop(node: TreeNode<K, V> | undefined): TreeNode<K, V> {
-    if (node === undefined) return { key: k, val: getVal(undefined), size: 1, left: undefined, right: undefined };
+): TreeNode<K, V> | undefined {
+  function loop(node: TreeNode<K, V> | undefined): TreeNode<K, V> | undefined {
+    if (node === undefined) {
+      const newVal = f(undefined);
+      if (newVal === undefined) {
+        return undefined;
+      } else {
+        return { key: k, val: newVal, size: 1, left: undefined, right: undefined };
+      }
+    }
+
     const c = compare(k, node.key);
     if (c === 0) {
-      const newVal = getVal(node.val);
-      if (newVal === node.val) {
+      const newVal = f(node.val);
+      if (newVal === undefined) {
+        return glueSizeBalanced(node.left, node.right);
+      } else if (newVal === node.val) {
         return node;
       } else {
         return { key: k, val: newVal, size: node.size, left: node.left, right: node.right };
@@ -60,201 +72,19 @@ export function insert<K, V>(
       if (newLeft === node.left) {
         return node;
       } else {
-        return combineAfterLeftIncrease(newLeft, node.key, node.val, node.right);
+        return combineAfterInsertOrRemove(newLeft, node.key, node.val, node.right);
       }
     } else {
       const newRight = loop(node.right);
       if (newRight === node.right) {
         return node;
       } else {
-        return combineAfterRightIncrease(node.left, node.key, node.val, newRight);
+        return combineAfterInsertOrRemove(node.left, node.key, node.val, newRight);
       }
     }
   }
 
   return loop(root);
-}
-
-export function insertSet<K, V>(
-  { compare }: ComparisionConfig<K>,
-  k: K,
-  v: V,
-  root: TreeNode<K, V> | undefined
-): TreeNode<K, V> {
-  function loop(node: TreeNode<K, V> | undefined): TreeNode<K, V> {
-    if (node === undefined) return { key: k, val: v, size: 1, left: undefined, right: undefined };
-    const c = compare(k, node.key);
-    if (c === 0) {
-      if (v === node.val) {
-        return node;
-      } else {
-        return { key: k, val: v, size: node.size, left: node.left, right: node.right };
-      }
-    } else if (c < 0) {
-      const newLeft = loop(node.left);
-      if (newLeft === node.left) {
-        return node;
-      } else {
-        return combineAfterLeftIncrease(newLeft, node.key, node.val, node.right);
-      }
-    } else {
-      const newRight = loop(node.right);
-      if (newRight === node.right) {
-        return node;
-      } else {
-        return combineAfterRightIncrease(node.left, node.key, node.val, newRight);
-      }
-    }
-  }
-
-  return loop(root);
-}
-
-export function insertFullRecursive<K, V>(
-  cmp: ComparisionConfig<K>,
-  k: K,
-  getVal: (v: V | undefined) => V,
-  node: TreeNode<K, V> | undefined
-): TreeNode<K, V> {
-  const { compare } = cmp;
-  if (node === undefined) return { key: k, val: getVal(undefined), size: 1, left: undefined, right: undefined };
-  const c = compare(k, node.key);
-  if (c === 0) {
-    const newVal = getVal(node.val);
-    if (newVal === node.val) {
-      return node;
-    } else {
-      return { key: k, val: newVal, size: node.size, left: node.left, right: node.right };
-    }
-  } else if (c < 0) {
-    const newLeft = insertFullRecursive(cmp, k, getVal, node.left);
-    if (newLeft === node.left) {
-      return node;
-    } else {
-      return combineAfterLeftIncrease(newLeft, node.key, node.val, node.right);
-    }
-  } else {
-    const newRight = insertFullRecursive(cmp, k, getVal, node.right);
-    if (newRight === node.right) {
-      return node;
-    } else {
-      return combineAfterRightIncrease(node.left, node.key, node.val, newRight);
-    }
-  }
-}
-
-export function insertArrayStack<K, V>(
-  { compare }: ComparisionConfig<K>,
-  k: K,
-  getVal: (v: V | undefined) => V,
-  root: TreeNode<K, V> | undefined
-): TreeNode<K, V> {
-  const spine: Array<{ n: TreeNode<K, V>; left: boolean }> = [];
-
-  let node: TreeNode<K, V> | undefined = root;
-  while (node !== undefined) {
-    const c = compare(k, node.key);
-    if (c === 0) {
-      break;
-    } else if (c < 0) {
-      spine.push({ n: node, left: true });
-      node = node.left;
-    } else {
-      spine.push({ n: node, left: false });
-      node = node.right;
-    }
-  }
-
-  if (node === undefined) {
-    node = { key: k, val: getVal(undefined), size: 1, left: undefined, right: undefined };
-  } else {
-    const newVal = getVal(node.val);
-    if (newVal === node.val) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return root!;
-    } else {
-      node = { key: k, val: newVal, size: node.size, left: node.left, right: node.right };
-    }
-  }
-
-  let parent: { n: TreeNode<K, V>; left: boolean } | undefined;
-  while ((parent = spine.pop())) {
-    const { n, left } = parent;
-    if (left) {
-      if (node === n.left) {
-        node = n;
-      } else {
-        node = combineAfterLeftIncrease(node, n.key, n.val, n.right);
-      }
-    } else {
-      if (node === n.right) {
-        node = n;
-      } else {
-        node = combineAfterRightIncrease(n.left, n.key, n.val, node);
-      }
-    }
-  }
-  return node;
-}
-
-interface NodeAndParent<K, V> {
-  readonly n: TreeNode<K, V>;
-  readonly left: boolean;
-  readonly parent: NodeAndParent<K, V> | undefined;
-}
-
-export function insertLLStack<K, V>(
-  { compare }: ComparisionConfig<K>,
-  k: K,
-  getVal: (v: V | undefined) => V,
-  root: TreeNode<K, V> | undefined
-): TreeNode<K, V> {
-  let parent: NodeAndParent<K, V> | undefined;
-  let node: TreeNode<K, V> | undefined = root;
-
-  while (node !== undefined) {
-    const c = compare(k, node.key);
-    if (c === 0) {
-      break;
-    } else if (c < 0) {
-      parent = { n: node, left: true, parent };
-      node = node.left;
-    } else {
-      parent = { n: node, left: false, parent };
-      node = node.right;
-    }
-  }
-
-  if (node === undefined) {
-    node = { key: k, val: getVal(undefined), size: 1, left: undefined, right: undefined };
-  } else {
-    const newVal = getVal(node.val);
-    if (newVal === node.val) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return root!;
-    } else {
-      node = { key: k, val: newVal, size: node.size, left: node.left, right: node.right };
-    }
-  }
-
-  while (parent) {
-    const { n, left, parent: grandparent } = parent;
-    if (left) {
-      if (node === n.left) {
-        node = n;
-      } else {
-        node = combineAfterLeftIncrease(node, n.key, n.val, n.right);
-      }
-    } else {
-      if (node === n.right) {
-        node = n;
-      } else {
-        node = combineAfterRightIncrease(n.left, n.key, n.val, node);
-      }
-    }
-    parent = grandparent;
-  }
-  return node;
 }
 
 export function two<K, V>(cmp: number, k1: K, v1: V, k2: K, v2: V): TreeNode<K, V> {
@@ -327,45 +157,6 @@ export function mutateInsert<K, V, T>(
   }
 
   return insertLoop(root);
-}
-
-export function mutateInsertFullRecursive<K, V, T>(
-  cfg: ComparisionConfig<K>,
-  k: K,
-  t: T,
-  getVal: (old: V | undefined, t: T) => V,
-  node: MutableTreeNode<K, V> | undefined
-): MutableTreeNode<K, V> {
-  if (node === undefined) return { key: k, val: getVal(undefined, t), size: 1, left: undefined, right: undefined };
-  const c = cfg.compare(k, node.key);
-  if (c < 0) {
-    const nl = node.left;
-    const oldSize = nl ? nl.size : 0;
-    const newNL = mutateInsertFullRecursive(cfg, k, t, getVal, nl);
-    node.left = newNL;
-    if (oldSize !== newNL.size) node.size += 1;
-    return mutateBalanceAfterLeftIncrease(node);
-  } else if (c > 0) {
-    const nr = node.right;
-    const oldSize = nr ? nr.size : 0;
-    const newNR = mutateInsertFullRecursive(cfg, k, t, getVal, nr);
-    node.right = newNR;
-    if (newNR.size !== oldSize) node.size += 1;
-    return mutateBalanceAfterRightIncrease(node);
-  } else {
-    const newVal = getVal(node.val, t);
-    if (newVal === node.val) {
-      return node;
-    } else {
-      return {
-        key: node.key,
-        val: newVal,
-        size: node.size,
-        left: node.left,
-        right: node.right,
-      };
-    }
-  }
 }
 
 export function from<K, V>(
@@ -459,125 +250,6 @@ export function build<T, K, V>(
   }
 
   return root;
-}
-
-export function remove<K, V>(
-  { compare }: ComparisionConfig<K>,
-  k: K,
-  root: TreeNode<K, V> | undefined
-): TreeNode<K, V> | undefined {
-  function loop(node: TreeNode<K, V> | undefined): TreeNode<K, V> | undefined {
-    if (node === undefined) return undefined;
-    const c = compare(k, node.key);
-    if (c === 0) {
-      return glueSizeBalanced(node.left, node.right);
-    } else if (c < 0) {
-      const newLeft = loop(node.left);
-      if (newLeft === node.left) {
-        return node;
-      } else {
-        return combineAfterRightIncrease(newLeft, node.key, node.val, node.right);
-      }
-    } else {
-      const newRight = loop(node.right);
-      if (newRight === node.right) {
-        return node;
-      } else {
-        return combineAfterLeftIncrease(node.left, node.key, node.val, newRight);
-      }
-    }
-  }
-
-  return loop(root);
-}
-
-export function alter<K, V>(
-  { compare }: ComparisionConfig<K>,
-  k: K,
-  f: (oldV: V | undefined) => V | undefined,
-  root: TreeNode<K, V> | undefined
-): TreeNode<K, V> | undefined {
-  function loop(node: TreeNode<K, V> | undefined): TreeNode<K, V> | undefined {
-    if (node === undefined) {
-      const newVal = f(undefined);
-      if (newVal === undefined) {
-        return undefined;
-      } else {
-        return { key: k, val: newVal, size: 1, left: undefined, right: undefined };
-      }
-    }
-
-    const c = compare(k, node.key);
-    if (c === 0) {
-      const newVal = f(node.val);
-      if (newVal === undefined) {
-        return glueSizeBalanced(node.left, node.right);
-      } else if (newVal === node.val) {
-        return node;
-      } else {
-        return { key: k, val: newVal, size: node.size, left: node.left, right: node.right };
-      }
-    } else if (c < 0) {
-      const newLeft = loop(node.left);
-      if (newLeft === node.left) {
-        return node;
-      } else {
-        return combineAfterInsertOrRemove(newLeft, node.key, node.val, node.right);
-      }
-    } else {
-      const newRight = loop(node.right);
-      if (newRight === node.right) {
-        return node;
-      } else {
-        return combineAfterInsertOrRemove(node.left, node.key, node.val, newRight);
-      }
-    }
-  }
-
-  return loop(root);
-}
-
-export function alterFullRecursive<K, V>(
-  cfg: ComparisionConfig<K>,
-  k: K,
-  f: (oldV: V | undefined) => V | undefined,
-  node: TreeNode<K, V> | undefined
-): TreeNode<K, V> | undefined {
-  const { compare } = cfg;
-  if (node === undefined) {
-    const newVal = f(undefined);
-    if (newVal === undefined) {
-      return undefined;
-    } else {
-      return { key: k, val: newVal, size: 1, left: undefined, right: undefined };
-    }
-  }
-
-  const c = compare(k, node.key);
-  if (c === 0) {
-    const newVal = f(node.val);
-    if (newVal === undefined) {
-      return glueSizeBalanced(node.left, node.right);
-    } else if (newVal === node.val) {
-      return node;
-    } else {
-      return { key: k, val: newVal, size: node.size, left: node.left, right: node.right };
-    }
-  } else if (c < 0) {
-    const newLeft = alterFullRecursive(cfg, k, f, node.left);
-    if (newLeft === node.left) {
-      return node;
-    } else {
-      return combineAfterInsertOrRemove(newLeft, node.key, node.val, node.right);
-    }
-  } else {
-    const newRight = alterFullRecursive(cfg, k, f, node.right);
-    if (newRight === node.right) {
-      return node;
-    } else {
-      return combineAfterInsertOrRemove(node.left, node.key, node.val, newRight);
-    }
-  }
 }
 
 export function* iterateAsc<K, V, T>(root: TreeNode<K, V> | undefined, f: (k: K, v: V) => T): IterableIterator<T> {
@@ -739,10 +411,10 @@ export function union<K, V>(
     if (!n1) return n2;
     if (!n2) return n1;
     if (!n1.left && !n1.right) {
-      return insert(cfg, n1.key, (oldVal) => (oldVal === undefined ? n1.val : f(n1.val, oldVal, n1.key)), n2);
+      return modify(cfg, n1.key, (oldVal) => (oldVal === undefined ? n1.val : f(n1.val, oldVal, n1.key)), n2);
     }
     if (!n2.left && !n2.right) {
-      return insert(cfg, n2.key, (oldVal) => (oldVal === undefined ? n2.val : f(oldVal, n2.val, n2.key)), n1);
+      return modify(cfg, n2.key, (oldVal) => (oldVal === undefined ? n2.val : f(oldVal, n2.val, n2.key)), n1);
     }
 
     const s = split(cfg, n1.key, n2);

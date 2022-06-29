@@ -273,7 +273,7 @@ describe("Ordered Map", () => {
     expectEqual(newM, newJsMap);
   });
 
-  it("alters values", () => {
+  it("modifies values", () => {
     const keygen = mkNumKeyGenerator(10_000);
     const { ordMap, jsMap } = createMap(5000, () => keygen() * 2);
 
@@ -284,14 +284,14 @@ describe("Ordered Map", () => {
 
       if (todo < 0.3) {
         // modify existing value
-        newM = newM.alter(k, (oldV) => {
+        newM = newM.modify(k, (oldV) => {
           expect(oldV).to.equal(v);
           return v + "!!!!";
         });
         newJsMap.set(k.toString(), [k, v + "!!!!"]);
       } else if (todo < 0.6) {
         // delete existing value
-        newM = newM.alter(k, (oldV) => {
+        newM = newM.modify(k, (oldV) => {
           expect(oldV).to.equal(v);
           return undefined;
         });
@@ -299,7 +299,7 @@ describe("Ordered Map", () => {
       } else {
         // add new value (use odd key)
         const newVal = faker.datatype.string();
-        newM = newM.alter(k + 1, (oldV) => {
+        newM = newM.modify(k + 1, (oldV) => {
           expect(oldV).to.be.undefined;
           return newVal;
         });
@@ -309,19 +309,6 @@ describe("Ordered Map", () => {
 
     checkMapBalanceAndSize(newM);
     expectEqual(newM, newJsMap);
-  });
-
-  it("returns unchanged if nothing is altered", () => {
-    const { ordMap } = createMap(1000, mkNumKeyGenerator(10_000));
-
-    const k = ordMap.keysToAscLazySeq().drop(200).head()!;
-    const v = ordMap.get(k)!;
-    const m = ordMap.alter(k, (existingV) => {
-      expect(existingV).to.equal(v);
-      return v;
-    });
-
-    expect(m).to.equal(ordMap);
   });
 
   it("creates via from", () => {

@@ -5,26 +5,28 @@ import { ComparisionConfig, mkComparisonConfig, OrderedMapKey } from "../data-st
 import { TreeNode } from "../data-structures/rotations.js";
 import {
   adjust,
-  alter,
   build,
   collectValues,
   difference,
   foldl,
   foldr,
   from,
-  insert,
   intersection,
   iterateAsc,
   iterateDesc,
   lookup,
+  modify,
   mapValues,
-  remove,
   split,
   union,
 } from "../data-structures/tree.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 type NotUndefined = {} | null;
+
+function constUndefined() {
+  return undefined;
+}
 
 export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V> {
   private cfg: ComparisionConfig<K>;
@@ -112,11 +114,16 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
   // Methods modifying the map
 
   set(k: K, v: V): OrderedMap<K, V> {
-    return this.modify(k, () => v);
+    const newRoot = modify(this.cfg, k, () => v, this.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedMap(this.cfg, newRoot);
+    }
   }
 
-  modify(k: K, f: (existing: V | undefined) => V): OrderedMap<K, V> {
-    const newRoot = insert(this.cfg, k, f, this.root);
+  modify(k: K, f: (existing: V | undefined) => V | undefined): OrderedMap<K, V> {
+    const newRoot = modify(this.cfg, k, f, this.root);
     if (newRoot === this.root) {
       return this;
     } else {
@@ -125,16 +132,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
   }
 
   delete(k: K): OrderedMap<K, V> {
-    const newRoot = remove(this.cfg, k, this.root);
-    if (newRoot === this.root) {
-      return this;
-    } else {
-      return new OrderedMap(this.cfg, newRoot);
-    }
-  }
-
-  alter(k: K, f: (existing: V | undefined) => V | undefined): OrderedMap<K, V> {
-    const newRoot = alter(this.cfg, k, f, this.root);
+    const newRoot = modify(this.cfg, k, constUndefined, this.root);
     if (newRoot === this.root) {
       return this;
     } else {
