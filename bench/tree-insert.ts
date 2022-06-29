@@ -42,14 +42,6 @@ suite.add("mutate insert", () => {
   }
 });
 
-suite.add("mutate insert full recursive", () => {
-  const compare = mkComparisonConfig();
-  let n: MutableTreeNode<number, string> | undefined = undefined;
-  for (const [k, v] of elems) {
-    n = mutateInsert(compare, k, v, snd, n);
-  }
-});
-
 suite.add("build", () => {
   const compare = mkComparisonConfig();
   build(
