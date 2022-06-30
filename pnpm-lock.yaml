@@ -14,7 +14,6 @@ specifiers:
   eslint: ^8.18.0
   eslint-config-prettier: ^8.5.0
   eslint-plugin-escompat: ^3.2.0
-  microtime: ^3.1.0
   mocha: ^10.0.0
   prettier: ^2.7.1
   ts-node: ^10.8.1
@@ -34,7 +33,6 @@ devDependencies:
   eslint: 8.18.0
   eslint-config-prettier: 8.5.0_eslint@8.18.0
   eslint-plugin-escompat: 3.2.0_eslint@8.18.0
-  microtime: 3.1.0
   mocha: 10.0.0
   prettier: 2.7.1
   ts-node: 10.8.1_x2utdhayajzrh747hktprshhby
@@ -1111,15 +1109,6 @@ packages:
       picomatch: 2.3.1
     dev: true
 
-  /microtime/3.1.0:
-    resolution: {integrity: sha512-GcjhfC2y/DF2znac8IRwri7+YUIy34QRHz/iZK3bHrh74qrNNOpAJQwiOMnIG+v1J0K4eiqd+RiGzN3F1eofTQ==}
-    engines: {node: '>= 14.13.0'}
-    requiresBuild: true
-    dependencies:
-      node-addon-api: 5.0.0
-      node-gyp-build: 4.4.0
-    dev: true
-
   /minimatch/3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
     dependencies:
@@ -1178,15 +1167,6 @@ packages:
 
   /natural-compare/1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
-    dev: true
-
-  /node-addon-api/5.0.0:
-    resolution: {integrity: sha512-CvkDw2OEnme7ybCykJpVcKH+uAOLV2qLqiyla128dN9TkEWfrYmxG6C2boDe5KcNQqZF3orkqzGgOMvZ/JNekA==}
-    dev: true
-
-  /node-gyp-build/4.4.0:
-    resolution: {integrity: sha512-amJnQCcgtRVw9SvoebO3BKGESClrfXGCUTX9hSn1OuGQTQBOZmVd0Z0OlecpuRksKvbsUqALE8jls/ErClAPuQ==}
-    hasBin: true
     dev: true
 
   /node-releases/2.0.5:
