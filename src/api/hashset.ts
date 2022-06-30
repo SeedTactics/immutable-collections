@@ -5,6 +5,7 @@ import { LazySeq } from "../lazyseq.js";
 import { mkHashConfig } from "../data-structures/hashing.js";
 import {
   collectValues,
+  difference,
   fold,
   HamtNode,
   insert,
@@ -88,7 +89,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
   }
 
   delete(t: T): HashSet<T> {
-    const newRoot = remove(this.cfg, t, this.root);
+    const newRoot = remove(this.cfg, this.cfg.hash(t), 0, t, this.root);
     if (newRoot === this.root) {
       return this;
     } else {
@@ -114,7 +115,14 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
     }
   }
 
-  // TODO: difference
+  difference(other: HashSet<T>): HashSet<T> {
+    const [newRoot, numRemoved] = difference(this.cfg, this.root, other.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new HashSet(this.cfg, newRoot, this.size - numRemoved);
+    }
+  }
 
   append(items: Iterable<T>): HashSet<T> {
     return this.union(HashSet.from(items));

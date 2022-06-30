@@ -519,16 +519,19 @@ function addToSpine<K, V>(
   spine.push({ node, childIdx });
 }
 
-export function remove<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V> | null): HamtNode<K, V> | null {
+export function remove<K, V>(
+  cfg: HashConfig<K>,
+  hash: number,
+  shift: number,
+  k: K,
+  rootNode: HamtNode<K, V> | null
+): HamtNode<K, V> | null {
   if (rootNode === null) {
     return null;
   }
 
-  const hash = cfg.hash(k);
-
   const spine: Array<MutableSpineNode<K, V>> = [];
 
-  let shift = 0;
   let curNode = rootNode;
 
   do {
@@ -970,7 +973,7 @@ export function union<K, V>(
     if ("key" in node1 && "key" in node2) {
       if (node1.hash === node2.hash) {
         const cmp = cfg.compare(node1.key, node2.key);
-        if (cfg.compare(node1.key, node2.key) === 0) {
+        if (cmp === 0) {
           intersectionSize++;
           const newVal = f(node1.val, node2.val, node1.key);
           if (newVal === node1.val) {
@@ -1351,4 +1354,179 @@ export function intersection<K, V>(
   const newRoot = loop(0, root1, root2);
 
   return [newRoot, intersectionSize];
+}
+
+export function difference<K, V1, V2>(
+  cfg: HashConfig<K>,
+  root1: HamtNode<K, V1> | null,
+  root2: HamtNode<K, V2> | null
+): readonly [HamtNode<K, V1> | null, number] {
+  if (root2 === null) return [root1, 0];
+  if (root1 === null) return [null, 0];
+
+  let numRemoved = 0;
+
+  function loop(shift: number, node1: HamtNode<K, V1>, node2: HamtNode<K, V2>): HamtNode<K, V1> | null {
+    if ("key" in node1) {
+      const has = lookup(cfg, node1.hash, shift, node1.key, node2);
+      if (has === undefined) {
+        // keep the key/val in the first tree
+        return node1;
+      } else {
+        numRemoved += 1;
+        return null;
+      }
+    } else if ("key" in node2) {
+      // take node2.key out of the first tree
+      const newRoot = remove(cfg, node2.hash, shift, node2.key, node1);
+      if (newRoot === node1) {
+        return node1;
+      } else {
+        numRemoved += 1;
+        return newRoot;
+      }
+    }
+
+    // Branch vs Branch
+    else if ("children" in node1 && "children" in node2) {
+      const node1bitmap = node1.bitmap;
+      const node2bitmap = node2.bitmap;
+      const intersectionBitmap = node1bitmap & node2bitmap;
+
+      // merge the two nodes, but don't create a copy until we find something to remove
+      let newArr: Array<HamtNode<K, V1>> | undefined = undefined;
+      let newBitmap = intersectionBitmap;
+      for (
+        let mask = 1, node1Idx = 0, node2Idx = 0, remainingBitmap = node1bitmap | node2bitmap;
+        remainingBitmap !== 0;
+        remainingBitmap &= ~mask, mask <<= 1
+      ) {
+        if (mask & intersectionBitmap) {
+          const newNode = loop(shift + bitsPerSubkey, node1.children[node1Idx], node2.children[node2Idx]);
+          if (newArr) {
+            // we already have a new array
+            if (newNode === null) {
+              // take this subtree out of the new Array
+              newBitmap &= ~mask;
+            } else {
+              newArr.push(newNode);
+            }
+          } else if (newNode !== node1.children[node1Idx]) {
+            // we don't have a new array yet, but we found a difference, so create one
+            if (newNode === null) {
+              newArr = [...node1.children.slice(0, node1Idx)];
+              newBitmap &= ~mask;
+            } else {
+              newArr = [...node1.children.slice(0, node1Idx), newNode];
+            }
+          }
+
+          node1Idx++;
+          node2Idx++;
+        } else if (mask & node1bitmap) {
+          // copy this part of the tree unchanged
+          if (newArr) {
+            newArr.push(node1.children[node1Idx]);
+          }
+          node1Idx++;
+        } else if (mask & node2bitmap) {
+          // ignore this part of the tree, is not intersecting node1
+          node2Idx++;
+        }
+      }
+
+      if (!newArr) {
+        return node1;
+      } else if (newArr.length === 0) {
+        return null;
+      } else if (newArr.length === 1) {
+        return hasSingleLeafOrCollision(newArr[0]) ?? { bitmap: newBitmap, children: newArr };
+      } else {
+        return { bitmap: newBitmap, children: newArr };
+      }
+    }
+
+    // Collision vs Collision
+    else if ("collision" in node1 && "collision" in node2) {
+      const newTree = tree.difference(cfg, node1.collision, node2.collision);
+      if (newTree === undefined) {
+        numRemoved = node1.collision.size;
+        return null;
+      } else if (newTree.size === 1) {
+        numRemoved = node1.collision.size - 1;
+        return { hash: node1.hash, key: newTree.key, val: newTree.val };
+      } else if (newTree === node1.collision) {
+        return node1;
+      } else {
+        numRemoved += node1.collision.size - newTree.size;
+        return { hash: node1.hash, collision: newTree };
+      }
+    }
+
+    // Branch vs Collision
+    else if ("children" in node1) {
+      // node2 is guaranteed to be collision, but typescript doesn't know that
+      const hash2: number = (node2 as CollisionNode<K, V2>).hash;
+      const node1bitmap = node1.bitmap;
+
+      // find where node2 would appear as a child of node1
+      let idx: number;
+      let m: number;
+      if (node1bitmap === fullBitmap) {
+        idx = fullIndex(hash2, shift);
+        m = 1 << idx;
+      } else {
+        m = mask(hash2, shift);
+        if (node1bitmap & m) {
+          idx = sparseIndex(node1bitmap, m);
+        } else {
+          // no need to recurse, node2 doesn't overlap node1
+          return node1;
+        }
+      }
+
+      // loop and replace in this node
+      const oldArr = node1.children;
+      const oldChild = oldArr[idx];
+      const newNode = loop(shift + bitsPerSubkey, oldChild, node2);
+      if (newNode === oldChild) {
+        return node1;
+      } else if (newNode === null) {
+        // delete this child
+        const newArr = [...oldArr.slice(0, idx), ...oldArr.slice(idx + 1)];
+        return { bitmap: node1bitmap & ~m, children: newArr };
+      } else {
+        // replace child with new child
+        const newArr = [...oldArr];
+        newArr[idx] = newNode;
+        return { bitmap: node1bitmap, children: newArr };
+      }
+    }
+
+    // Collision vs Branch
+    else {
+      const hash1: number = node1.hash;
+      // node2 is guaranteed to be branch, but typescript doesn't know that
+      const node2int = node2 as InternalNode<K, V2>;
+      const node2bitmap = node2int.bitmap;
+
+      // find the index where hash1 will live (if any)
+      let idx: number;
+      if (node2bitmap === undefined) {
+        idx = fullIndex(hash1, shift);
+      } else {
+        const m = mask(hash1, shift);
+        if (m & node2bitmap) {
+          idx = sparseIndex(node2bitmap, m);
+        } else {
+          return null;
+        }
+      }
+
+      // whatever the difference is, everything else in node2 is ignored
+      return loop(shift + bitsPerSubkey, node1, node2int.children[idx]);
+    }
+  }
+
+  return [loop(0, root1, root2), numRemoved];
 }

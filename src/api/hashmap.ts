@@ -3,6 +3,7 @@
 import {
   alter,
   collectValues,
+  difference,
   fold,
   HamtNode,
   insert,
@@ -109,7 +110,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   }
 
   delete(k: K): HashMap<K, V> {
-    const newRoot = remove(this.cfg, k, this.root);
+    const newRoot = remove(this.cfg, this.cfg.hash(k), 0, k, this.root);
     if (newRoot === this.root) {
       return this;
     } else {
@@ -146,7 +147,29 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     }
   }
 
-  // TODO: difference, adjust, withoutKeys
+  difference<V2>(other: HashMap<K, V2>): HashMap<K, V> {
+    const [newRoot, numRemoved] = difference(this.cfg, this.root, other.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new HashMap(this.cfg, newRoot, this.size - numRemoved);
+    }
+  }
+
+  withoutKeys(keys: HashSet<K>): HashMap<K, V> {
+    const [newRoot, numRemoved] = difference(
+      this.cfg,
+      this.root,
+      (keys as unknown as { root: HamtNode<K, unknown> }).root
+    );
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new HashMap(this.cfg, newRoot, this.size - numRemoved);
+    }
+  }
+
+  // TODO: adjust
 
   append(items: Iterable<readonly [K, V]>): HashMap<K, V> {
     return this.union(HashMap.from(items));
