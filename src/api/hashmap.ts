@@ -152,19 +152,23 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     return this.union(HashMap.from(items));
   }
 
-  mapValues(f: (v: V, k: K) => V): HashMap<K, V> {
+  mapValues<V2>(f: (v: V, k: K) => V2): HashMap<K, V2> {
     const newRoot = mapValues(this.root, f);
     if (newRoot === this.root) {
-      return this;
+      // if the roots didn't change, then the map is empty or  the values were === which
+      // means that V1 is the same as V2.  In either case, can cast.
+      return this as unknown as HashMap<K, V2>;
     } else {
       return new HashMap(this.cfg, newRoot, this.size);
     }
   }
 
-  collectValues(f: (v: V, k: K) => V | null | undefined): HashMap<K, V> {
-    const [newRoot, newSize] = collectValues(this.root, f as (v: V, k: K) => V | undefined, true);
+  collectValues<V2>(f: (v: V, k: K) => V2 | null | undefined): HashMap<K, V2> {
+    const [newRoot, newSize] = collectValues(this.root, f as (v: V, k: K) => V2 | undefined, true);
     if (newRoot === this.root) {
-      return this;
+      // if the roots didn't change, then the map is empty or  the values were === which
+      // means that V1 is the same as V2.  In either case, can cast.
+      return this as unknown as HashMap<K, V2>;
     } else {
       return new HashMap(this.cfg, newRoot, newSize);
     }

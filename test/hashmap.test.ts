@@ -579,7 +579,7 @@ describe("HashMap", () => {
     expect(m).to.equal(m2);
   });
 
-  it("maps values in an ImMap", () => {
+  it("maps values in a HashMap", () => {
     const m = createMap(5000, () => randomCollisionKey());
 
     const newImMap = m.imMap.mapValues((v, k) => v + "!!!" + k.hash.toString() + "$$$" + k.x.toString());
@@ -589,6 +589,18 @@ describe("HashMap", () => {
     }
 
     expectEqual(m.imMap, m.jsMap);
+    expectEqual(newImMap, newJsMap);
+  });
+
+  it("maps values to a new type in a HashMap", () => {
+    const m = createMap(5000, () => randomCollisionKey());
+
+    const newImMap = m.imMap.mapValues((v) => v.replace(/[a-z]/g, "").length);
+    const newJsMap = new Map<string, [CollidingKey, number]>();
+    for (const [kS, [k, v]] of m.jsMap) {
+      newJsMap.set(kS, [k, v.replace(/[a-z]/g, "").length]);
+    }
+
     expectEqual(newImMap, newJsMap);
   });
 

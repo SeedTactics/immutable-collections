@@ -807,18 +807,20 @@ export function fold<K, V, T>(root: HamtNode<K, V> | null, f: (acc: T, key: K, v
   return acc;
 }
 
-export function mapValues<K, V>(root: HamtNode<K, V> | null, f: (v: V, k: K) => V): HamtNode<K, V> | null {
+export function mapValues<K, V1, V2>(root: HamtNode<K, V1> | null, f: (v: V1, k: K) => V2): HamtNode<K, V2> | null {
   if (root === null) return null;
 
-  function loop(node: HamtNode<K, V>): HamtNode<K, V> {
+  function loop(node: HamtNode<K, V1>): HamtNode<K, V2> {
     if ("children" in node) {
-      let newArr: Array<HamtNode<K, V>> | undefined = undefined;
+      let newArr: Array<HamtNode<K, V2>> | undefined = undefined;
       for (let i = 0, arr = node.children, len = arr.length; i < len; i++) {
         const n = arr[i];
         const newN = loop(n);
         if (!newArr) {
-          if (n !== newN) {
-            newArr = [...arr.slice(0, i), newN];
+          // if i > 0 and newArr is undefined, we must have had a previous value === and therefore
+          // know that V1 is the same type as V2, but typescript does not know that
+          if ((n as unknown) !== (newN as unknown)) {
+            newArr = [...(arr.slice(0, i) as unknown as ReadonlyArray<HamtNode<K, V2>>), newN];
           }
         } else {
           newArr.push(newN);
@@ -827,19 +829,22 @@ export function mapValues<K, V>(root: HamtNode<K, V> | null, f: (v: V, k: K) => 
       if (newArr) {
         return { bitmap: node.bitmap, children: newArr };
       } else {
-        return node;
+        // if newArr is undefined, we know that V1 is the same as V2.
+        return node as unknown as HamtNode<K, V2>;
       }
     } else if ("key" in node) {
       const newVal = f(node.val, node.key);
-      if (node.val !== newVal) {
-        return { hash: node.hash, key: node.key, val: newVal };
+      if ((node.val as unknown) === (newVal as unknown)) {
+        // if the values are ===, the type of V1 equals the type of V2
+        return node as unknown as HamtNode<K, V2>;
       } else {
-        return node;
+        return { hash: node.hash, key: node.key, val: newVal };
       }
     } else {
       const newRoot = tree.mapValues(f, node.collision);
-      if (newRoot === node.collision) {
-        return node;
+      if ((newRoot as unknown) === (node.collision as unknown)) {
+        // if the values are ===, the type of V1 equals the type of V2
+        return node as unknown as HamtNode<K, V2>;
       } else {
         // mapValues on a non-null tree produces a non-null tree
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -851,18 +856,18 @@ export function mapValues<K, V>(root: HamtNode<K, V> | null, f: (v: V, k: K) => 
   return loop(root);
 }
 
-export function collectValues<K, V>(
-  root: HamtNode<K, V> | null,
-  f: (v: V, k: K) => V | undefined,
+export function collectValues<K, V1, V2>(
+  root: HamtNode<K, V1> | null,
+  f: (v: V1, k: K) => V2 | undefined,
   filterNull: boolean
-): [HamtNode<K, V> | null, number] {
+): [HamtNode<K, V2> | null, number] {
   if (root === null) return [null, 0];
 
   let newSize = 0;
-  function loop(node: HamtNode<K, V>): HamtNode<K, V> | null {
+  function loop(node: HamtNode<K, V1>): HamtNode<K, V2> | null {
     if ("children" in node) {
       const origBitmap = node.bitmap;
-      let newArr: Array<HamtNode<K, V>> | undefined = undefined;
+      let newArr: Array<HamtNode<K, V2>> | undefined = undefined;
       let newBitmap = origBitmap;
 
       for (
@@ -876,12 +881,14 @@ export function collectValues<K, V>(
           const newN = loop(n);
           if (!newArr) {
             if (newN) {
-              if (n !== newN) {
-                newArr = [...node.children.slice(0, idx), newN];
+              // if i > 0 and newArr is undefined, we must have had a previous value === and therefore
+              // know that V1 is the same type as V2, but typescript does not know that
+              if ((n as unknown) !== (newN as unknown)) {
+                newArr = [...(node.children.slice(0, idx) as unknown as ReadonlyArray<HamtNode<K, V2>>), newN];
               }
             } else {
               // filter out the value
-              newArr = [...node.children.slice(0, idx)];
+              newArr = [...(node.children.slice(0, idx) as unknown as ReadonlyArray<HamtNode<K, V2>>)];
               newBitmap = newBitmap & ~mask;
             }
           } else {
@@ -909,24 +916,27 @@ export function collectValues<K, V>(
           return { bitmap: newBitmap, children: newArr };
         }
       } else {
-        return node;
+        // if newArr is undefined, we know that V1 is the same as V2.
+        return node as unknown as HamtNode<K, V2>;
       }
     } else if ("key" in node) {
       const newVal = f(node.val, node.key);
       if (newVal === undefined || (filterNull && newVal === null)) {
         return null;
-      } else if (node.val !== newVal) {
+      } else if ((node.val as unknown) !== (newVal as unknown)) {
         newSize++;
         return { hash: node.hash, key: node.key, val: newVal };
       } else {
         newSize++;
-        return node;
+        // if vals are ===, we know that V1 is the same as V2.
+        return node as unknown as HamtNode<K, V2>;
       }
     } else {
       const newCol = tree.collectValues(f, filterNull, node.collision);
-      if (newCol === node.collision) {
+      if ((newCol as unknown) === (node.collision as unknown)) {
         newSize += node.collision.size;
-        return node;
+        // if vals are ===, we know that V1 is the same as V2.
+        return node as unknown as HamtNode<K, V2>;
       } else if (newCol === undefined) {
         return null;
       } else if (newCol.size === 1) {
