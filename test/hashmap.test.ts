@@ -214,6 +214,82 @@ describe("HashMap", () => {
     expectEqual(newImMap, newJsMap);
   });
 
+  it("inserts into empty map using alter", () => {
+    const k = randomCollisionKey();
+    const v = faker.datatype.string();
+    const m = HashMap.empty<CollidingKey, string>().alter(k, (existing) => {
+      expect(existing).to.be.undefined;
+      return v;
+    });
+
+    expectEqual(m, new Map([[k.toString(), [k, v]]]));
+
+    const e = m.alter(k, (existing) => {
+      expect(existing).to.equal(v);
+      return undefined;
+    });
+    expectEqual(e, new Map());
+  });
+
+  it("deletes from empty map using alter", () => {
+    const k = randomCollisionKey();
+    const m = HashMap.empty<CollidingKey, string>().alter(k, (existing) => {
+      expect(existing).to.be.undefined;
+      return undefined;
+    });
+
+    expectEqual(m, new Map());
+  });
+
+  it("leaves map unchanged when altering the same value", () => {
+    const { imMap } = createMap(5000, randomCollisionKey);
+
+    for (const [k, v] of imMap.toLazySeq().take(1000)) {
+      const newM = imMap.alter(k, (old) => {
+        expect(old).to.equal(v);
+        return v;
+      });
+      expect(newM).to.equal(imMap);
+    }
+  });
+
+  it("alters values", () => {
+    const { imMap, jsMap } = createMap(5000, randomCollisionKey);
+
+    let newM = imMap;
+    const newJsMap = new Map(jsMap);
+    for (const [k, v] of imMap.toLazySeq().take(4900)) {
+      const todo = Math.random();
+
+      if (todo < 0.3) {
+        // modify existing value
+        newM = newM.alter(k, (oldV) => {
+          expect(oldV).to.equal(v);
+          return v + "!!!!";
+        });
+        newJsMap.set(k.toString(), [k, v + "!!!!"]);
+      } else if (todo < 0.6) {
+        // delete existing value
+        newM = newM.alter(k, (oldV) => {
+          expect(oldV).to.equal(v);
+          return undefined;
+        });
+        newJsMap.delete(k.toString());
+      } else {
+        // add new value (use odd key)
+        const newK = randomCollisionKey();
+        const newVal = faker.datatype.string();
+        newM = newM.alter(newK, (oldV) => {
+          expect(oldV).to.be.undefined;
+          return newVal;
+        });
+        newJsMap.set(newK.toString(), [newK, newVal]);
+      }
+    }
+
+    expectEqual(newM, newJsMap);
+  });
+
   it("creates via from", () => {
     const size = 1000;
     const entries = new Array<[number, string]>(size);
