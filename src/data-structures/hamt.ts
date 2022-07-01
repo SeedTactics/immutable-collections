@@ -519,7 +519,7 @@ function addToSpine<K, V>(
   spine.push({ node, childIdx });
 }
 
-export function remove<K, V>(
+function removeHelper<K, V>(
   cfg: HashConfig<K>,
   hash: number,
   shift: number,
@@ -606,6 +606,10 @@ export function remove<K, V>(
   } while (curNode);
 
   throw new Error("Internal immutable-collections violation: hamt remove reached null");
+}
+
+export function remove<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V> | null): HamtNode<K, V> | null {
+  return removeHelper(cfg, cfg.hash(k), 0, k, rootNode);
 }
 
 export function alter<K, V>(
@@ -1378,7 +1382,7 @@ export function difference<K, V1, V2>(
       }
     } else if ("key" in node2) {
       // take node2.key out of the first tree
-      const newRoot = remove(cfg, node2.hash, shift, node2.key, node1);
+      const newRoot = removeHelper(cfg, node2.hash, shift, node2.key, node1);
       if (newRoot === node1) {
         return node1;
       } else {

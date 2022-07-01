@@ -110,7 +110,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   }
 
   delete(k: K): HashMap<K, V> {
-    const newRoot = remove(this.cfg, this.cfg.hash(k), 0, k, this.root);
+    const newRoot = remove(this.cfg, k, this.root);
     if (newRoot === this.root) {
       return this;
     } else {
