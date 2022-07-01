@@ -39,9 +39,9 @@ export function lookup<K, V>({ compare }: ComparisionConfig<K>, k: K, root: Tree
 
 /* Benchmarking a variety of implementation strategies (see  commit 785942937019aa44527605bb4231d68f2692ec56)
    showed that a recursive function was faster than a loop+stack, and that dedicated insert/remove
-   functions had roughly the same performance as the generalized modify function.
+   functions had roughly the same performance as the generalized alter function.
 */
-export function modify<K, V>(
+export function alter<K, V>(
   { compare }: ComparisionConfig<K>,
   k: K,
   f: (oldV: V | undefined) => V | undefined,
@@ -411,10 +411,10 @@ export function union<K, V>(
     if (!n1) return n2;
     if (!n2) return n1;
     if (!n1.left && !n1.right) {
-      return modify(cfg, n1.key, (oldVal) => (oldVal === undefined ? n1.val : f(n1.val, oldVal, n1.key)), n2);
+      return alter(cfg, n1.key, (oldVal) => (oldVal === undefined ? n1.val : f(n1.val, oldVal, n1.key)), n2);
     }
     if (!n2.left && !n2.right) {
-      return modify(cfg, n2.key, (oldVal) => (oldVal === undefined ? n2.val : f(oldVal, n2.val, n2.key)), n1);
+      return alter(cfg, n2.key, (oldVal) => (oldVal === undefined ? n2.val : f(oldVal, n2.val, n2.key)), n1);
     }
 
     const s = split(cfg, n1.key, n2);

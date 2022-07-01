@@ -74,7 +74,7 @@ function createMap<K extends OrderedMapKey>(size: number, key: () => K): Ordered
       ordMap = ordMap.set(k, v);
       jsMap.set(k.toString(), [k, v]);
     } else {
-      ordMap = ordMap.modify(k, (oldV) => (oldV === undefined ? v : oldV + v));
+      ordMap = ordMap.alter(k, (oldV) => (oldV === undefined ? v : oldV + v));
       const oldjV = jsMap.get(k.toString());
       jsMap.set(k.toString(), [k, oldjV === undefined ? v : oldjV[1] + v]);
     }
@@ -231,11 +231,11 @@ describe("Ordered Map", () => {
     }
   });
 
-  it("leaves map unchanged when modifying the same value", () => {
+  it("leaves map unchanged when altering the same value", () => {
     const { ordMap } = createMap(5000, () => faker.datatype.string());
 
     for (const [k, v] of ordMap.toAscLazySeq().take(1000)) {
-      const newM = ordMap.modify(k, (old) => {
+      const newM = ordMap.alter(k, (old) => {
         expect(old).to.equal(v);
         return v;
       });
@@ -262,7 +262,7 @@ describe("Ordered Map", () => {
     let newM = ordMap;
     const newJsMap = new Map(jsMap);
     for (const [k, v] of ordMap.toAscLazySeq().take(4000)) {
-      newM = newM.modify(k, (oldV) => {
+      newM = newM.alter(k, (oldV) => {
         expect(oldV).to.equal(v);
         return v + "!!!!";
       });
@@ -273,7 +273,7 @@ describe("Ordered Map", () => {
     expectEqual(newM, newJsMap);
   });
 
-  it("modifies values", () => {
+  it("alters values", () => {
     const keygen = mkNumKeyGenerator(10_000);
     const { ordMap, jsMap } = createMap(5000, () => keygen() * 2);
 
@@ -284,14 +284,14 @@ describe("Ordered Map", () => {
 
       if (todo < 0.3) {
         // modify existing value
-        newM = newM.modify(k, (oldV) => {
+        newM = newM.alter(k, (oldV) => {
           expect(oldV).to.equal(v);
           return v + "!!!!";
         });
         newJsMap.set(k.toString(), [k, v + "!!!!"]);
       } else if (todo < 0.6) {
         // delete existing value
-        newM = newM.modify(k, (oldV) => {
+        newM = newM.alter(k, (oldV) => {
           expect(oldV).to.equal(v);
           return undefined;
         });
@@ -299,7 +299,7 @@ describe("Ordered Map", () => {
       } else {
         // add new value (use odd key)
         const newVal = faker.datatype.string();
-        newM = newM.modify(k + 1, (oldV) => {
+        newM = newM.alter(k + 1, (oldV) => {
           expect(oldV).to.be.undefined;
           return newVal;
         });

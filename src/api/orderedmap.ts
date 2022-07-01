@@ -15,7 +15,7 @@ import {
   iterateAsc,
   iterateDesc,
   lookup,
-  modify,
+  alter,
   mapValues,
   split,
   union,
@@ -47,7 +47,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
   }
 
   has(k: K): boolean {
-    return this.get(k) !== undefined;
+    return lookup(this.cfg, k, this.root) !== undefined;
   }
 
   [Symbol.iterator](): IterableIterator<[K, V]> {
@@ -114,7 +114,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
   // Methods modifying the map
 
   set(k: K, v: V): OrderedMap<K, V> {
-    const newRoot = modify(this.cfg, k, () => v, this.root);
+    const newRoot = alter(this.cfg, k, () => v, this.root);
     if (newRoot === this.root) {
       return this;
     } else {
@@ -122,8 +122,8 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     }
   }
 
-  modify(k: K, f: (existing: V | undefined) => V | undefined): OrderedMap<K, V> {
-    const newRoot = modify(this.cfg, k, f, this.root);
+  alter(k: K, f: (existing: V | undefined) => V | undefined): OrderedMap<K, V> {
+    const newRoot = alter(this.cfg, k, f, this.root);
     if (newRoot === this.root) {
       return this;
     } else {
@@ -132,7 +132,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
   }
 
   delete(k: K): OrderedMap<K, V> {
-    const newRoot = modify(this.cfg, k, constUndefined, this.root);
+    const newRoot = alter(this.cfg, k, constUndefined, this.root);
     if (newRoot === this.root) {
       return this;
     } else {

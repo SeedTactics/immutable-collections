@@ -2,7 +2,7 @@ import type { Event } from "benchmark";
 import Benchmark from "benchmark";
 import { mkComparisonConfig } from "../src/data-structures/comparison.js";
 import { MutableTreeNode, TreeNode } from "../src/data-structures/rotations.js";
-import { build, from, modify, mutateInsert } from "../src/data-structures/tree.js";
+import { build, from, alter, mutateInsert } from "../src/data-structures/tree.js";
 
 const size = 50_000;
 const suite = new Benchmark.Suite("Tree Insert");
@@ -21,7 +21,7 @@ suite.add("modify", () => {
   let n: TreeNode<number, string> | undefined = undefined;
   const compare = mkComparisonConfig();
   for (let i = 0; i < size; i++) {
-    n = modify(compare, i, () => i.toString(), n);
+    n = alter(compare, i, () => i.toString(), n);
   }
 });
 
