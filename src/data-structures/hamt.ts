@@ -458,7 +458,11 @@ function hasSingleLeafOrCollision<K, V>(node: HamtNode<K, V>): LeafNode<K, V> | 
   return null;
 }
 
-function removeChildFromEndOfSpine<K, V>(spine: ReadonlyArray<MutableSpineNode<K, V>>, hash: number): HamtNode<K, V> {
+function removeChildFromEndOfSpine<K, V>(
+  spine: ReadonlyArray<MutableSpineNode<K, V>>,
+  hash: number,
+  shift: number
+): HamtNode<K, V> {
   // remove the node pointed to by the last spine entry
   // there are three cases:
   // - a full node is transitioned to a bitmap indexed node
@@ -502,7 +506,7 @@ function removeChildFromEndOfSpine<K, V>(spine: ReadonlyArray<MutableSpineNode<K
   }
 
   // last is a bitmap indexed node which after removal will not be in a chain of single-child bitmap-indexed nodes
-  last.node.bitmap &= ~mask(hash, bitsPerSubkey * (spine.length - 1));
+  last.node.bitmap &= ~mask(hash, shift - bitsPerSubkey);
   last.node.children.splice(last.childIdx, 1);
   return spine[0].node;
 }
@@ -565,7 +569,7 @@ function removeHelper<K, V>(
             // this leaf is the root, so removing it will make the tree empty
             return null;
           } else {
-            return removeChildFromEndOfSpine(spine, hash);
+            return removeChildFromEndOfSpine(spine, hash, shift);
           }
         } else {
           // keys are not equal, no match
@@ -688,7 +692,7 @@ export function alter<K, V>(
               // this leaf is the root, so removing it will make the tree empty
               return [null, -1];
             } else {
-              return [removeChildFromEndOfSpine(spine, hash), -1];
+              return [removeChildFromEndOfSpine(spine, hash, shift), -1];
             }
           } else if (newVal === curNode.val) {
             return [rootNode, 0];
@@ -1399,9 +1403,9 @@ export function difference<K, V1, V2>(
 
       // merge the two nodes, but don't create a copy until we find something to remove
       let newArr: Array<HamtNode<K, V1>> | undefined = undefined;
-      let newBitmap = intersectionBitmap;
+      let newBitmap = node1bitmap;
       for (
-        let mask = 1, node1Idx = 0, node2Idx = 0, remainingBitmap = node1bitmap | node2bitmap;
+        let mask = 1, node1Idx = 0, node2Idx = 0, remainingBitmap = node1bitmap;
         remainingBitmap !== 0;
         remainingBitmap &= ~mask, mask <<= 1
       ) {
@@ -1454,10 +1458,10 @@ export function difference<K, V1, V2>(
     else if ("collision" in node1 && "collision" in node2) {
       const newTree = tree.difference(cfg, node1.collision, node2.collision);
       if (newTree === undefined) {
-        numRemoved = node1.collision.size;
+        numRemoved += node1.collision.size;
         return null;
       } else if (newTree.size === 1) {
-        numRemoved = node1.collision.size - 1;
+        numRemoved += node1.collision.size - 1;
         return { hash: node1.hash, key: newTree.key, val: newTree.val };
       } else if (newTree === node1.collision) {
         return node1;
