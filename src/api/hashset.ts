@@ -39,7 +39,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
 
   has(t: T): boolean {
     if (this.root === null) return false;
-    return lookup(this.cfg, this.cfg.hash(t), 0, t, this.root) !== undefined;
+    return lookup(this.cfg, t, this.root) !== undefined;
   }
 
   [Symbol.iterator](): IterableIterator<T> {

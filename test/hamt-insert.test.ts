@@ -26,10 +26,10 @@ describe("HAMT insert and lookup", () => {
       val: 100,
     });
 
-    expect(lookup(cfg, cfg.hash(k), 0, k, node)).to.equal(100);
-    expect(lookup(cfg, 10, 0, new Key(10, 20), node)).to.equal(100);
-    expect(lookup(cfg, 50, 0, new Key(50, 20), node)).to.be.undefined;
-    expect(lookup(cfg, 10, 0, new Key(10, 30), node)).to.be.undefined;
+    expect(lookup(cfg, k, node)).to.equal(100);
+    expect(lookup(cfg, new Key(10, 20), node)).to.equal(100);
+    expect(lookup(cfg, new Key(50, 20), node)).to.be.undefined;
+    expect(lookup(cfg, new Key(10, 30), node)).to.be.undefined;
   });
 
   it("creates two nodes directly at the root", () => {
@@ -56,8 +56,8 @@ describe("HAMT insert and lookup", () => {
     // check node reused, so no deep equal, just shallow ===
     expect(node1).to.equal((node2 as InternalNode<Key, number>).children[0]);
 
-    expect(lookup(cfg, cfg.hash(k1), 0, k1, node2)).to.equal(100);
-    expect(lookup(cfg, cfg.hash(k2), 0, k2, node2)).to.equal(200);
+    expect(lookup(cfg, k1, node2)).to.equal(100);
+    expect(lookup(cfg, k2, node2)).to.equal(200);
   });
 
   it("creates nodes deep in the tree", () => {
@@ -123,10 +123,10 @@ describe("HAMT insert and lookup", () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
     expect((node2 as any).children[0].children[0]).to.equal((node3 as any).children[0].children[0]);
 
-    expect(lookup(cfg, cfg.hash(k1), 0, k1, node2)).to.equal(100);
-    expect(lookup(cfg, cfg.hash(k2), 0, k2, node2)).to.equal(200);
+    expect(lookup(cfg, k1, node2)).to.equal(100);
+    expect(lookup(cfg, k2, node2)).to.equal(200);
 
-    expect(lookup(cfg, 3, 0, new Key(3, 10), node2)).to.be.undefined;
+    expect(lookup(cfg, new Key(3, 10), node2)).to.be.undefined;
   });
 
   it("creates a full node", () => {
@@ -172,8 +172,8 @@ describe("HAMT insert and lookup", () => {
 
     for (let i = 0; i < 32; i++) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      expect(lookup(cfg, i, 0, new Key(i, i), tree!)).to.equal(i * 100);
-      expect(lookup(cfg, i, 0, new Key(i, i), after)).to.equal(i * 100);
+      expect(lookup(cfg, new Key(i, i), tree!)).to.equal(i * 100);
+      expect(lookup(cfg, new Key(i, i), after)).to.equal(i * 100);
 
       if (i > 1) {
         // check that the nodes were re-used so shallow equal

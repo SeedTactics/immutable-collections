@@ -1,4 +1,3 @@
-/* eslint-disable no-inner-declarations */
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
 import { HashConfig } from "./hashing.js";
@@ -106,11 +105,17 @@ function constUndefined() {
 
 export function lookup<K, V>(
   cfg: HashConfig<K>,
-  hash: number,
-  shift: number,
   k: K,
-  rootNode: HamtNode<K, V>
+  rootNode: HamtNode<K, V>,
+  hash?: number,
+  shift?: number
 ): V | undefined {
+  if (hash === undefined) {
+    hash = cfg.hash(k);
+  }
+  if (shift === undefined) {
+    shift = 0;
+  }
   let node = rootNode;
   do {
     if ("children" in node) {
@@ -524,16 +529,18 @@ function addToSpine<K, V>(
   spine.push({ node, childIdx });
 }
 
-function removeHelper<K, V>(
+export function remove<K, V>(
   cfg: HashConfig<K>,
-  hash: number,
-  shift: number,
   k: K,
-  rootNode: HamtNode<K, V> | null
+  rootNode: HamtNode<K, V> | null,
+  hash?: number,
+  shift?: number
 ): HamtNode<K, V> | null {
   if (rootNode === null) {
     return null;
   }
+  if (hash === undefined) hash = cfg.hash(k);
+  if (shift === undefined) shift = 0;
 
   const spine: Array<MutableSpineNode<K, V>> = [];
 
@@ -611,10 +618,6 @@ function removeHelper<K, V>(
   } while (curNode);
 
   throw new Error("Internal immutable-collections violation: hamt remove reached null");
-}
-
-export function remove<K, V>(cfg: HashConfig<K>, k: K, rootNode: HamtNode<K, V> | null): HamtNode<K, V> | null {
-  return removeHelper(cfg, cfg.hash(k), 0, k, rootNode);
 }
 
 export function alter<K, V>(
@@ -1206,7 +1209,7 @@ export function intersection<K, V>(
   function loop(shift: number, node1: HamtNode<K, V>, node2: HamtNode<K, V>): HamtNode<K, V> | null {
     // Leaf vs anything
     if ("key" in node1) {
-      const other = lookup(cfg, node1.hash, shift, node1.key, node2);
+      const other = lookup(cfg, node1.key, node2, node1.hash, shift);
       if (other !== undefined) {
         intersectionSize++;
         const newVal = f(node1.val, other, node1.key);
@@ -1219,7 +1222,7 @@ export function intersection<K, V>(
         return null;
       }
     } else if ("key" in node2) {
-      const other = lookup(cfg, node2.hash, shift, node2.key, node1);
+      const other = lookup(cfg, node2.key, node1, node2.hash, shift);
       if (other !== undefined) {
         intersectionSize++;
         const newVal = f(other, node2.val, node2.key);
@@ -1377,7 +1380,7 @@ export function difference<K, V1, V2>(
 
   function loop(shift: number, node1: HamtNode<K, V1>, node2: HamtNode<K, V2>): HamtNode<K, V1> | null {
     if ("key" in node1) {
-      const has = lookup(cfg, node1.hash, shift, node1.key, node2);
+      const has = lookup(cfg, node1.key, node2, node1.hash, shift);
       if (has === undefined) {
         // keep the key/val in the first tree
         return node1;
@@ -1387,7 +1390,7 @@ export function difference<K, V1, V2>(
       }
     } else if ("key" in node2) {
       // take node2.key out of the first tree
-      const newRoot = removeHelper(cfg, node2.hash, shift, node2.key, node1);
+      const newRoot = remove(cfg, node2.key, node1, node2.hash, shift);
       if (newRoot === node1) {
         return node1;
       } else {
@@ -1566,22 +1569,51 @@ export function adjust<K, V1, V2>(
   let numRemoved = 0;
   function loop(shift: number, node1: HamtNode<K, V1>, node2: HamtNode<K, V2>): HamtNode<K, V1> | null {
     if ("key" in node1 && "key" in node2) {
-      const newVal = f(node1.val, node2.val, node1.key);
-      if (newVal === undefined) {
-        numRemoved += 1;
-        return null;
-      } else if (newVal === node1.val) {
-        return node1;
+      if (node1.hash === node2.hash) {
+        const cmp = cfg.compare(node1.key, node2.key);
+        if (cmp === 0) {
+          const newVal = f(node1.val, node2.val, node1.key);
+          if (newVal === undefined) {
+            numRemoved += 1;
+            return null;
+          } else if (newVal === node1.val) {
+            return node1;
+          } else {
+            return { hash: node1.hash, key: node1.key, val: newVal };
+          }
+        } else {
+          // collision
+          const newVal = f(undefined, node2.val, node2.key);
+          if (newVal === undefined) {
+            return node1;
+          } else {
+            numRemoved -= 1;
+            return { hash: node1.hash, collision: tree.two(cmp, node1.key, node1.val, node2.key, newVal) };
+          }
+        }
       } else {
-        return { hash: node1.hash, key: node1.key, val: newVal };
+        // hashes are different, create a second leaf if required
+        const newVal = f(undefined, node2.val, node2.key);
+        if (newVal === undefined) {
+          return node1;
+        } else {
+          numRemoved -= 1;
+          return two(shift, node1, { hash: node2.hash, key: node2.key, val: newVal });
+        }
       }
-    } else if ("key" in node2) {
-      const [newNode1, sizeChange] = alter(cfg, node2.key, (oldV) => f(oldV, node2.val, node2.key), node1);
-      if (newNode1 === node1) {
+    } else if ("collision" in node1 && "key" in node2) {
+      const newCol1 = tree.alter(cfg, node2.key, (oldV) => f(oldV, node2.val, node2.key), node1.collision);
+      if (newCol1 === node1.collision) {
         return node1;
+      } else if (newCol1 === undefined) {
+        numRemoved += node1.collision.size;
+        return null;
+      } else if (newCol1.size === 1) {
+        numRemoved += node1.collision.size - 1;
+        return { hash: node1.hash, key: newCol1.key, val: newCol1.val };
       } else {
-        numRemoved -= sizeChange;
-        return newNode1;
+        numRemoved += node1.collision.size - newCol1.size;
+        return { hash: node1.hash, collision: newCol1 };
       }
     } else if ("key" in node1 && "collision" in node2) {
       const newCol = tree.adjust(
@@ -1689,11 +1721,11 @@ export function adjust<K, V1, V2>(
       }
     }
 
-    //  Branch vs Collision
+    //  Branch vs Leaf or Collision
     else if ("children" in node1) {
-      // node2 is guaranteed to be collision, but typescript doesn't know that
-      const node2col = node2 as CollisionNode<K, V2>;
-      const hash2: number = node2col.hash;
+      // node2 is guaranteed to be leaf or collision, but typescript doesn't know that
+      const node2leaf = node2 as LeafNode<K, V2> | CollisionNode<K, V2>;
+      const hash2: number = node2leaf.hash;
       const node1bitmap = node1.bitmap;
 
       let idx: number;
@@ -1732,11 +1764,9 @@ export function adjust<K, V1, V2>(
       } else {
         // missing in node1, so check if adding a new child for the node2
         const idx = sparseIndex(node1bitmap, m);
-        const newCol = tree.collectValues(fWithUndefined, false, node2col.collision);
-        if (newCol !== undefined) {
-          numRemoved -= newCol.size;
-          const newChild =
-            newCol.size === 1 ? { hash: hash2, key: newCol.key, val: newCol.val } : { hash: hash2, collision: newCol };
+        const [newChild, newSize] = collectValues(node2leaf, fWithUndefined, false);
+        if (newChild !== null) {
+          numRemoved -= newSize;
           const newArr = copyAndInsertToArray(node1.children, idx, newChild);
           return { bitmap: node1bitmap | m, children: newArr };
         } else {
@@ -1797,8 +1827,8 @@ export function adjust<K, V1, V2>(
           node2Idx++;
         } else if (mask & mask1) {
           // insert node1 into the new bitmap-indexed node
+          newBitmap |= mask;
           if (newArr) {
-            newBitmap |= mask;
             newArr.push(node1);
           } else {
             // if node2Idx > 0 and newArr is undefined, we must have had a previous value === and therefore

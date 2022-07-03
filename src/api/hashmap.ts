@@ -1,6 +1,7 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
 import {
+  adjust,
   alter,
   collectValues,
   difference,
@@ -38,7 +39,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
 
   get(k: K): V | undefined {
     if (this.root === null) return undefined;
-    return lookup(this.cfg, this.cfg.hash(k), 0, k, this.root);
+    return lookup(this.cfg, k, this.root);
   }
 
   has(k: K): boolean {
@@ -169,7 +170,17 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     }
   }
 
-  // TODO: adjust
+  adjust<V2>(
+    keysToAdjust: HashMap<K, V2>,
+    adjustVal: (existingVal: V | undefined, helperVal: V2, k: K) => V | undefined
+  ): HashMap<K, V> {
+    const [newRoot, numRemoved] = adjust(this.cfg, adjustVal, this.root, keysToAdjust.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new HashMap(this.cfg, newRoot, this.size - numRemoved);
+    }
+  }
 
   append(items: Iterable<readonly [K, V]>): HashMap<K, V> {
     return this.union(HashMap.from(items));
