@@ -1602,49 +1602,85 @@ export function adjust<K, V1, V2>(
         }
       }
     } else if ("collision" in node1 && "key" in node2) {
-      const newCol1 = tree.alter(cfg, node2.key, (oldV) => f(oldV, node2.val, node2.key), node1.collision);
-      if (newCol1 === node1.collision) {
-        return node1;
-      } else if (newCol1 === undefined) {
-        numRemoved += node1.collision.size;
-        return null;
-      } else if (newCol1.size === 1) {
-        numRemoved += node1.collision.size - 1;
-        return { hash: node1.hash, key: newCol1.key, val: newCol1.val };
+      if (node1.hash === node2.hash) {
+        const newCol1 = tree.alter(cfg, node2.key, (oldV) => f(oldV, node2.val, node2.key), node1.collision);
+        if (newCol1 === node1.collision) {
+          return node1;
+        } else if (newCol1 === undefined) {
+          numRemoved += node1.collision.size;
+          return null;
+        } else if (newCol1.size === 1) {
+          numRemoved += node1.collision.size - 1;
+          return { hash: node1.hash, key: newCol1.key, val: newCol1.val };
+        } else {
+          numRemoved += node1.collision.size - newCol1.size;
+          return { hash: node1.hash, collision: newCol1 };
+        }
       } else {
-        numRemoved += node1.collision.size - newCol1.size;
-        return { hash: node1.hash, collision: newCol1 };
+        const newVal = f(undefined, node2.val, node2.key);
+        if (newVal === undefined) {
+          return node1;
+        } else {
+          numRemoved -= 1;
+          return two(shift, node1, { hash: node2.hash, key: node2.key, val: newVal });
+        }
       }
     } else if ("key" in node1 && "collision" in node2) {
-      const newCol = tree.adjust(
-        cfg,
-        f,
-        { key: node1.key, val: node1.val, size: 1, left: undefined, right: undefined },
-        node2.collision
-      );
-      if (newCol === undefined) {
-        numRemoved += 1;
-        return null;
-      } else if ((newCol as unknown) === (node2.collision as unknown)) {
-        numRemoved += 1 - node2.collision.size;
-        return node2 as unknown as HamtNode<K, V1>;
+      if (node1.hash === node2.hash) {
+        const newCol = tree.adjust(
+          cfg,
+          f,
+          { key: node1.key, val: node1.val, size: 1, left: undefined, right: undefined },
+          node2.collision
+        );
+        if (newCol === undefined) {
+          numRemoved += 1;
+          return null;
+        } else if ((newCol as unknown) === (node2.collision as unknown)) {
+          numRemoved += 1 - node2.collision.size;
+          return node2 as unknown as HamtNode<K, V1>;
+        } else {
+          numRemoved += 1 - newCol.size;
+          return { hash: node1.hash, collision: newCol };
+        }
       } else {
-        numRemoved += 1 - newCol.size;
-        return { hash: node1.hash, collision: newCol };
+        const newTree = tree.collectValues(fWithUndefined, false, node2.collision);
+        if (newTree === undefined) {
+          return node1;
+        } else if (newTree.size === 1) {
+          numRemoved -= 1;
+          return two(shift, node1, { hash: node2.hash, key: newTree.key, val: newTree.val });
+        } else {
+          numRemoved -= newTree.size;
+          return two(shift, node1, { hash: node2.hash, collision: newTree });
+        }
       }
     } else if ("collision" in node1 && "collision" in node2) {
-      const newTree = tree.adjust(cfg, f, node1.collision, node2.collision);
-      if (newTree === undefined) {
-        numRemoved += node1.collision.size;
-        return null;
-      } else if (newTree === node1.collision) {
-        return node1;
-      } else if (newTree.size === 1) {
-        numRemoved += node1.collision.size - 1;
-        return { hash: node1.hash, key: newTree.key, val: newTree.val };
+      if (node1.hash === node2.hash) {
+        const newTree = tree.adjust(cfg, f, node1.collision, node2.collision);
+        if (newTree === undefined) {
+          numRemoved += node1.collision.size;
+          return null;
+        } else if (newTree === node1.collision) {
+          return node1;
+        } else if (newTree.size === 1) {
+          numRemoved += node1.collision.size - 1;
+          return { hash: node1.hash, key: newTree.key, val: newTree.val };
+        } else {
+          numRemoved += node1.collision.size - newTree.size;
+          return { hash: node1.hash, collision: newTree };
+        }
       } else {
-        numRemoved += node1.collision.size - newTree.size;
-        return { hash: node1.hash, collision: newTree };
+        const newTree = tree.collectValues(fWithUndefined, false, node2.collision);
+        if (newTree === undefined) {
+          return node1;
+        } else if (newTree.size === 1) {
+          numRemoved -= 1;
+          return two(shift, node1, { hash: node2.hash, key: newTree.key, val: newTree.val });
+        } else {
+          numRemoved -= newTree.size;
+          return two(shift, node1, { hash: node2.hash, collision: newTree });
+        }
       }
     }
 

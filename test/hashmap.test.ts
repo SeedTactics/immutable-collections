@@ -8,6 +8,7 @@ import { HashMap } from "../src/api/hashmap.js";
 import { mkCompareByProperties } from "../src/data-structures/comparison.js";
 import { CollidingKey, createKeyWithSameHash, distinctKeyWithHash, randomCollisionKey } from "./collision-key.js";
 import { deepFreeze } from "./deepfreeze.js";
+import { HamtNode } from "../src/data-structures/hamt.js";
 
 interface HashMapAndJsMap<K extends HashKey, V> {
   readonly imMap: HashMap<K, V>;
@@ -68,7 +69,29 @@ export function createMap<K extends HashKey>(size: number, key: () => K): HashMa
   return { imMap, jsMap };
 }
 
+// copy popCount here because we don't want it exported
+function popCount(n: number): number {
+  n = n - ((n >> 1) & 0x55555555);
+  n = (n & 0x33333333) + ((n >> 2) & 0x33333333);
+  return (((n + (n >> 4)) & 0xf0f0f0f) * 0x1010101) >> 24;
+}
+
+function checkBitmap<K extends HashKey, V>(imMap: HashMap<K, V>): void {
+  function loop(node: HamtNode<K, V>): void {
+    if ("children" in node) {
+      expect(popCount(node.bitmap)).to.equal(node.children.length);
+      for (const n of node.children) {
+        loop(n);
+      }
+    }
+  }
+  const root = (imMap as unknown as { root: HamtNode<K, V> | null }).root;
+  if (root !== null) loop(root);
+}
+
 function expectEqual<K extends HashKey, V>(imMap: HashMap<K, V>, jsMap: Map<string, [K, V]>): void {
+  checkBitmap(imMap);
+
   const entries = sortEntries(jsMap.values());
   expect(imMap.size).to.equal(jsMap.size);
 
@@ -956,28 +979,28 @@ describe("HashMap", () => {
       { map1K: CollidingKey; map1V: string | null } | { map2K: CollidingKey; map2V: AdjustType }
     > {
       // want a bunch of keys to be deleted
-      for (let i = 0; i < 2000; i++) {
+      for (let i = 0; i < 10000; i++) {
         const k = randomCollisionKey();
         yield { map1K: k, map1V: randomNullableStr() };
         yield { map2K: k, map2V: { type: "delete" } };
       }
 
       // want a bunch of keys to be merged
-      for (let i = 0; i < 1000; i++) {
+      for (let i = 0; i < 10000; i++) {
         const k = randomCollisionKey();
         yield { map1K: k, map1V: randomNullableStr() };
         yield { map2K: k, map2V: { type: "mergeWith", val: randomNullableStr() } };
       }
 
       // want a bunch of keys to be left unchanged
-      for (let i = 0; i < 1000; i++) {
+      for (let i = 0; i < 10000; i++) {
         const k = randomCollisionKey();
         yield { map1K: k, map1V: randomNullableStr() };
         yield { map2K: k, map2V: { type: "leave unchanged" } };
       }
 
       // want a bunch of keys only in each map
-      for (let i = 0; i < 2000; i++) {
+      for (let i = 0; i < 10000; i++) {
         yield { map1K: randomCollisionKey(), map1V: randomNullableStr() };
         yield { map2K: randomCollisionKey(), map2V: { type: "expect missing", val: randomNullableStr() } };
       }
