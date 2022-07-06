@@ -435,6 +435,80 @@ export function mutateInsert<K, T, V>(
   throw new Error("Internal immutable-collections violation: hamt mutate insert reached null");
 }
 
+export function from<K, V>(
+  cfg: HashConfig<K>,
+  items: Iterable<readonly [K, V]>,
+  merge?: (v1: V, v2: V) => V
+): [HamtNode<K, V> | null, number] {
+  let root: MutableHamtNode<K, V> | null = null;
+  let size = 0;
+
+  let val: (old: V | undefined, v: V) => V;
+  if (merge) {
+    val = function val(old: V | undefined, v: V): V {
+      if (old === undefined) {
+        size++;
+        return v;
+      } else {
+        return merge(old, v);
+      }
+    };
+  } else {
+    val = function (old, v: V): V {
+      if (old === undefined) {
+        size++;
+      }
+      return v;
+    };
+  }
+
+  for (const [k, t] of items) {
+    root = mutateInsert(cfg, k, t, val, root);
+  }
+  return [root, size];
+}
+
+export function build<K, V>(cfg: HashConfig<K>, items: Iterable<V>, key: (v: V) => K): [HamtNode<K, V> | null, number];
+export function build<T, K, V>(
+  cfg: HashConfig<K>,
+  items: Iterable<T>,
+  key: (v: T) => K,
+  val: (old: V | undefined, t: T) => V
+): [HamtNode<K, V> | null, number];
+export function build<T, K, V>(
+  cfg: HashConfig<K>,
+  items: Iterable<T>,
+  key: (t: T) => K,
+  val?: (old: V | undefined, t: T) => V
+): [HamtNode<K, V> | null, number] {
+  let root: MutableHamtNode<K, V> | null = null;
+  let size = 0;
+
+  let getVal: (old: V | undefined, t: T) => V;
+  if (val) {
+    getVal = function getVal(old: V | undefined, t: T): V {
+      if (old === undefined) {
+        size++;
+        return val(undefined, t);
+      } else {
+        return val(old, t);
+      }
+    };
+  } else {
+    getVal = function (old: V | undefined, t: T): V {
+      if (old === undefined) {
+        size++;
+      }
+      return t as unknown as V;
+    };
+  }
+
+  for (const t of items) {
+    root = mutateInsert(cfg, key(t), t, getVal, root);
+  }
+  return [root, size];
+}
+
 function hasSingleLeafOrCollision<K, V>(node: HamtNode<K, V>): LeafNode<K, V> | CollisionNode<K, V> | null {
   while (node) {
     if ("children" in node) {

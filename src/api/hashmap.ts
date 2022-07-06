@@ -3,17 +3,17 @@
 import {
   adjust,
   alter,
+  build,
   collectValues,
   difference,
   fold,
+  from,
   HamtNode,
   insert,
   intersection,
   iterate,
   lookup,
   mapValues,
-  MutableHamtNode,
-  mutateInsert,
   remove,
   union,
 } from "../data-structures/hamt.js";
@@ -227,32 +227,8 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     items: Iterable<readonly [K, V]>,
     merge?: (v1: V, v2: V) => V
   ): HashMap<K, V> {
-    let root: MutableHamtNode<K, V> | null = null;
-    let size = 0;
     const cfg = mkHashConfig();
-
-    let val: (old: V | undefined, v: V) => V;
-    if (merge) {
-      val = function val(old: V | undefined, v: V): V {
-        if (old === undefined) {
-          size++;
-          return v;
-        } else {
-          return merge(old, v);
-        }
-      };
-    } else {
-      val = function (old, v: V): V {
-        if (old === undefined) {
-          size++;
-        }
-        return v;
-      };
-    }
-
-    for (const [k, t] of items) {
-      root = mutateInsert(cfg, k, t, val, root);
-    }
+    const [root, size] = from(cfg, items, merge);
     return new HashMap(cfg, root, size);
   }
 
@@ -267,32 +243,8 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     key: (t: T) => K,
     val?: (old: V | undefined, t: T) => V
   ): HashMap<K, V> {
-    let root: MutableHamtNode<K, V> | null = null;
-    let size = 0;
     const cfg = mkHashConfig();
-
-    let getVal: (old: V | undefined, t: T) => V;
-    if (val) {
-      getVal = function getVal(old: V | undefined, t: T): V {
-        if (old === undefined) {
-          size++;
-          return val(undefined, t);
-        } else {
-          return val(old, t);
-        }
-      };
-    } else {
-      getVal = function (old: V | undefined, t: T): V {
-        if (old === undefined) {
-          size++;
-        }
-        return t as unknown as V;
-      };
-    }
-
-    for (const t of items) {
-      root = mutateInsert(cfg, key(t), t, getVal, root);
-    }
+    const [root, size] = build(cfg, items, key, val as (old: V | undefined, t: T) => V);
     return new HashMap(cfg, root, size);
   }
 
