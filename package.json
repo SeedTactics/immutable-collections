@@ -4,14 +4,18 @@
   "author": "John Lenz",
   "license": "BSD-3-Clause",
   "type": "module",
-  "main": "./src/api/classes.ts",
+  "exports": {
+    ".": "./dist/api/classes.js",
+    "./tree": "./dist/data-structures/tree.js",
+    "./comparision": "./dist/data-structures/comparision.js"
+  },
   "packageManager": "pnpm@7.2.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SeedTactics/immutable-collections.git"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --project tsconfig.build.json",
     "test": "mocha test/**/*.ts",
     "coverage": "c8 --reporter lcov mocha test/**/*.ts"
   },
