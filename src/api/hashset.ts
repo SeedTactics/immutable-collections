@@ -43,34 +43,34 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
   }
 
   [Symbol.iterator](): IterableIterator<T> {
-    return iterate(this.root, (t) => t);
+    return iterate((t) => t, this.root);
   }
 
   entries(): IterableIterator<[T, T]> {
-    return iterate(this.root, (t) => [t, t]);
+    return iterate((t) => [t, t], this.root);
   }
 
   keys(): IterableIterator<T> {
-    return iterate(this.root, (t) => t);
+    return iterate((t) => t, this.root);
   }
 
   values(): IterableIterator<T> {
-    return iterate(this.root, (t) => t);
+    return iterate((t) => t, this.root);
   }
 
   forEach(f: (val: T, val2: T, set: HashSet<T>) => void): void {
     fold(
-      this.root,
       (_acc, t) => {
         f(t, t, this);
         return undefined;
       },
-      undefined
+      undefined,
+      this.root
     );
   }
 
   fold<R>(f: (acc: R, val: T) => R, zero: R): R {
-    return fold(this.root, (acc, v) => f(acc, v), zero);
+    return fold((acc, v) => f(acc, v), zero, this.root);
   }
 
   toLazySeq(): LazySeq<T> {
@@ -129,7 +129,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
   }
 
   filter(f: (k: T) => boolean): HashSet<T> {
-    const [newRoot, newSize] = collectValues(this.root, (v, k) => (f(k) ? v : undefined), false);
+    const [newRoot, newSize] = collectValues((v, k) => (f(k) ? v : undefined), false, this.root);
     if (newRoot === this.root) {
       return this;
     } else {

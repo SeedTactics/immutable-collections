@@ -47,36 +47,36 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   }
 
   [Symbol.iterator](): IterableIterator<[K, V]> {
-    return iterate(this.root, (k, v) => [k, v]);
+    return iterate((k, v) => [k, v], this.root);
   }
 
   entries(): IterableIterator<[K, V]> {
-    return iterate(this.root, (k, v) => [k, v]);
+    return iterate((k, v) => [k, v], this.root);
   }
 
   keys(): IterableIterator<K> {
-    return iterate(this.root, (k) => k);
+    return iterate((k) => k, this.root);
   }
 
   values(): IterableIterator<V> {
-    return iterate(this.root, (_, v) => v);
+    return iterate((_, v) => v, this.root);
   }
 
   forEach(f: (val: V, k: K, map: HashMap<K, V>) => void): void {
     fold(
-      this.root,
       (_, k, v) => {
         f(v, k, this);
         return undefined;
       },
-      undefined
+      undefined,
+      this.root
     );
   }
 
   // Other read methods
 
   fold<T>(f: (acc: T, key: K, val: V) => T, zero: T): T {
-    return fold(this.root, f, zero);
+    return fold(f, zero, this.root);
   }
 
   toLazySeq(): LazySeq<readonly [K, V]> {
@@ -187,7 +187,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   }
 
   mapValues<V2>(f: (v: V, k: K) => V2): HashMap<K, V2> {
-    const newRoot = mapValues(this.root, f);
+    const newRoot = mapValues(f, this.root);
     if (newRoot === this.root) {
       // if the roots didn't change, then the map is empty or  the values were === which
       // means that V1 is the same as V2.  In either case, can cast.
@@ -198,7 +198,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   }
 
   collectValues<V2>(f: (v: V, k: K) => V2 | null | undefined): HashMap<K, V2> {
-    const [newRoot, newSize] = collectValues(this.root, f as (v: V, k: K) => V2 | undefined, true);
+    const [newRoot, newSize] = collectValues(f as (v: V, k: K) => V2 | undefined, true, this.root);
     if (newRoot === this.root) {
       // if the roots didn't change, then the map is empty or  the values were === which
       // means that V1 is the same as V2.  In either case, can cast.
@@ -209,7 +209,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   }
 
   filter(f: (v: V, k: K) => boolean): HashMap<K, V> {
-    const [newRoot, newSize] = collectValues(this.root, (v, k) => (f(v, k) ? v : undefined), false);
+    const [newRoot, newSize] = collectValues((v, k) => (f(v, k) ? v : undefined), false, this.root);
     if (newRoot === this.root) {
       return this;
     } else {

@@ -775,7 +775,7 @@ export function alter<K, V>(
   throw new Error("Internal immutable-collections violation: hamt alter reached null");
 }
 
-export function* iterate<K, V, R>(root: HamtNode<K, V> | null, f: (k: K, v: V) => R): IterableIterator<R> {
+export function* iterate<K, V, R>(f: (k: K, v: V) => R, root: HamtNode<K, V> | null): IterableIterator<R> {
   if (root === null) return;
 
   const stack: Array<HamtNode<K, V>> = [root];
@@ -794,7 +794,7 @@ export function* iterate<K, V, R>(root: HamtNode<K, V> | null, f: (k: K, v: V) =
   }
 }
 
-export function fold<K, V, T>(root: HamtNode<K, V> | null, f: (acc: T, key: K, val: V) => T, zero: T): T {
+export function fold<K, V, T>(f: (acc: T, key: K, val: V) => T, zero: T, root: HamtNode<K, V> | null): T {
   let acc = zero;
   if (root === null) return acc;
 
@@ -815,7 +815,7 @@ export function fold<K, V, T>(root: HamtNode<K, V> | null, f: (acc: T, key: K, v
   return acc;
 }
 
-export function mapValues<K, V1, V2>(root: HamtNode<K, V1> | null, f: (v: V1, k: K) => V2): HamtNode<K, V2> | null {
+export function mapValues<K, V1, V2>(f: (v: V1, k: K) => V2, root: HamtNode<K, V1> | null): HamtNode<K, V2> | null {
   if (root === null) return null;
 
   function loop(node: HamtNode<K, V1>): HamtNode<K, V2> {
@@ -865,9 +865,9 @@ export function mapValues<K, V1, V2>(root: HamtNode<K, V1> | null, f: (v: V1, k:
 }
 
 export function collectValues<K, V1, V2>(
-  root: HamtNode<K, V1> | null,
   f: (v: V1, k: K) => V2 | undefined,
-  filterNull: boolean
+  filterNull: boolean,
+  root: HamtNode<K, V1> | null
 ): [HamtNode<K, V2> | null, number] {
   if (root === null) return [null, 0];
 
@@ -1551,7 +1551,7 @@ export function adjust<K, V1, V2>(
 ): readonly [HamtNode<K, V1> | null, number] {
   if (root2 === null) return [root1, 0];
   if (root1 === null) {
-    const [newRoot, newSize] = collectValues(root2, fWithUndefined, false);
+    const [newRoot, newSize] = collectValues(fWithUndefined, false, root2);
     return [newRoot, -newSize];
   }
 
@@ -1723,7 +1723,7 @@ export function adjust<K, V1, V2>(
           }
           node1Idx++;
         } else if (mask & node2bitmap) {
-          const [newChild, newSize] = collectValues(node2.children[node2Idx], fWithUndefined, false);
+          const [newChild, newSize] = collectValues(fWithUndefined, false, node2.children[node2Idx]);
           if (newChild !== null) {
             numRemoved -= newSize;
             // add the new child into the new node1
@@ -1793,7 +1793,7 @@ export function adjust<K, V1, V2>(
       } else {
         // missing in node1, so check if adding a new child for the node2
         const idx = sparseIndex(node1bitmap, m);
-        const [newChild, newSize] = collectValues(node2leaf, fWithUndefined, false);
+        const [newChild, newSize] = collectValues(fWithUndefined, false, node2leaf);
         if (newChild !== null) {
           numRemoved -= newSize;
           const oldArr = node1.children;
@@ -1828,7 +1828,7 @@ export function adjust<K, V1, V2>(
             newChild = loop(shift + bitsPerSubkey, node1, node2int.children[node2Idx]);
           } else {
             let newSize: number;
-            [newChild, newSize] = collectValues(node2int.children[node2Idx], fWithUndefined, false);
+            [newChild, newSize] = collectValues(fWithUndefined, false, node2int.children[node2Idx]);
             numRemoved -= newSize;
           }
           if (newArr) {

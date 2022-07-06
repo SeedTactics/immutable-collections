@@ -7,7 +7,9 @@
   "exports": {
     ".": "./dist/api/classes.js",
     "./tree": "./dist/data-structures/tree.js",
-    "./comparision": "./dist/data-structures/comparision.js"
+    "./comparision": "./dist/data-structures/comparision.js",
+    "./hamt": "./dist/data-structures/hamt.js",
+    "./hashing": "./dist/data-structures/hashing.js"
   },
   "packageManager": "pnpm@7.2.1",
   "repository": {
