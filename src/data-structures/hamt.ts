@@ -209,20 +209,6 @@ function two<K, V>(
   );
 }
 
-// Copy the array and splice a single element in at the given index
-function copyAndInsertToArray<T>(arr: ReadonlyArray<T>, newIdx: number, newT: T): Array<T> {
-  const len = arr.length;
-  const out = new Array<T>(len + 1);
-  for (let i = 0; i < newIdx; i++) {
-    out[i] = arr[i];
-  }
-  out[newIdx] = newT;
-  for (let i = newIdx; i < len; i++) {
-    out[i + 1] = arr[i];
-  }
-  return out;
-}
-
 export function insert<K, V>(
   cfg: HashConfig<K>,
   k: K,
@@ -260,8 +246,9 @@ export function insert<K, V>(
           // child is not present in the bitmap so can be added as a leaf
 
           // create the new node
+          const childArr = curNode.children;
           const leaf = { hash, key: k, val: getVal(undefined) };
-          const newArr = copyAndInsertToArray(curNode.children, idx, leaf);
+          const newArr = [...childArr.slice(0, idx), leaf, ...childArr.slice(idx)];
           const newNode = { bitmap: bitmap | m, children: newArr };
 
           // set it in the parent and return
@@ -655,11 +642,17 @@ export function alter<K, V>(
             return [rootNode, 0];
           } else {
             // add as a leaf
-            const newArr = copyAndInsertToArray(curNode.children, sparseIndex(bitmap, m), {
-              hash,
-              key: k,
-              val: newVal,
-            });
+            const childArr = curNode.children;
+            const newIdx = sparseIndex(bitmap, m);
+            const newArr = [
+              ...childArr.slice(0, newIdx),
+              {
+                hash,
+                key: k,
+                val: newVal,
+              },
+              ...childArr.slice(newIdx),
+            ];
             const newNode = { bitmap: bitmap | m, children: newArr };
             if (spine.length > 0) {
               const parent = spine[spine.length - 1];
@@ -1125,6 +1118,7 @@ export function union<K, V>(
       // node2 is guaranteed to be leaf or collision, but typescript doesn't know that
       const hash2: number = (node2 as LeafNode<K, V> | CollisionNode<K, V>).hash;
       const node1bitmap = node1.bitmap;
+      const oldArr = node1.children;
 
       let idx: number;
       if (node1bitmap === fullBitmap) {
@@ -1137,13 +1131,12 @@ export function union<K, V>(
           // no need to recurse, add directly
           // add the node into the bitmap-indexed node
           const idx = sparseIndex(node1bitmap, m);
-          const newArr = copyAndInsertToArray(node1.children, idx, node2);
+          const newArr = [...oldArr.slice(0, idx), node2, ...oldArr.slice(idx)];
           return { bitmap: node1bitmap | m, children: newArr };
         }
       }
 
       // loop and replace in this node
-      const oldArr = node1.children;
       const oldChild = oldArr[idx];
       const newNode = loop(shift + bitsPerSubkey, oldChild, node2);
       if (newNode === oldChild) {
@@ -1157,6 +1150,7 @@ export function union<K, V>(
       // same as above but with node1 and node2 swapped
       const hash1: number = node1.hash;
       const node2bitmap = node2.bitmap;
+      const oldArr = node2.children;
 
       let idx: number;
       if (node2bitmap === fullBitmap) {
@@ -1169,13 +1163,12 @@ export function union<K, V>(
           // no need to recurse, add directly
           // add the node into the bitmap-indexed node
           const idx = sparseIndex(node2bitmap, m);
-          const newArr = copyAndInsertToArray(node2.children, idx, node1);
+          const newArr = [...oldArr.slice(0, idx), node1, ...oldArr.slice(idx)];
           return { bitmap: node2bitmap | m, children: newArr };
         }
       }
 
       // loop and replace in this node
-      const oldArr = node2.children;
       const oldChild = oldArr[idx];
       const newNode = loop(shift + bitsPerSubkey, node1, oldChild);
       if (newNode === oldChild) {
@@ -1803,7 +1796,8 @@ export function adjust<K, V1, V2>(
         const [newChild, newSize] = collectValues(node2leaf, fWithUndefined, false);
         if (newChild !== null) {
           numRemoved -= newSize;
-          const newArr = copyAndInsertToArray(node1.children, idx, newChild);
+          const oldArr = node1.children;
+          const newArr = [...oldArr.slice(0, idx), newChild, ...oldArr.slice(idx)];
           return { bitmap: node1bitmap | m, children: newArr };
         } else {
           return node1;
