@@ -88,38 +88,6 @@ export function alter<K, V>(
   return loop(root);
 }
 
-export function two<K, V>(cmp: number, k1: K, v1: V, k2: K, v2: V): TreeNode<K, V> {
-  if (cmp < 0) {
-    return {
-      key: k1,
-      val: v1,
-      size: 2,
-      left: null,
-      right: {
-        key: k2,
-        val: v2,
-        size: 1,
-        left: null,
-        right: null,
-      },
-    };
-  } else {
-    return {
-      key: k1,
-      val: v1,
-      size: 2,
-      left: {
-        key: k2,
-        val: v2,
-        size: 1,
-        left: null,
-        right: null,
-      },
-      right: null,
-    };
-  }
-}
-
 export function mutateInsert<K, V, T>(
   { compare }: ComparisionConfig<K>,
   k: K,

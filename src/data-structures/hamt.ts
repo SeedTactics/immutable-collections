@@ -2,6 +2,7 @@
 
 import { HashConfig } from "./hashing.js";
 import * as tree from "./tree.js";
+import * as treeRotations from "./rotations.js";
 
 /*
 A Hash Array Mapped Trie (HAMT)
@@ -297,7 +298,7 @@ export function insert<K, V>(
           // a collision
           newNode = {
             hash,
-            collision: tree.two(cmp, k, getVal(undefined), curNode.key, curNode.val),
+            collision: treeRotations.two(cmp, k, getVal(undefined), curNode.key, curNode.val),
           };
         }
       } else {
@@ -399,7 +400,7 @@ export function mutateInsert<K, T, V>(
           // a collision
           newNode = {
             hash,
-            collision: tree.two(cmp, k, getVal(undefined, t), curNode.key, curNode.val),
+            collision: treeRotations.two(cmp, k, getVal(undefined, t), curNode.key, curNode.val),
           };
         }
       } else {
@@ -705,7 +706,7 @@ export function alter<K, V>(
           } else {
             newNode = {
               hash,
-              collision: tree.two(cmp, k, newVal, curNode.key, curNode.val),
+              collision: treeRotations.two(cmp, k, newVal, curNode.key, curNode.val),
             };
             sizeChange = 1;
           }
@@ -991,7 +992,7 @@ export function union<K, V>(
           // collision
           return {
             hash: node1.hash,
-            collision: tree.two(cmp, node1.key, node1.val, node2.key, node2.val),
+            collision: treeRotations.two(cmp, node1.key, node1.val, node2.key, node2.val),
           };
         }
       } else {
@@ -1580,7 +1581,7 @@ export function adjust<K, V1, V2>(
             return node1;
           } else {
             numRemoved -= 1;
-            return { hash: node1.hash, collision: tree.two(cmp, node1.key, node1.val, node2.key, newVal) };
+            return { hash: node1.hash, collision: treeRotations.two(cmp, node1.key, node1.val, node2.key, newVal) };
           }
         }
       } else {
