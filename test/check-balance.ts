@@ -1,7 +1,7 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
-import { TreeNode } from "../src/data-structures/rotations.js";
 import { expect } from "chai";
+import { TreeNode } from "../src/data-structures/tree.js";
 import { ComparisionConfig, OrderedMapKey } from "../src/data-structures/comparison.js";
 import { OrderedMap } from "../src/api/orderedmap.js";
 

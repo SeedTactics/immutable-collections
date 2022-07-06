@@ -95,13 +95,13 @@ describe("Tree", () => {
     const n2 = alter(compareNum, 20, () => "bbb", n1);
     const n3 = alter(compareNum, 5, () => "ccc", n2);
 
-    expect([...iterateAsc(n3, (k, v) => [k, v])]).to.deep.equal([
+    expect([...iterateAsc((k, v) => [k, v], n3)]).to.deep.equal([
       [5, "ccc"],
       [10, "aaa"],
       [20, "bbb"],
     ]);
 
-    expect([...iterateDesc(n3, (k, v) => [k, v])]).to.deep.equal([
+    expect([...iterateDesc((k, v) => [k, v], n3)]).to.deep.equal([
       [20, "bbb"],
       [10, "aaa"],
       [5, "ccc"],

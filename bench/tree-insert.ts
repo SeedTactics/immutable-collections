@@ -1,8 +1,7 @@
 import type { Event } from "benchmark";
 import Benchmark from "benchmark";
 import { mkComparisonConfig } from "../src/data-structures/comparison.js";
-import { MutableTreeNode, TreeNode } from "../src/data-structures/rotations.js";
-import { build, from, alter, mutateInsert } from "../src/data-structures/tree.js";
+import { build, from, alter, mutateInsert, TreeNode, MutableTreeNode } from "../src/data-structures/tree.js";
 
 const size = 50_000;
 const suite = new Benchmark.Suite("Tree Insert");

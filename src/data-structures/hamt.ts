@@ -1,7 +1,6 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
 import { HashConfig } from "./hashing.js";
-import { MutableTreeNode, TreeNode } from "./rotations.js";
 import * as tree from "./tree.js";
 
 /*
@@ -39,11 +38,11 @@ export type MutableLeafNode<K, V> = { readonly hash: number; readonly key: K; va
 // A leaf node with the hash and an array of keys and values with this same hash.
 export type CollisionNode<K, V> = {
   readonly hash: number;
-  readonly collision: TreeNode<K, V>;
+  readonly collision: tree.TreeNode<K, V>;
 };
 export type MutableCollisionNode<K, V> = {
   readonly hash: number;
-  collision: MutableTreeNode<K, V>;
+  collision: tree.MutableTreeNode<K, V>;
 };
 
 export type InternalNode<K, V> = {
@@ -789,7 +788,7 @@ export function* iterate<K, V, R>(root: HamtNode<K, V> | null, f: (k: K, v: V) =
     } else if ("key" in node) {
       yield f(node.key, node.val);
     } else {
-      yield* tree.iterateAsc(node.collision, f);
+      yield* tree.iterateAsc(f, node.collision);
     }
   }
 }

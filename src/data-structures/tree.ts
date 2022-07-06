@@ -11,6 +11,7 @@ import {
   mutateBalanceAfterRightIncrease,
   TreeNode,
 } from "./rotations.js";
+export { TreeNode, MutableTreeNode } from "./rotations.js";
 
 /*
 Implementation of a size-balanced binary tree.
@@ -252,7 +253,7 @@ export function build<T, K, V>(
   return root;
 }
 
-export function* iterateAsc<K, V, T>(root: TreeNode<K, V> | undefined, f: (k: K, v: V) => T): IterableIterator<T> {
+export function* iterateAsc<K, V, T>(f: (k: K, v: V) => T, root: TreeNode<K, V> | undefined): IterableIterator<T> {
   const nodes: Array<TreeNode<K, V>> = [];
   let node: TreeNode<K, V> | undefined = root;
   while (node !== undefined || nodes.length > 0) {
@@ -268,7 +269,7 @@ export function* iterateAsc<K, V, T>(root: TreeNode<K, V> | undefined, f: (k: K,
   }
 }
 
-export function* iterateDesc<K, V, T>(root: TreeNode<K, V> | undefined, f: (k: K, v: V) => T): IterableIterator<T> {
+export function* iterateDesc<K, V, T>(f: (k: K, v: V) => T, root: TreeNode<K, V> | undefined): IterableIterator<T> {
   const nodes: Array<TreeNode<K, V>> = [];
   let node: TreeNode<K, V> | undefined = root;
   while (node !== undefined || nodes.length > 0) {

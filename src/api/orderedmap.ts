@@ -2,7 +2,6 @@
 
 import { LazySeq } from "../lazyseq.js";
 import { ComparisionConfig, mkComparisonConfig, OrderedMapKey } from "../data-structures/comparison.js";
-import { TreeNode } from "../data-structures/rotations.js";
 import {
   adjust,
   build,
@@ -19,6 +18,7 @@ import {
   mapValues,
   split,
   union,
+  TreeNode,
 } from "../data-structures/tree.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -51,19 +51,19 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
   }
 
   [Symbol.iterator](): IterableIterator<[K, V]> {
-    return iterateAsc(this.root, (k, v) => [k, v]);
+    return iterateAsc((k, v) => [k, v], this.root);
   }
 
   entries(): IterableIterator<[K, V]> {
-    return iterateAsc(this.root, (k, v) => [k, v]);
+    return iterateAsc((k, v) => [k, v], this.root);
   }
 
   keys(): IterableIterator<K> {
-    return iterateAsc(this.root, (k) => k);
+    return iterateAsc((k) => k, this.root);
   }
 
   values(): IterableIterator<V> {
-    return iterateAsc(this.root, (_, v) => v);
+    return iterateAsc((_, v) => v, this.root);
   }
 
   forEach(f: (val: V, k: K, map: OrderedMap<K, V>) => void): void {
@@ -100,15 +100,15 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
   }
 
   toDescLazySeq(): LazySeq<readonly [K, V]> {
-    return LazySeq.ofIterable(iterateDesc(this.root, (k, v) => [k, v]));
+    return LazySeq.ofIterable(iterateDesc((k, v) => [k, v], this.root));
   }
 
   keysToDescLazySeq(): LazySeq<K> {
-    return LazySeq.ofIterable(iterateDesc(this.root, (k) => k));
+    return LazySeq.ofIterable(iterateDesc((k) => k, this.root));
   }
 
   valuesToDescLazySeq(): LazySeq<V> {
-    return LazySeq.ofIterable(iterateDesc(this.root, (_, v) => v));
+    return LazySeq.ofIterable(iterateDesc((_, v) => v, this.root));
   }
 
   // Methods modifying the map

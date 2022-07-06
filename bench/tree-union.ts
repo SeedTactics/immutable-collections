@@ -1,8 +1,7 @@
 import type { Event } from "benchmark";
 import Benchmark from "benchmark";
 import { mkComparisonConfig } from "../src/data-structures/comparison.js";
-import { TreeNode } from "../src/data-structures/rotations.js";
-import { adjust, difference, alter, union } from "../src/data-structures/tree.js";
+import { adjust, difference, alter, union, TreeNode } from "../src/data-structures/tree.js";
 
 const size = 50_000;
 const suite = new Benchmark.Suite("Tree Union");

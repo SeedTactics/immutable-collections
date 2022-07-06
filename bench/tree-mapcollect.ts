@@ -1,8 +1,7 @@
 import type { Event } from "benchmark";
 import Benchmark from "benchmark";
 import { mkComparisonConfig } from "../src/data-structures/comparison.js";
-import { TreeNode } from "../src/data-structures/rotations.js";
-import { collectValues, mapValues, alter } from "../src/data-structures/tree.js";
+import { collectValues, mapValues, alter, TreeNode } from "../src/data-structures/tree.js";
 
 const size = 100_000;
 const suite = new Benchmark.Suite("Tree Map vs Collect");
