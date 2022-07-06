@@ -35,16 +35,16 @@ export interface TreeNode<K, V> {
   readonly key: K;
   readonly val: V;
   readonly size: number;
-  readonly left: TreeNode<K, V> | undefined;
-  readonly right: TreeNode<K, V> | undefined;
+  readonly left: TreeNode<K, V> | null;
+  readonly right: TreeNode<K, V> | null;
 }
 
 export interface MutableTreeNode<K, V> {
   key: K;
   val: V;
   size: number;
-  left: MutableTreeNode<K, V> | undefined;
-  right: MutableTreeNode<K, V> | undefined;
+  left: MutableTreeNode<K, V> | null;
+  right: MutableTreeNode<K, V> | null;
 }
 
 // the rotations maintain that the size of the left and right
@@ -57,26 +57,26 @@ const ratio = 2;
 function balanceLeftUndefined<K, V>(k: K, v: V, right: TreeNode<K, V>): TreeNode<K, V> {
   const rl = right.left;
   const rr = right.right;
-  if (rl === undefined) {
-    if (rr === undefined) {
-      return { key: k, val: v, size: 2, left: undefined, right };
+  if (rl === null) {
+    if (rr === null) {
+      return { key: k, val: v, size: 2, left: null, right };
     } else {
       return {
         key: right.key,
         val: right.val,
         size: 3,
-        left: { key: k, val: v, size: 1, left: undefined, right: undefined },
+        left: { key: k, val: v, size: 1, left: null, right: null },
         right: rr,
       };
     }
   }
-  if (rr === undefined) {
+  if (rr === null) {
     return {
       key: rl.key,
       val: rl.val,
       size: 3,
-      left: { key: k, val: v, size: 1, left: undefined, right: undefined },
-      right: { key: right.key, val: right.val, size: 1, left: undefined, right: undefined },
+      left: { key: k, val: v, size: 1, left: null, right: null },
+      right: { key: right.key, val: right.val, size: 1, left: null, right: null },
     };
   }
 
@@ -86,7 +86,7 @@ function balanceLeftUndefined<K, V>(k: K, v: V, right: TreeNode<K, V>): TreeNode
       key: right.key,
       val: right.val,
       size: 1 + right.size,
-      left: { key: k, val: v, size: 1 + rl.size, left: undefined, right: rl },
+      left: { key: k, val: v, size: 1 + rl.size, left: null, right: rl },
       right: rr,
     };
   }
@@ -100,7 +100,7 @@ function balanceLeftUndefined<K, V>(k: K, v: V, right: TreeNode<K, V>): TreeNode
       key: k,
       val: v,
       size: 1 + (rl.left?.size ?? 0),
-      left: undefined,
+      left: null,
       right: rl.left,
     },
     right: {
@@ -116,27 +116,27 @@ function balanceLeftUndefined<K, V>(k: K, v: V, right: TreeNode<K, V>): TreeNode
 function balanceRightUndefined<K, V>(k: K, v: V, left: TreeNode<K, V>): TreeNode<K, V> {
   const ll = left.left;
   const lr = left.right;
-  if (ll === undefined) {
-    if (lr === undefined) {
-      return { key: k, val: v, size: 2, left, right: undefined };
+  if (ll === null) {
+    if (lr === null) {
+      return { key: k, val: v, size: 2, left, right: null };
     } else {
       return {
         key: lr.key,
         val: lr.val,
         size: 3,
-        left: { key: left.key, val: left.val, size: 1, left: undefined, right: undefined },
-        right: { key: k, val: v, size: 1, left: undefined, right: undefined },
+        left: { key: left.key, val: left.val, size: 1, left: null, right: null },
+        right: { key: k, val: v, size: 1, left: null, right: null },
       };
     }
   }
 
-  if (lr === undefined) {
+  if (lr === null) {
     return {
       key: left.key,
       val: left.val,
       size: 3,
       left: ll,
-      right: { key: k, val: v, size: 1, left: undefined, right: undefined },
+      right: { key: k, val: v, size: 1, left: null, right: null },
     };
   }
 
@@ -147,7 +147,7 @@ function balanceRightUndefined<K, V>(k: K, v: V, left: TreeNode<K, V>): TreeNode
       val: left.val,
       size: 1 + left.size,
       left: ll,
-      right: { key: k, val: v, size: 1 + lr.size, left: lr, right: undefined },
+      right: { key: k, val: v, size: 1 + lr.size, left: lr, right: null },
     };
   }
 
@@ -168,7 +168,7 @@ function balanceRightUndefined<K, V>(k: K, v: V, left: TreeNode<K, V>): TreeNode
       val: v,
       size: 1 + (lr.right?.size ?? 0),
       left: lr.right,
-      right: undefined,
+      right: null,
     },
   };
 }
@@ -259,20 +259,20 @@ function rotateRight<K, V>(k: K, v: V, left: TreeNode<K, V>, right: TreeNode<K, 
 
 // call this when the left subtree might have been inserted to or the right subtree might have been deleted from
 export function combineAfterLeftIncrease<K, V>(
-  left: TreeNode<K, V> | undefined,
+  left: TreeNode<K, V> | null,
   k: K,
   v: V,
-  right: TreeNode<K, V> | undefined
+  right: TreeNode<K, V> | null
 ): TreeNode<K, V> {
-  if (right === undefined) {
-    if (left === undefined) {
-      return { key: k, val: v, size: 1, left: undefined, right: undefined };
+  if (right === null) {
+    if (left === null) {
+      return { key: k, val: v, size: 1, left: null, right: null };
     }
     return balanceRightUndefined(k, v, left);
   }
 
-  if (left === undefined) {
-    return { key: k, val: v, size: 1 + right.size, left: undefined, right };
+  if (left === null) {
+    return { key: k, val: v, size: 1 + right.size, left: null, right };
   }
 
   if (left.size > delta * right.size) {
@@ -284,20 +284,20 @@ export function combineAfterLeftIncrease<K, V>(
 
 // call this when the right subtree might have been inserted to or the left subtree might have been deleted from
 export function combineAfterRightIncrease<K, V>(
-  left: TreeNode<K, V> | undefined,
+  left: TreeNode<K, V> | null,
   k: K,
   v: V,
-  right: TreeNode<K, V> | undefined
+  right: TreeNode<K, V> | null
 ): TreeNode<K, V> {
-  if (left === undefined) {
-    if (right === undefined) {
-      return { key: k, val: v, size: 1, left: undefined, right: undefined };
+  if (left === null) {
+    if (right === null) {
+      return { key: k, val: v, size: 1, left: null, right: null };
     }
     return balanceLeftUndefined(k, v, right);
   }
 
-  if (right === undefined) {
-    return { key: k, val: v, size: 1 + left.size, left, right: undefined };
+  if (right === null) {
+    return { key: k, val: v, size: 1 + left.size, left, right: null };
   }
 
   if (right.size > delta * left.size) {
@@ -309,18 +309,18 @@ export function combineAfterRightIncrease<K, V>(
 
 // call when either left or right has changed size by at most one
 export function combineAfterInsertOrRemove<K, V>(
-  left: TreeNode<K, V> | undefined,
+  left: TreeNode<K, V> | null,
   k: K,
   v: V,
-  right: TreeNode<K, V> | undefined
+  right: TreeNode<K, V> | null
 ): TreeNode<K, V> {
-  if (left === undefined) {
-    if (right === undefined) {
-      return { key: k, val: v, size: 1, left: undefined, right: undefined };
+  if (left === null) {
+    if (right === null) {
+      return { key: k, val: v, size: 1, left: null, right: null };
     }
     return balanceLeftUndefined(k, v, right);
   }
-  if (right === undefined) {
+  if (right === null) {
     return balanceRightUndefined(k, v, left);
   }
 
@@ -334,14 +334,14 @@ export function combineAfterInsertOrRemove<K, V>(
   return { key: k, val: v, size: 1 + left.size + right.size, left, right };
 }
 
-function insertMin<K, V>(k: K, v: V, root: TreeNode<K, V> | undefined): TreeNode<K, V> {
-  if (root === undefined) return { key: k, val: v, size: 1, left: undefined, right: undefined };
+function insertMin<K, V>(k: K, v: V, root: TreeNode<K, V> | null): TreeNode<K, V> {
+  if (root === null) return { key: k, val: v, size: 1, left: null, right: null };
   const newLeft = insertMin(k, v, root.left);
   return combineAfterLeftIncrease(newLeft, root.key, root.val, root.right);
 }
 
-function insertMax<K, V>(k: K, v: V, root: TreeNode<K, V> | undefined): TreeNode<K, V> {
-  if (root === undefined) return { key: k, val: v, size: 1, left: undefined, right: undefined };
+function insertMax<K, V>(k: K, v: V, root: TreeNode<K, V> | null): TreeNode<K, V> {
+  if (root === null) return { key: k, val: v, size: 1, left: null, right: null };
   const newRight = insertMax(k, v, root.right);
   return combineAfterRightIncrease(root.left, root.key, root.val, newRight);
 }
@@ -349,13 +349,13 @@ function insertMax<K, V>(k: K, v: V, root: TreeNode<K, V> | undefined): TreeNode
 // Combines two trees into one and restores balance, no matter the size difference between left and right
 // Assumes each of left and right are individually balanced
 export function combineDifferentSizes<K, V>(
-  left: TreeNode<K, V> | undefined,
+  left: TreeNode<K, V> | null,
   k: K,
   v: V,
-  right: TreeNode<K, V> | undefined
+  right: TreeNode<K, V> | null
 ): TreeNode<K, V> {
-  if (left === undefined) return insertMin(k, v, right);
-  if (right === undefined) return insertMax(k, v, left);
+  if (left === null) return insertMin(k, v, right);
+  if (right === null) return insertMax(k, v, left);
   if (right.size > delta * left.size) {
     return combineAfterLeftIncrease(combineDifferentSizes(left, k, v, right.left), right.key, right.val, right.right);
   }
@@ -365,9 +365,9 @@ export function combineDifferentSizes<K, V>(
   return { key: k, val: v, size: 1 + left.size + right.size, left, right };
 }
 
-function removeMin<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, V> | undefined } {
+function removeMin<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, V> | null } {
   const left = node.left;
-  if (left === undefined) {
+  if (left === null) {
     return { k: node.key, v: node.val, rest: node.right };
   } else {
     const ret = removeMin(left);
@@ -376,9 +376,9 @@ function removeMin<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, 
   }
 }
 
-function removeMax<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, V> | undefined } {
+function removeMax<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, V> | null } {
   const right = node.right;
-  if (right === undefined) {
+  if (right === null) {
     return { k: node.key, v: node.val, rest: node.left };
   } else {
     const ret = removeMax(right);
@@ -389,11 +389,11 @@ function removeMax<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, 
 
 // combines two trees that are individually balanced and also the size is balanced between left and right
 export function glueSizeBalanced<K, V>(
-  left: TreeNode<K, V> | undefined,
-  right: TreeNode<K, V> | undefined
-): TreeNode<K, V> | undefined {
-  if (left === undefined) return right;
-  if (right === undefined) return left;
+  left: TreeNode<K, V> | null,
+  right: TreeNode<K, V> | null
+): TreeNode<K, V> | null {
+  if (left === null) return right;
+  if (right === null) return left;
   if (left.size > right.size) {
     const { k, v, rest } = removeMax(left);
     return combineAfterRightIncrease(rest, k, v, right);
@@ -405,11 +405,11 @@ export function glueSizeBalanced<K, V>(
 
 // combines two trees that are individually balanced but the size of left compared to right might be unbalanced
 export function glueDifferentSizes<K, V>(
-  left: TreeNode<K, V> | undefined,
-  right: TreeNode<K, V> | undefined
-): TreeNode<K, V> | undefined {
-  if (left === undefined) return right;
-  if (right === undefined) return left;
+  left: TreeNode<K, V> | null,
+  right: TreeNode<K, V> | null
+): TreeNode<K, V> | null {
+  if (left === null) return right;
+  if (right === null) return left;
   if (right.size > delta * left.size) {
     return combineAfterLeftIncrease(glueDifferentSizes(left, right.left), right.key, right.val, right.right);
   }

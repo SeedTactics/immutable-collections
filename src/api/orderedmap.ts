@@ -30,16 +30,16 @@ function constUndefined() {
 
 export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V> {
   private cfg: ComparisionConfig<K>;
-  private root: TreeNode<K, V> | undefined;
+  private root: TreeNode<K, V> | null;
 
-  private constructor(cfg: ComparisionConfig<K>, root: TreeNode<K, V> | undefined) {
+  private constructor(cfg: ComparisionConfig<K>, root: TreeNode<K, V> | null) {
     this.cfg = cfg;
     this.root = root;
   }
 
   // ReadonlyMap interface
   get size() {
-    return this.root === undefined ? 0 : this.root.size;
+    return this.root === null ? 0 : this.root.size;
   }
 
   get(k: K): V | undefined {
@@ -222,7 +222,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
   // Creating new maps
 
   public static empty<K extends OrderedMapKey, V extends NotUndefined>(): OrderedMap<K, V> {
-    return new OrderedMap(mkComparisonConfig(), undefined);
+    return new OrderedMap(mkComparisonConfig(), null);
   }
 
   public static from<K extends OrderedMapKey, V extends NotUndefined>(

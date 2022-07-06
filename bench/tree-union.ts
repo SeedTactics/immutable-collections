@@ -8,12 +8,12 @@ const suite = new Benchmark.Suite("Tree Union");
 
 const compare = mkComparisonConfig();
 
-let evens: TreeNode<number, string> | undefined = undefined;
+let evens: TreeNode<number, string> | null = null;
 for (let i = 0; i < size; i += 2) {
   evens = alter(compare, i, () => i.toString(), evens);
 }
 
-let mult3: TreeNode<number, string> | undefined = undefined;
+let mult3: TreeNode<number, string> | null = null;
 for (let i = 0; i < size; i += 3) {
   mult3 = alter(compare, i, () => i.toString(), mult3);
 }

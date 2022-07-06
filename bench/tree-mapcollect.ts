@@ -8,7 +8,7 @@ const suite = new Benchmark.Suite("Tree Map vs Collect");
 
 const compare = mkComparisonConfig();
 
-let evens: TreeNode<number, string> | undefined = undefined;
+let evens: TreeNode<number, string> | null = null;
 for (let i = 0; i < size; i += 2) {
   evens = alter(compare, i, () => i.toString(), evens);
 }

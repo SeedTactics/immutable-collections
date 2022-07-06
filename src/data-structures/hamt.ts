@@ -944,7 +944,7 @@ export function collectValues<K, V1, V2>(
         newSize += node.collision.size;
         // if vals are ===, we know that V1 is the same as V2.
         return node as unknown as HamtNode<K, V2>;
-      } else if (newCol === undefined) {
+      } else if (newCol === null) {
         return null;
       } else if (newCol.size === 1) {
         // switch from collision back to just a leaf
@@ -1234,7 +1234,7 @@ export function intersection<K, V>(
       if (newRoot === node1.collision) {
         intersectionSize += node1.collision.size;
         return node1;
-      } else if (newRoot === undefined) {
+      } else if (newRoot === null) {
         return null;
       } else if (newRoot.size === 1) {
         intersectionSize += 1;
@@ -1453,7 +1453,7 @@ export function difference<K, V1, V2>(
     // Collision vs Collision
     else if ("collision" in node1 && "collision" in node2) {
       const newTree = tree.difference(cfg, node1.collision, node2.collision);
-      if (newTree === undefined) {
+      if (newTree === null) {
         numRemoved += node1.collision.size;
         return null;
       } else if (newTree.size === 1) {
@@ -1598,7 +1598,7 @@ export function adjust<K, V1, V2>(
         const newCol1 = tree.alter(cfg, node2.key, (oldV) => f(oldV, node2.val, node2.key), node1.collision);
         if (newCol1 === node1.collision) {
           return node1;
-        } else if (newCol1 === undefined) {
+        } else if (newCol1 === null) {
           numRemoved += node1.collision.size;
           return null;
         } else if (newCol1.size === 1) {
@@ -1622,10 +1622,10 @@ export function adjust<K, V1, V2>(
         const newCol = tree.adjust(
           cfg,
           f,
-          { key: node1.key, val: node1.val, size: 1, left: undefined, right: undefined },
+          { key: node1.key, val: node1.val, size: 1, left: null, right: null },
           node2.collision
         );
-        if (newCol === undefined) {
+        if (newCol === null) {
           numRemoved += 1;
           return null;
         } else if ((newCol as unknown) === (node2.collision as unknown)) {
@@ -1637,7 +1637,7 @@ export function adjust<K, V1, V2>(
         }
       } else {
         const newTree = tree.collectValues(fWithUndefined, false, node2.collision);
-        if (newTree === undefined) {
+        if (newTree === null) {
           return node1;
         } else if (newTree.size === 1) {
           numRemoved -= 1;
@@ -1650,7 +1650,7 @@ export function adjust<K, V1, V2>(
     } else if ("collision" in node1 && "collision" in node2) {
       if (node1.hash === node2.hash) {
         const newTree = tree.adjust(cfg, f, node1.collision, node2.collision);
-        if (newTree === undefined) {
+        if (newTree === null) {
           numRemoved += node1.collision.size;
           return null;
         } else if (newTree === node1.collision) {
@@ -1664,7 +1664,7 @@ export function adjust<K, V1, V2>(
         }
       } else {
         const newTree = tree.collectValues(fWithUndefined, false, node2.collision);
-        if (newTree === undefined) {
+        if (newTree === null) {
           return node1;
         } else if (newTree.size === 1) {
           numRemoved -= 1;

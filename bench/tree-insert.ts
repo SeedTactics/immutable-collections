@@ -17,7 +17,7 @@ for (let i = 0; i < size; i++) {
 }
 
 suite.add("modify", () => {
-  let n: TreeNode<number, string> | undefined = undefined;
+  let n: TreeNode<number, string> | null = null;
   const compare = mkComparisonConfig();
   for (let i = 0; i < size; i++) {
     n = alter(compare, i, () => i.toString(), n);
@@ -35,7 +35,7 @@ function snd<A, B>(_: A, b: B): B {
 
 suite.add("mutate insert", () => {
   const compare = mkComparisonConfig();
-  let n: MutableTreeNode<number, string> | undefined = undefined;
+  let n: MutableTreeNode<number, string> | null = null;
   for (const [k, v] of elems) {
     n = mutateInsert(compare, k, v, snd, n);
   }

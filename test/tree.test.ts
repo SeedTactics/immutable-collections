@@ -12,7 +12,7 @@ const compareNum = {
 
 describe("Tree", () => {
   it("inserts some values", () => {
-    const n1 = alter(compareNum, 10, () => "aaa", undefined)!;
+    const n1 = alter(compareNum, 10, () => "aaa", null)!;
     const n2 = alter(compareNum, 20, () => "bbb", n1)!;
     const n3 = alter(compareNum, 5, () => "ccc", n2)!;
 
@@ -41,7 +41,7 @@ describe("Tree", () => {
         expect(old).to.be.undefined;
         return "aaa";
       },
-      undefined
+      null
     )!;
     const n2 = alter(compareNum, 20, () => "bbb", n1)!;
 
@@ -78,7 +78,7 @@ describe("Tree", () => {
   });
 
   it("removes a value", () => {
-    const n1 = alter(compareNum, 10, () => "aaa", undefined);
+    const n1 = alter(compareNum, 10, () => "aaa", null);
     const n2 = alter(compareNum, 20, () => "bbb", n1);
     const n3 = alter(compareNum, 5, () => "ccc", n2);
 
@@ -91,7 +91,7 @@ describe("Tree", () => {
   });
 
   it("iterates values", () => {
-    const n1 = alter(compareNum, 10, () => "aaa", undefined);
+    const n1 = alter(compareNum, 10, () => "aaa", null);
     const n2 = alter(compareNum, 20, () => "bbb", n1);
     const n3 = alter(compareNum, 5, () => "ccc", n2);
 
