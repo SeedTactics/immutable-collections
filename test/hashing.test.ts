@@ -5,7 +5,7 @@ import { expect } from "chai";
 import { faker } from "@faker-js/faker";
 import { hashValues, isHashableObj, mkHashConfig } from "../src/data-structures/hashing.js";
 
-export class IntStrKey {
+class IntStrKey {
   readonly i: number;
   readonly s: string;
   public constructor(i: number, s: string) {
@@ -20,12 +20,12 @@ export class IntStrKey {
   }
 }
 
-export class ComplexKey {
+class ComplexKey {
   readonly b: boolean;
-  readonly d: Date;
+  readonly d: Date | null | undefined;
   readonly k: IntStrKey;
 
-  public constructor(b: boolean, d: Date, i: number, s: string) {
+  public constructor(b: boolean, d: Date | null | undefined, i: number, s: string) {
     this.b = b;
     this.d = d;
     this.k = new IntStrKey(i, s);
@@ -34,7 +34,7 @@ export class ComplexKey {
     return hashValues(this.b, this.d, this.k);
   }
   public toString(): string {
-    return `[${this.b.toString()}, ${this.d.toString()}, ${this.k.toString()}]`;
+    return `[${this.b.toString()}, ${this.d?.toString() ?? "null"}, ${this.k.toString()}]`;
   }
 }
 
@@ -103,6 +103,13 @@ describe("Hashing", () => {
     expect(cfg.hash(4.8)).to.equal(-1937069445);
   });
 
+  it("hash config works when compare is called first", () => {
+    const cfg = mkHashConfig<number>();
+    expect(cfg.compare(1, 2)).to.equal(-1);
+
+    expect(cfg.hash(50)).to.equal(50);
+  });
+
   it("hashes an object", () => {
     expect(new IntStrKey(1, "2").hash()).to.equal(1836881326);
     // cfg.hash should be replaced with the direct hash function, check it again
@@ -125,5 +132,17 @@ describe("Hashing", () => {
     expect(new ComplexKey(k1.b, new Date(Date.UTC(2022, 5, 4, 10, 2, 2)), k1.k.i, k1.k.s).hash()).to.equal(1043564563);
     expect(new ComplexKey(k1.b, k1.d, 102, k1.k.s).hash()).to.equal(-60260645);
     expect(new ComplexKey(k1.b, k1.d, k1.k.i, "hello").hash()).to.equal(1803504075);
+  });
+
+  it("hashes null and undefined", () => {
+    const knull = new ComplexKey(true, null, 20, "str");
+    const kundef = new ComplexKey(true, undefined, 20, "str");
+
+    expect(knull.hash()).to.equal(1633561911);
+    expect(kundef.hash()).to.equal(1633561911);
+  });
+
+  it("hashes an array of a single value", () => {
+    expect(hashValues(100)).to.equal(100);
   });
 });
