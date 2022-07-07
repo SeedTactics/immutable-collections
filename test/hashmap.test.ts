@@ -6,7 +6,13 @@ import { faker } from "@faker-js/faker";
 import { HashKey } from "../src/data-structures/hashing.js";
 import { HashMap } from "../src/api/hashmap.js";
 import { mkCompareByProperties } from "../src/data-structures/comparison.js";
-import { CollidingKey, createKeyWithSameHash, distinctKeyWithHash, randomCollisionKey } from "./collision-key.js";
+import {
+  CollidingKey,
+  createKeyWithSameHash,
+  createKeyWithSamePrefix,
+  distinctKeyWithHash,
+  randomCollisionKey,
+} from "./collision-key.js";
 import { deepFreeze } from "./deepfreeze.js";
 import { HamtNode } from "../src/data-structures/hamt.js";
 
@@ -428,6 +434,13 @@ describe("HashMap", () => {
     expect(m).to.equal(maps.imMap);
   });
 
+  it("returns unchanged if unioning with the empty map", () => {
+    const { imMap, jsMap } = createMap(50, randomCollisionKey);
+
+    expect(imMap.union(HashMap.empty())).to.equal(imMap);
+    expectEqual(HashMap.empty<CollidingKey, string>().union(imMap), jsMap);
+  });
+
   it("unions two maps", () => {
     function* unionValues(): Generator<
       { map1K: CollidingKey; map1V: string | null } | { map2K: CollidingKey; map2V: string | null }
@@ -439,7 +452,7 @@ describe("HashMap", () => {
         yield { map2K: k, map2V: randomNullableStr() };
       }
 
-      // want a bunch of keys in distinct in each map
+      // want a bunch of keys distinct in each map
       for (let i = 0; i < 2000; i++) {
         yield { map1K: randomCollisionKey(), map1V: randomNullableStr() };
         yield { map2K: randomCollisionKey(), map2V: randomNullableStr() };
@@ -503,6 +516,31 @@ describe("HashMap", () => {
         yield { map1K: k2, map1V: randomNullableStr() };
         yield { map2K: k2, map2V: randomNullableStr() };
         yield { map2K: k3, map2V: randomNullableStr() };
+      }
+
+      for (let i = 0; i < 500; i++) {
+        // key in map1, collision in map2 with same prefix but ultimitely different hash
+        const [[k1], [k2, k3]] = createKeyWithSamePrefix([1, 2]);
+        yield { map1K: k1, map1V: randomNullableStr() };
+        yield { map2K: k2, map2V: randomNullableStr() };
+        yield { map2K: k3, map2V: randomNullableStr() };
+      }
+
+      for (let i = 0; i < 500; i++) {
+        // key in map2, collision in map1 with same prefix but ultimitely different hash
+        const [[k1, k2], [k3]] = createKeyWithSamePrefix([2, 1]);
+        yield { map1K: k1, map1V: randomNullableStr() };
+        yield { map1K: k2, map1V: randomNullableStr() };
+        yield { map2K: k3, map2V: randomNullableStr() };
+      }
+
+      for (let i = 0; i < 500; i++) {
+        // collision in both with same prefix but ultimitely different hash
+        const [[k1, k2], [k3, k4]] = createKeyWithSamePrefix([2, 2]);
+        yield { map1K: k1, map1V: randomNullableStr() };
+        yield { map1K: k2, map1V: randomNullableStr() };
+        yield { map2K: k3, map2V: randomNullableStr() };
+        yield { map2K: k4, map2V: randomNullableStr() };
       }
     }
 
@@ -755,7 +793,7 @@ describe("HashMap", () => {
     expect(filterNone).to.equal(imMap);
   });
 
-  it("returns empty if everyhing filtered", () => {
+  it("returns empty if everything filtered", () => {
     let imMap = HashMap.empty<CollidingKey, string | null>();
     for (let i = 0; i < 1000; i++) {
       const k = randomCollisionKey();
@@ -796,6 +834,9 @@ describe("HashMap", () => {
     expectEqual(empty, new Map());
 
     empty = imMap.intersection(HashMap.empty<CollidingKey, string>());
+    expectEqual(empty, new Map());
+
+    empty = HashMap.empty<CollidingKey, string>().intersection(imMap);
     expectEqual(empty, new Map());
   });
 
@@ -838,6 +879,36 @@ describe("HashMap", () => {
         yield { both: k1, val1: randomNullableStr(), val2: randomNullableStr() };
         yield { map2K: k2, map2V: randomNullableStr() };
         yield { map2K: k3, map2V: randomNullableStr() };
+      }
+
+      for (let i = 0; i < 500; i++) {
+        // bitmap or full node in map1 and a collision in map2
+        const sizes = new Array(i % 2 === 0 ? 15 : 33).fill(1);
+        sizes[0] = 2;
+        const keys = createKeyWithSamePrefix(sizes);
+        for (const k of keys[0]) {
+          // keys[0] has 2 keys so makes a collision
+          yield { map2K: k, map2V: randomNullableStr() };
+        }
+        for (const [k] of keys.slice(1)) {
+          // remaining keys make a full node or a bitmap node depending on parity of i
+          yield { map1K: k, map1V: randomNullableStr() };
+        }
+      }
+
+      for (let i = 0; i < 500; i++) {
+        // bitmap or full node in map2 and a collision in map1
+        const sizes = new Array(i % 2 === 0 ? 15 : 33).fill(1);
+        sizes[0] = 2;
+        const keys = createKeyWithSamePrefix(sizes);
+        for (const k of keys[0]) {
+          // keys[0] has 2 keys so makes a collision
+          yield { map1K: k, map1V: randomNullableStr() };
+        }
+        for (const [k] of keys.slice(1)) {
+          // remaining keys make a full node or a bitmap node depending on parity of i
+          yield { map2K: k, map2V: randomNullableStr() };
+        }
       }
     }
 
@@ -944,6 +1015,42 @@ describe("HashMap", () => {
         yield { map2K: k2, map2V: { foo: Math.random() } };
         yield { map2K: k3, map2V: { foo: Math.random() } };
       }
+
+      for (let i = 0; i < 500; i++) {
+        // bitmap or full node in map1 and a collision in map2
+        const sizes = new Array(i % 2 === 0 ? 15 : 33).fill(1);
+        sizes[0] = 2;
+        const keys = createKeyWithSamePrefix(sizes);
+        for (const k of keys[0]) {
+          // keys[0] has 2 keys so makes a collision
+          yield { map2K: k, map2V: { foo: Math.random() } };
+        }
+
+        if (i % 3 === 0) {
+          // put one of the map2 collision keys into map1 so it is removed
+          yield { map1K: keys[0][0], map1V: randomNullableStr() };
+        }
+
+        for (const [k] of keys.slice(1)) {
+          // remaining keys make a full node or a bitmap node depending on parity of i
+          yield { map1K: k, map1V: randomNullableStr() };
+        }
+      }
+
+      for (let i = 0; i < 500; i++) {
+        // bitmap or full node in map2 and a collision in map1
+        const sizes = new Array(i % 2 === 0 ? 15 : 33).fill(1);
+        sizes[0] = 2;
+        const keys = createKeyWithSamePrefix(sizes);
+        for (const k of keys[0]) {
+          // keys[0] has 2 keys so makes a collision
+          yield { map1K: k, map1V: randomNullableStr() };
+        }
+        for (const [k] of keys.slice(1)) {
+          // remaining keys make a full node or a bitmap node depending on parity of i
+          yield { map2K: k, map2V: { foo: Math.random() } };
+        }
+      }
     }
 
     // create the maps
@@ -972,6 +1079,28 @@ describe("HashMap", () => {
 
     const imDiff = imMap1.difference(imMap2);
     expectEqual(imDiff, jsMap1);
+  });
+
+  it("difference with itself is the empty map", () => {
+    const { imMap } = createMap(5000, randomCollisionKey);
+
+    const empty = imMap.difference(imMap);
+
+    expectEqual(empty, new Map());
+  });
+
+  it("difference with the empty map is unchanged", () => {
+    const { imMap } = createMap(500, randomCollisionKey);
+
+    const diff = imMap.difference(HashMap.empty());
+    expect(diff).to.equal(imMap);
+  });
+
+  it("difference with the empty map is empty", () => {
+    const { imMap } = createMap(500, randomCollisionKey);
+
+    const diff = HashMap.empty<CollidingKey, string>().difference(imMap);
+    expectEqual(diff, new Map());
   });
 
   it("adjusts a map", () => {

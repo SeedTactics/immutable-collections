@@ -68,13 +68,20 @@ export function createKeyWithSameHash(count: number): ReadonlyArray<CollidingKey
   return ret;
 }
 
-export function createKeyWithSamePrefix(count: number): ReadonlyArray<CollidingKey> {
+export function createKeyWithSamePrefix(counts: ReadonlyArray<number>): ReadonlyArray<ReadonlyArray<CollidingKey>> {
   const prefix = Math.floor(Math.random() * 2 ** 25);
-  const ret = [];
-  for (let i = 0; i < count; i++) {
-    const h = prefix | (Math.floor(Math.random() * 2 ** 4) << 25);
-    lastX++;
-    ret.push(new CollidingKey(h, lastX));
+
+  const ret: CollidingKey[][] = [];
+
+  for (let countI = 0; countI < counts.length; countI++) {
+    const h = prefix | (Math.floor(Math.random() * 2 ** 4) << 30) | (countI << 25);
+    const chunk: CollidingKey[] = [];
+    for (let i = 0; i < counts[countI]; i++) {
+      lastX++;
+      chunk.push(new CollidingKey(h, lastX));
+    }
+    ret.push(chunk);
   }
+
   return ret;
 }

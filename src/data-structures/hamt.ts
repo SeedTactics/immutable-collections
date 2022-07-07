@@ -1220,11 +1220,13 @@ export function union<K, V>(
         newArr[idx] = newNode;
         return { bitmap: node1bitmap, children: newArr };
       }
-    } else if ("children" in node2) {
+    } else {
       // same as above but with node1 and node2 swapped
       const hash1: number = node1.hash;
-      const node2bitmap = node2.bitmap;
-      const oldArr = node2.children;
+      // node2 is guranteed to be internal, but typescript does not infer this
+      const node2int: InternalNode<K, V> = node2 as InternalNode<K, V>;
+      const node2bitmap = node2int.bitmap;
+      const oldArr = node2int.children;
 
       let idx: number;
       if (node2bitmap === fullBitmap) {
@@ -1253,8 +1255,6 @@ export function union<K, V>(
         return { bitmap: node2bitmap, children: newArr };
       }
     }
-
-    throw new Error("Internal immutable-collections error: union reached invalid node combination");
   }
 
   const newRoot = loop(0, root1, root2);
@@ -1406,13 +1406,15 @@ export function intersection<K, V>(
     }
 
     // Collision vs Branch
-    else if ("children" in node2) {
+    else {
       const hash1: number = node1.hash;
-      const node2bitmap = node2.bitmap;
+      // node2 is guaranteed to be internal, but typescript doesn't know that
+      const node2int: InternalNode<K, V> = node2 as InternalNode<K, V>;
+      const node2bitmap = node2int.bitmap;
 
       // find the index where hash1 will live (if any)
       let idx: number;
-      if (node2bitmap === undefined) {
+      if (node2bitmap === fullBitmap) {
         idx = fullIndex(hash1, shift);
       } else {
         const m = mask(hash1, shift);
@@ -1424,10 +1426,8 @@ export function intersection<K, V>(
       }
 
       // whatever the intersection is, everything else in the children array is thrown away
-      return loop(shift + bitsPerSubkey, node1, node2.children[idx]);
+      return loop(shift + bitsPerSubkey, node1, node2int.children[idx]);
     }
-
-    throw new Error("Internal immutable-collections error: intersection reached invalid node combination");
   }
 
   const newRoot = loop(0, root1, root2);
@@ -1598,14 +1598,14 @@ export function difference<K, V1, V2>(
 
       // find the index where hash1 will live (if any)
       let idx: number;
-      if (node2bitmap === undefined) {
+      if (node2bitmap === fullBitmap) {
         idx = fullIndex(hash1, shift);
       } else {
         const m = mask(hash1, shift);
         if (m & node2bitmap) {
           idx = sparseIndex(node2bitmap, m);
         } else {
-          return null;
+          return node1;
         }
       }
 
