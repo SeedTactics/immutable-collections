@@ -347,6 +347,27 @@ describe("HashMap", () => {
     expectEqual(imMap, jsMap);
   });
 
+  it("creates via from but keeping first value", () => {
+    const size = 1000;
+    const entries = new Array<[CollidingKey, string]>(size * 2);
+    for (let i = 0; i < size; i++) {
+      const k = randomCollisionKey();
+      entries[i] = [k, faker.datatype.string()];
+      entries[size + i] = [k, faker.datatype.string()];
+    }
+    const imMap = HashMap.from(entries, (a) => a);
+
+    const jsMap = new Map<string, [CollidingKey, string]>();
+    for (const [k, v] of entries) {
+      const oldV = jsMap.get(k.toString());
+      if (oldV === undefined) {
+        jsMap.set(k.toString(), [k, v]);
+      }
+    }
+
+    expectEqual(imMap, jsMap);
+  });
+
   it("creates via build", () => {
     const size = 1000;
     const values = new Array<number>(size);

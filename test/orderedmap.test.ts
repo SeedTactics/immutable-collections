@@ -313,11 +313,15 @@ describe("Ordered Map", () => {
 
   it("creates via from", () => {
     const size = 1000;
-    const entries = new Array<[number, string]>(size);
+    const entries = new Array<[number, string]>(size + 50);
     for (let i = 0; i < size; i++) {
       const k = Math.floor(Math.random() * 5000);
       const v = faker.datatype.string();
       entries[i] = [k, v];
+      // duplicate the first 50 entries at the end
+      if (i < 50) {
+        entries[i + size] = [k, v];
+      }
     }
     const imMap = OrderedMap.from(entries);
     const jsMap = new Map<string, [number, string]>(entries.map(([k, v]) => [k.toString(), [k, v]]));
