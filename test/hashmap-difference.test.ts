@@ -3,6 +3,7 @@
 
 import { expect } from "chai";
 import { HashMap } from "../src/api/hashmap.js";
+import { HashSet } from "../src/api/hashset.js";
 import {
   CollidingKey,
   createKeyWithSameHash,
@@ -168,6 +169,10 @@ describe("HashMap difference", () => {
 
     const imDiff = imMap1.difference(imMap2);
     expectEqual(imDiff, jsMap1);
+
+    // withoutKeys is the same
+    const withoutKeys = imMap1.withoutKeys(imMap2.keySet());
+    expectEqual(withoutKeys, jsMap1);
   });
 
   it("difference with itself is the empty map", () => {
@@ -182,6 +187,13 @@ describe("HashMap difference", () => {
     const { imMap } = createMap(500, randomCollisionKey);
 
     const diff = imMap.difference(HashMap.empty());
+    expect(diff).to.equal(imMap);
+  });
+
+  it("withoutKeys with the empty set is unchanged", () => {
+    const { imMap } = createMap(500, randomCollisionKey);
+
+    const diff = imMap.withoutKeys(HashSet.empty());
     expect(diff).to.equal(imMap);
   });
 

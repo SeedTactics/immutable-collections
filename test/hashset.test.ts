@@ -214,14 +214,14 @@ describe("HashSet", () => {
 
   it("unions two sets", () => {
     function* unionValues(): Generator<{ map1K: CollidingKey } | { map2K: CollidingKey }> {
-      // want a bunch of keys in both maps
+      // want a bunch of keys in both sets
       for (let i = 0; i < 2000; i++) {
         const k = randomCollisionKey();
         yield { map1K: k };
         yield { map2K: k };
       }
 
-      // want a bunch of keys in distinct in each map
+      // want a bunch of keys in distinct in each sets
       for (let i = 0; i < 2000; i++) {
         yield { map1K: randomCollisionKey() };
         yield { map2K: randomCollisionKey() };
@@ -284,24 +284,24 @@ describe("HashSet", () => {
     expectEqual(empty, new Map());
   });
 
-  it("intersects two maps", () => {
+  it("intersects two sets", () => {
     function* intersectionValues(): Generator<
       { map1K: CollidingKey } | { map2K: CollidingKey } | { both: CollidingKey }
     > {
-      // want a bunch of keys in both maps
+      // want a bunch of keys in both sets
       for (let i = 0; i < 2000; i++) {
         const k = randomCollisionKey();
         yield { both: k };
       }
 
-      // want a bunch of keys in distinct in each map
+      // want a bunch of keys in distinct in each sets
       for (let i = 0; i < 2000; i++) {
         yield { map1K: randomCollisionKey() };
         yield { map2K: randomCollisionKey() };
       }
     }
 
-    // create the maps and the expected union
+    // create the sets and the expected intersection
     let imSet1 = HashSet.empty<CollidingKey>();
     let imSet2 = HashSet.empty<CollidingKey>();
     const jsIntersection = new Map<string, CollidingKey>();
@@ -322,6 +322,51 @@ describe("HashSet", () => {
 
     const imInter = HashSet.intersection(imSet1, imSet2);
     expectEqual(imInter, jsIntersection);
+  });
+
+  it("differences two sets", () => {
+    function* diffValues(): Generator<{ map1K: CollidingKey } | { map2K: CollidingKey } | { both: CollidingKey }> {
+      // want a bunch of keys in both sets
+      for (let i = 0; i < 2000; i++) {
+        const k = randomCollisionKey();
+        yield { both: k };
+      }
+
+      // want a bunch of keys in distinct in each set
+      for (let i = 0; i < 2000; i++) {
+        yield { map1K: randomCollisionKey() };
+        yield { map2K: randomCollisionKey() };
+      }
+    }
+
+    // create the sets and the expected difference
+    let imSet1 = HashSet.empty<CollidingKey>();
+    let imSet2 = HashSet.empty<CollidingKey>();
+    const jsDiff = new Map<string, CollidingKey>();
+    for (const x of diffValues()) {
+      if ("map1K" in x) {
+        imSet1 = imSet1.add(x.map1K);
+        jsDiff.set(x.map1K.toString(), x.map1K);
+      } else if ("map2K" in x) {
+        imSet2 = imSet2.add(x.map2K);
+      } else {
+        imSet1 = imSet1.add(x.both);
+        imSet2 = imSet2.add(x.both);
+      }
+    }
+
+    deepFreeze(imSet1);
+    deepFreeze(imSet2);
+
+    const imDiff = imSet1.difference(imSet2);
+    expectEqual(imDiff, jsDiff);
+  });
+
+  it("difference with empty set is unchanged", () => {
+    const { imSet } = createSet(1000, randomCollisionKey);
+
+    const m = imSet.difference(HashSet.empty());
+    expect(m).to.equal(imSet);
   });
 
   it("creates a key set from a HashMap", () => {
