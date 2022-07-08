@@ -6,13 +6,30 @@ import {
   mkCompareByProperties,
   ToComparable,
   OrderedMapKey,
+  ReturnOfComparable,
+  evalComparable,
 } from "./data-structures/comparison.js";
 import { HashMap } from "./api/hashmap.js";
 import { HashSet } from "./api/hashset.js";
 import { OrderedMap } from "./api/orderedmap.js";
 import * as hamt from "./data-structures/hamt.js";
+import * as tree from "./data-structures/tree.js";
 
 type JsMapKey = number | string | boolean;
+
+type ReturnsOfHashable<T, FS extends ToHashable<T>[]> = FS extends [(t: T) => infer R]
+  ? R
+  : {
+      [k in keyof FS]: FS[k] extends (t: T) => infer R ? R : never;
+    };
+
+type ReturnsOfComparable<T, FS extends (ToComparable<T> | ToComparableDirection<T>)[]> = FS extends [
+  ToComparable<T> | ToComparableDirection<T>
+]
+  ? ReturnOfComparable<T, FS[0]>
+  : {
+      [k in keyof FS]: ReturnOfComparable<T, FS[k]>;
+    };
 
 export class LazySeq<T> {
   static ofIterable<T>(iter: Iterable<T>): LazySeq<T> {
@@ -154,10 +171,9 @@ export class LazySeq<T> {
         return true;
       }
       for (const x of iter) {
-        const newS: hamt.MutableHamtNode<T, boolean> = hamt.mutateInsert(cfg, x, true, constTrue, s);
+        s = hamt.mutateInsert(cfg, x, true, constTrue, s);
         if (inserted) {
           yield x;
-          s = newS;
         }
       }
     });
@@ -236,27 +252,63 @@ export class LazySeq<T> {
     return soFar;
   }
 
-  groupBy<K>(
-    f: (x: T) => K & JsMapKey,
-    ...sort: ReadonlyArray<ToComparableDirection<T>>
-  ): LazySeq<readonly [K, ReadonlyArray<T>]> {
-    const m = new Map<K, T[]>();
+  groupBy<Props extends ToHashable<T>[]>(...fs: Props): LazySeq<[ReturnsOfHashable<T, Props>, ReadonlyArray<T>]> {
+    const cfg = {
+      hash: (x: T) => hashValues(...fs.map((f) => f(x))),
+      compare: mkCompareByProperties(...fs),
+    };
+
+    let s = null;
+    function appendVal(old: Array<T> | undefined, x: T): Array<T> {
+      if (old === undefined) {
+        return [x];
+      } else {
+        old.push(x);
+        return old;
+      }
+    }
     for (const x of this.iter) {
-      const k = f(x);
-      let v = m.get(k);
-      if (v === undefined) {
-        v = [];
-        m.set(k, v);
-      }
-      v.push(x);
+      s = hamt.mutateInsert(cfg, x, x, appendVal, s);
     }
-    if (sort.length > 0) {
-      const sortF = mkCompareByProperties(...sort);
-      for (const v of m.values()) {
-        v.sort(sortF);
+    return LazySeq.ofIterable(
+      hamt.iterate<T, Array<T>, [ReturnsOfHashable<T, Props>, ReadonlyArray<T>]>((t, ts) => {
+        if (fs.length === 1) {
+          return [fs[0](t) as ReturnsOfHashable<T, Props>, ts];
+        } else {
+          return [fs.map((f) => f(t)) as ReturnsOfHashable<T, Props>, ts];
+        }
+      }, s)
+    );
+  }
+
+  orderedGroupBy<KeyProps extends (ToComparable<T> | ToComparableDirection<T>)[]>(
+    ...keys: KeyProps
+  ): LazySeq<[ReturnsOfComparable<T, KeyProps>, ReadonlyArray<T>]> {
+    const cfg = {
+      compare: mkCompareByProperties(...keys),
+    };
+
+    let s = null;
+    function appendVal(old: Array<T> | undefined, x: T): Array<T> {
+      if (old === undefined) {
+        return [x];
+      } else {
+        old.push(x);
+        return old;
       }
     }
-    return LazySeq.ofIterable(m);
+    for (const x of this.iter) {
+      s = tree.mutateInsert(cfg, x, x, appendVal, s);
+    }
+    return LazySeq.ofIterable(
+      tree.iterateAsc<T, Array<T>, [ReturnsOfComparable<T, KeyProps>, ReadonlyArray<T>]>((t, ts) => {
+        if (keys.length === 1) {
+          return [evalComparable(keys[0], t) as ReturnsOfComparable<T, KeyProps>, ts];
+        } else {
+          return [keys.map((f) => evalComparable(f, t)) as ReturnsOfComparable<T, KeyProps>, ts];
+        }
+      }, s)
+    );
   }
 
   head(): T | undefined {
@@ -350,7 +402,7 @@ export class LazySeq<T> {
     return LazySeq.ofIterable(Array.from(this.iter).sort(compare));
   }
 
-  sort(...getKeys: Array<ToComparable<T> | ToComparableDirection<T>>): LazySeq<T> {
+  sort(...getKeys: ReadonlyArray<ToComparable<T> | ToComparableDirection<T>>): LazySeq<T> {
     return LazySeq.ofIterable(Array.from(this.iter).sort(mkCompareByProperties(...getKeys)));
   }
 

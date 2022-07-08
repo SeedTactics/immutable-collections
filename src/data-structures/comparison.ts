@@ -17,6 +17,29 @@ export type ToComparable<T> =
 
 export type ToComparableDirection<T> = { asc: ToComparable<T> } | { desc: ToComparable<T> };
 
+export type ReturnOfComparable<T, F extends ToComparable<T> | ToComparableDirection<T>> = F extends {
+  asc: (t: T) => infer R;
+}
+  ? R
+  : F extends { desc: (t: T) => infer R }
+  ? R
+  : F extends (t: T) => infer R
+  ? R
+  : never;
+
+export function evalComparable<T, F extends ToComparable<T> | ToComparableDirection<T>>(
+  f: F,
+  t: T
+): ReturnOfComparable<T, F> {
+  if ("asc" in f) {
+    return (f as { asc: ToComparable<T> }).asc(t) as ReturnOfComparable<T, F>;
+  } else if ("desc" in f) {
+    return (f as { desc: ToComparable<T> }).desc(t) as ReturnOfComparable<T, F>;
+  } else {
+    return f(t) as ReturnOfComparable<T, F>;
+  }
+}
+
 export function mkCompareByProperties<T>(
   ...getKeys: ReadonlyArray<ToComparable<T> | ToComparableDirection<T>>
 ): (a: T, b: T) => -1 | 0 | 1 {

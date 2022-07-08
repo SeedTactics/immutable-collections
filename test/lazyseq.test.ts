@@ -240,7 +240,7 @@ describe("LazySeq", () => {
 
   it("groups a sequence", () => {
     const seq = LazySeq.ofRange(10, 0, -1);
-    const seq2 = seq.groupBy((i) => Math.floor(i / 2));
+    const seq2: LazySeq<[number, ReadonlyArray<number>]> = seq.groupBy((i) => Math.floor(i / 2));
 
     expect(seq.toRArray()).to.deep.equal([10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
     expect(seq2.toRArray()).to.deep.equal([
@@ -253,18 +253,109 @@ describe("LazySeq", () => {
     ]);
   });
 
-  it("groups and sorts each group", () => {
+  it("groups a sequence by multiple properties", () => {
+    const seq = LazySeq.ofIterable([
+      { foo: 1, bar: "a", baz: 60 },
+      { foo: 1, bar: "a", baz: 65 },
+      { foo: 1, bar: "b", baz: 70 },
+      { foo: 2, bar: "c", baz: 80 },
+      { foo: 2, bar: "d", baz: 90 },
+      { foo: 2, bar: "d", baz: 95 },
+      { foo: 3, bar: "f", baz: 100 },
+      { foo: 3, bar: "f", baz: 110 },
+    ]);
+
+    const grouped: LazySeq<[[number, string], ReadonlyArray<{ foo: number; bar: string; baz: number }>]> = seq.groupBy(
+      (x) => x.foo,
+      (x) => x.bar
+    );
+
+    expect(
+      grouped.toSortedArray(
+        ([[n]]) => n,
+        ([[, s]]) => s
+      )
+    ).to.deep.equal([
+      [
+        [1, "a"],
+        [
+          { foo: 1, bar: "a", baz: 60 },
+          { foo: 1, bar: "a", baz: 65 },
+        ],
+      ],
+      [[1, "b"], [{ foo: 1, bar: "b", baz: 70 }]],
+      [[2, "c"], [{ foo: 2, bar: "c", baz: 80 }]],
+      [
+        [2, "d"],
+        [
+          { foo: 2, bar: "d", baz: 90 },
+          { foo: 2, bar: "d", baz: 95 },
+        ],
+      ],
+      [
+        [3, "f"],
+        [
+          { foo: 3, bar: "f", baz: 100 },
+          { foo: 3, bar: "f", baz: 110 },
+        ],
+      ],
+    ]);
+  });
+
+  it("groups and sorts a sequence", () => {
     const seq = LazySeq.ofRange(10, 0, -1);
-    const seq2 = seq.groupBy((i) => Math.floor(i / 2), { asc: (i) => i });
+    const seq2: LazySeq<[number, ReadonlyArray<number>]> = seq.orderedGroupBy((i) => Math.floor(i / 2));
 
     expect(seq.toRArray()).to.deep.equal([10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
     expect(seq2.toRArray()).to.deep.equal([
-      [5, [10]],
-      [4, [8, 9]],
-      [3, [6, 7]],
-      [2, [4, 5]],
-      [1, [2, 3]],
       [0, [1]],
+      [1, [3, 2]],
+      [2, [5, 4]],
+      [3, [7, 6]],
+      [4, [9, 8]],
+      [5, [10]],
+    ]);
+  });
+
+  it("groups and sorts a sequence by multiple properties", () => {
+    const seq = LazySeq.ofIterable([
+      { foo: 1, bar: "a", baz: 60 },
+      { foo: 1, bar: "a", baz: 65 },
+      { foo: 1, bar: "b", baz: 70 },
+      { foo: 2, bar: "c", baz: 80 },
+      { foo: 2, bar: "d", baz: 90 },
+      { foo: 2, bar: "d", baz: 95 },
+      { foo: 3, bar: "f", baz: 100 },
+      { foo: 3, bar: "f", baz: 110 },
+    ]);
+
+    const grouped: LazySeq<[[number, string], ReadonlyArray<{ foo: number; bar: string; baz: number }>]> =
+      seq.orderedGroupBy({ asc: (x) => x.foo }, { desc: (x) => x.bar });
+
+    expect(grouped.toRArray()).to.deep.equal([
+      [[1, "b"], [{ foo: 1, bar: "b", baz: 70 }]],
+      [
+        [1, "a"],
+        [
+          { foo: 1, bar: "a", baz: 60 },
+          { foo: 1, bar: "a", baz: 65 },
+        ],
+      ],
+      [
+        [2, "d"],
+        [
+          { foo: 2, bar: "d", baz: 90 },
+          { foo: 2, bar: "d", baz: 95 },
+        ],
+      ],
+      [[2, "c"], [{ foo: 2, bar: "c", baz: 80 }]],
+      [
+        [3, "f"],
+        [
+          { foo: 3, bar: "f", baz: 100 },
+          { foo: 3, bar: "f", baz: 110 },
+        ],
+      ],
     ]);
   });
 
