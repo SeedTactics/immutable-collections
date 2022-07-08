@@ -1572,9 +1572,11 @@ export function difference<K, V1, V2>(
         return node1;
       } else if (newNode === null) {
         // delete this child
-        if (oldArr.length === 1) {
-          return null;
-        } else if (oldArr.length === 2) {
+
+        // oldArr cannot have length 1 because we are deleting everything from a single hash (node2.hash)
+        // and getting null which means oldArr must have only a single hash as a child in which case
+        // this bitmap node should not exist
+        if (oldArr.length === 2) {
           const other = oldArr[1 - idx];
           return hasSingleLeafOrCollision(other) ?? { bitmap: node1bitmap & ~m, children: [other] };
         } else {

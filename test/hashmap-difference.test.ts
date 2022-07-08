@@ -3,7 +3,13 @@
 
 import { expect } from "chai";
 import { HashMap } from "../src/api/hashmap.js";
-import { CollidingKey, createKeyWithSameHash, createKeyWithSamePrefix, randomCollisionKey } from "./collision-key.js";
+import {
+  CollidingKey,
+  createKeyWithSameHash,
+  createKeyWithSamePrefix,
+  distinctKeyWithHash,
+  randomCollisionKey,
+} from "./collision-key.js";
 import { deepFreeze } from "./deepfreeze.js";
 import { createMap, expectEqual, randomNullableStr } from "./hashmap.test.js";
 
@@ -104,6 +110,20 @@ describe("HashMap difference", () => {
           // remaining keys make a full node or a bitmap node depending on parity of i
           yield { map1K: k, map1V: randomNullableStr() };
         }
+      }
+
+      for (let i = 0; i < 500; i++) {
+        // bitmap of size 2 in map1 with multiple children and a collision in map2
+        const [[k1], [k2, k3]] = createKeyWithSamePrefix([1, 2]);
+
+        // to test when map1 has a bitmap node with two children (k1 and k2), one of which is itself
+        // a bitmap node with (k1 and k1a)
+        const k1a = distinctKeyWithHash(k1.h | (1 << 31));
+        yield { map1K: k1, map1V: randomNullableStr() };
+        yield { map1K: k1a, map1V: randomNullableStr() };
+        yield { map1K: k2, map1V: randomNullableStr() };
+        yield { map2K: k2, map2V: { foo: Math.random() } };
+        yield { map2K: k3, map2V: { foo: Math.random() } };
       }
 
       for (let i = 0; i < 500; i++) {
