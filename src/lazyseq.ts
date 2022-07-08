@@ -3,6 +3,7 @@
 import { HashKey } from "./data-structures/hashing.js";
 import { ToComparableDirection, mkCompareByProperties, ToComparable } from "./data-structures/comparison.js";
 import { HashMap } from "./api/hashmap.js";
+import { HashSet } from "./api/hashset.js";
 
 type JsMapKey = number | string | boolean;
 
@@ -455,6 +456,10 @@ export class LazySeq<T> {
     return m;
   }
 
+  toHashSet<S>(converter: (x: T) => S & HashKey): HashSet<S & HashKey> {
+    return HashSet.build(this.iter, converter);
+  }
+
   toMutableSet<S>(converter: (x: T) => S & JsMapKey): Set<S> {
     const s = new Set<S>();
     for (const x of this.iter) {
@@ -497,7 +502,6 @@ export class LazySeq<T> {
     val?: (x: T) => S,
     mergeVals?: (v1: S, v2: S) => S
   ): HashMap<K1 & HashKey, HashMap<K2 & HashKey, T | S>> {
-    // TODO: add dedicated function to ImMap to make this efficient
     function merge(old: HashMap<K2 & HashKey, T | S> | undefined, t: T): HashMap<K2 & HashKey, T | S> {
       if (old === undefined) {
         old = HashMap.empty<K2 & HashKey, T | S>();

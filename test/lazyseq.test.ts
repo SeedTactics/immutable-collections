@@ -677,6 +677,14 @@ describe("LazySeq", () => {
     });
   });
 
+  it("converts to a hash set", () => {
+    const seq = LazySeq.ofRange(1, 5).concat(LazySeq.ofRange(1, 5));
+    const mset = seq.toHashSet((x) => x * 3);
+
+    expect(seq.toRArray()).to.deep.equal([1, 2, 3, 4, 1, 2, 3, 4]);
+    expect(Array.from(mset).sort((x, y) => x - y)).to.deep.equal([3, 6, 9, 12]);
+  });
+
   it("converts to a JS set", () => {
     const seq = LazySeq.ofRange(1, 5).concat(LazySeq.ofRange(1, 5));
     const set = seq.toRSet((x) => x * 2);
