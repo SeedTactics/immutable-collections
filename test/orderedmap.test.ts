@@ -601,6 +601,78 @@ describe("Ordered Map", () => {
     expectEqual(empty, new Map());
   });
 
+  it("returns undefined for min/max of empty tree", () => {
+    const m = OrderedMap.empty<number, string>();
+    expect(m.minView()).to.be.undefined;
+    expect(m.maxView()).to.be.undefined;
+  });
+
+  it("returns and pops the minimum element", () => {
+    let m = OrderedMap.from(
+      (function* () {
+        for (let i = 9; i >= 0; i--) {
+          yield [i, i.toString()];
+        }
+      })()
+    );
+
+    checkMapBalanceAndSize(m);
+    deepFreeze(m);
+
+    const jsMap = new Map<string, [number, string]>();
+    for (let i = 0; i < 10; i++) {
+      jsMap.set(i.toString(), [i, i.toString()]);
+    }
+
+    expectEqual(m, jsMap);
+
+    for (let i = 0; i < 10; i++) {
+      const v = m.minView();
+      expect(v!.minKey).to.equal(i);
+      expect(v!.minVal).to.equal(i.toString());
+      jsMap.delete(i.toString());
+
+      checkMapBalanceAndSize(v!.rest);
+      deepFreeze(v!.rest);
+      expectEqual(v!.rest, jsMap);
+
+      m = v!.rest;
+    }
+  });
+
+  it("returns and pops the maximum element", () => {
+    let m = OrderedMap.from(
+      (function* () {
+        for (let i = 0; i < 1000; i++) {
+          yield [i, i.toString()];
+        }
+      })()
+    );
+
+    checkMapBalanceAndSize(m);
+    deepFreeze(m);
+
+    const jsMap = new Map<string, [number, string]>();
+    for (let i = 0; i < 1000; i++) {
+      jsMap.set(i.toString(), [i, i.toString()]);
+    }
+
+    expectEqual(m, jsMap);
+
+    for (let i = 999; i > 950; i--) {
+      const v = m.maxView();
+      expect(v!.maxKey).to.equal(i);
+      expect(v!.maxVal).to.equal(i.toString());
+      jsMap.delete(i.toString());
+
+      checkMapBalanceAndSize(v!.rest);
+      deepFreeze(v!.rest);
+      expectEqual(v!.rest, jsMap);
+
+      m = v!.rest;
+    }
+  });
+
   it("unions two maps", () => {
     function* unionValues(): Generator<
       { map1K: number; map1V: string | null } | { map2K: number; map2V: string | null }

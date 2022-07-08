@@ -9,6 +9,8 @@ import {
   MutableTreeNode,
   mutateBalanceAfterLeftIncrease,
   mutateBalanceAfterRightIncrease,
+  removeMax,
+  removeMin,
   TreeNode,
 } from "./rotations.js";
 export { TreeNode, MutableTreeNode } from "./rotations.js";
@@ -35,8 +37,6 @@ export function lookup<K, V>({ compare }: ComparisionConfig<K>, k: K, root: Tree
 
   return undefined;
 }
-
-// TODO: lookupLT, lookupLE, lookupGT, lookupGE
 
 /* Benchmarking a variety of implementation strategies (see  commit 785942937019aa44527605bb4231d68f2692ec56)
    showed that a recursive function was faster than a loop+stack, and that dedicated insert/remove
@@ -362,6 +362,16 @@ export function split<K, V>({ compare }: ComparisionConfig<K>, k: K, root: TreeN
 
   return loop(root);
 }
+
+export interface ViewResult<K, V> {
+  k: K;
+  v: V;
+  rest: TreeNode<K, V> | null;
+}
+
+export const minView: <K, V>(root: TreeNode<K, V>) => ViewResult<K, V> = removeMin;
+
+export const maxView: <K, V>(root: TreeNode<K, V>) => ViewResult<K, V> = removeMax;
 
 export function union<K, V>(
   cfg: ComparisionConfig<K>,

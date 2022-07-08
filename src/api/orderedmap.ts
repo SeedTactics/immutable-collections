@@ -19,6 +19,8 @@ import {
   split,
   union,
   TreeNode,
+  minView,
+  maxView,
 } from "../data-structures/tree.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -76,6 +78,8 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
       this.root
     );
   }
+
+  // TODO: lookupLT, lookupLE, lookupGT, lookupGE
 
   // Other read methods
 
@@ -144,8 +148,6 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
 
   // TODO: indexing access: findIndex, lookupIndex, elemAt, take, drop, splitAt, updateAt, deleteAt
 
-  // TODO: min/max values: lookupMin, lookupMax, deleteMin, deleteMax, updateMin, updateMax, minView, maxView
-
   mapValues<V2>(f: (v: V, k: K) => V2): OrderedMap<K, V2> {
     const newRoot = mapValues(f, this.root);
     if (newRoot === this.root) {
@@ -176,6 +178,26 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
   split(k: K): { readonly below: OrderedMap<K, V>; readonly val: V | undefined; readonly above: OrderedMap<K, V> } {
     const s = split(this.cfg, k, this.root);
     return { below: new OrderedMap(this.cfg, s.below), val: s.val, above: new OrderedMap(this.cfg, s.above) };
+  }
+
+  // TODO: min/max values: lookupMin, lookupMax, deleteMin, deleteMax, updateMin, updateMax
+
+  minView(): { readonly minKey: K; readonly minVal: V; readonly rest: OrderedMap<K, V> } | undefined {
+    if (this.root === null) {
+      return undefined;
+    } else {
+      const m = minView(this.root);
+      return { minKey: m.k, minVal: m.v, rest: new OrderedMap(this.cfg, m.rest) };
+    }
+  }
+
+  maxView(): { readonly maxKey: K; readonly maxVal: V; readonly rest: OrderedMap<K, V> } | undefined {
+    if (this.root === null) {
+      return undefined;
+    } else {
+      const m = maxView(this.root);
+      return { maxKey: m.k, maxVal: m.v, rest: new OrderedMap(this.cfg, m.rest) };
+    }
   }
 
   union(other: OrderedMap<K, V>, merge?: (vThis: V, vOther: V, k: K) => V): OrderedMap<K, V> {
