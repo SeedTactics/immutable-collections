@@ -454,6 +454,14 @@ describe("LazySeq", () => {
     expect(seq2.toRArray()).to.deep.equal([1, 2, 3, 4]);
   });
 
+  it("takeWhile to end of list", () => {
+    const seq = LazySeq.ofRange(1, 10).append(-5);
+    const seq2 = seq.takeWhile(() => true);
+
+    expect(seq.toRArray()).to.deep.equal([1, 2, 3, 4, 5, 6, 7, 8, 9, -5]);
+    expect(seq2.toRArray()).to.deep.equal([1, 2, 3, 4, 5, 6, 7, 8, 9, -5]);
+  });
+
   it("zips two sequences", () => {
     const seq = LazySeq.ofRange(1, 10);
     const seq2 = LazySeq.ofRange(100, 111); // different length
@@ -490,7 +498,7 @@ describe("LazySeq", () => {
     expect(sorted).to.deep.equal([5, 4, 3, 2, 1]);
   });
 
-  it("converts to a IMap", () => {
+  it("converts to a HashMap", () => {
     const seq = LazySeq.ofIterable([
       {
         foo: 1,
@@ -527,6 +535,47 @@ describe("LazySeq", () => {
       [1, "world"],
       [2, "!!!"],
       [3, "??!?"],
+    ]);
+  });
+
+  it("builds a HashMap", () => {
+    const seq = LazySeq.ofIterable([
+      {
+        foo: 1,
+        bar: "hello",
+      },
+      {
+        foo: 1,
+        bar: "world",
+      },
+      {
+        foo: 2,
+        bar: "!!!",
+      },
+      {
+        foo: 3,
+        bar: "??!?",
+      },
+    ]);
+
+    const m = seq.buildHashMap((x) => x.foo);
+
+    expect(Array.from(m).sort(([k1], [k2]) => k1 - k2)).to.deep.equal([
+      [1, { foo: 1, bar: "world" }],
+      [2, { foo: 2, bar: "!!!" }],
+      [3, { foo: 3, bar: "??!?" }],
+    ]);
+
+    // now with a value function
+    const m2 = seq.buildHashMap<number, string>(
+      (x) => x.foo,
+      (old, x) => (old ?? "") + x.bar + "_" + x.foo.toString()
+    );
+
+    expect(Array.from(m2).sort(([k1], [k2]) => k1 - k2)).to.deep.equal([
+      [1, "hello_1world_1"],
+      [2, "!!!_2"],
+      [3, "??!?_3"],
     ]);
   });
 
@@ -639,7 +688,7 @@ describe("LazySeq", () => {
     expect(mset).to.deep.equal(new Set([100, 3, 6, 9, 12]));
   });
 
-  it("builds a lookup in an IMap", () => {
+  it("builds a lookup in an HashMap", () => {
     const seq = LazySeq.ofIterable([
       { foo: 1, bar: "aa" },
       { foo: 1, bar: "aaaa" },
@@ -680,7 +729,7 @@ describe("LazySeq", () => {
     ]);
   });
 
-  it("builds a lookupMap in an IMap", () => {
+  it("builds a lookupMap in an HashMap", () => {
     const seq = LazySeq.ofIterable([
       { foo: 1, bar: "aa" },
       { foo: 1, bar: "aaaa" },
@@ -717,7 +766,7 @@ describe("LazySeq", () => {
     ]);
   });
 
-  it("builds a lookupMap in an IMap and transforms the value", () => {
+  it("builds a lookupMap in an HashMap and transforms the value", () => {
     const seq = LazySeq.ofIterable([
       { foo: 1, bar: "aa" },
       { foo: 1, bar: "aaaa" },
@@ -742,6 +791,46 @@ describe("LazySeq", () => {
         [
           ["aa", 1 + 2],
           ["aaaa", 1 + 4],
+        ],
+      ],
+      [
+        2,
+        [
+          ["bb", 2 + 2],
+          ["bbbb", 2 + 4],
+        ],
+      ],
+      [3, [["c", 3 + 1]]],
+    ]);
+  });
+
+  it("builds a lookupMap in an HashMap and merges", () => {
+    const seq = LazySeq.ofIterable([
+      { foo: 1, bar: "aa" },
+      { foo: 1, bar: "aaaa" },
+      { foo: 1, bar: "aaaa" },
+      { foo: 2, bar: "bb" },
+      { foo: 3, bar: "c" },
+      { foo: 2, bar: "bbbb" },
+    ]);
+
+    const lookup = seq.toLookupMap(
+      (x) => x.foo,
+      (x) => x.bar,
+      (x) => x.foo + x.bar.length,
+      (x, y) => x + y + 1000
+    );
+
+    expect(
+      Array.from(lookup)
+        .sort(([k1], [k2]) => k1 - k2)
+        .map(([k, vs]) => [k, Array.from(vs).sort(([k1], [k2]) => k1.localeCompare(k2))])
+    ).to.deep.equal([
+      [
+        1,
+        [
+          ["aa", 1 + 2],
+          ["aaaa", 1 + 4 + 1 + 4 + 1000],
         ],
       ],
       [

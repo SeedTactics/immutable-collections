@@ -37,14 +37,12 @@ export class LazySeq<T> {
           yield x;
         }
       });
-    } else if (s < 0) {
+    } else {
       return LazySeq.ofIterator(function* () {
         for (let x = start; x > end; x += s) {
           yield x;
         }
       });
-    } else {
-      throw new Error("step must be nonzero");
     }
   }
 
