@@ -153,6 +153,47 @@ describe("hamt mutate insert", () => {
     });
   });
 
+  it("creates a collision node", () => {
+    const k1 = new Key(0b11011, 701);
+    const k2 = new Key(0b11011, 702);
+    const k3 = new Key(0b11011, 703);
+    const cfg = mkHashConfig<Key>();
+    const node1 = mutateInsert(cfg, k1, "AA", setNewVal("AA", 100), null);
+    const node2 = mutateInsert(cfg, k2, "BB", setNewVal("BB", 200), node1);
+    const node3 = mutateInsert(cfg, k3, "CC", setNewVal("CC", 300), node2);
+
+    expect(node3).to.deep.equal({
+      hash: k1.h,
+      collision: {
+        key: k2,
+        val: 200,
+        size: 3,
+        left: { key: k1, val: 100, size: 1, left: null, right: null },
+        right: { key: k3, val: 300, size: 1, left: null, right: null },
+      },
+    });
+
+    const k4 = new Key(0b01001, 801);
+    const node4 = mutateInsert(cfg, k4, "DD", setNewVal("DD", 400), node2);
+
+    expect(node4).to.deep.equal({
+      bitmap: (1 << 0b11011) | (1 << 0b01001),
+      children: [
+        { hash: k4.h, key: k4, val: 400 },
+        {
+          hash: k1.h,
+          collision: {
+            key: k2,
+            val: 200,
+            size: 3,
+            left: { key: k1, val: 100, size: 1, left: null, right: null },
+            right: { key: k3, val: 300, size: 1, left: null, right: null },
+          },
+        },
+      ],
+    });
+  });
+
   it("merges in an existing value", () => {
     const cfg = mkHashConfig<Key>();
     const k1 = new Key(10, 25);

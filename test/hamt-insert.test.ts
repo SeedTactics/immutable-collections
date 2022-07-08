@@ -1,7 +1,7 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
 import { expect } from "chai";
-import { CollidingKey as Key } from "./collision-key.js";
+import { CollidingKey as Key, createKeyWithSameHash } from "./collision-key.js";
 import { mkHashConfig } from "../src/data-structures/hashing.js";
 import { InternalNode, HamtNode, insert, lookup } from "../src/data-structures/hamt.js";
 import { LazySeq } from "../src/lazyseq.js";
@@ -181,6 +181,28 @@ describe("HAMT insert and lookup", () => {
         expect((tree as any).children[i]).to.equal((after as any).children[i]);
       }
     }
+  });
+
+  it("inserts to collision node", () => {
+    const [k1, k2, k3] = createKeyWithSameHash(3);
+    const cfg = mkHashConfig<Key>();
+    const [node1, inserted1] = insert(cfg, k1, setNewVal(100), null);
+    const [node2, inserted2] = insert(cfg, k2, setNewVal(200), node1);
+    const [node3, inserted3] = insert(cfg, k3, setNewVal(300), node2);
+    expect(inserted1).to.be.true;
+    expect(inserted2).to.be.true;
+    expect(inserted3).to.be.true;
+
+    expect(node3).to.deep.equal({
+      hash: k1.h,
+      collision: {
+        key: k2,
+        val: 200,
+        size: 3,
+        left: { key: k1, val: 100, size: 1, left: null, right: null },
+        right: { key: k3, val: 300, size: 1, left: null, right: null },
+      },
+    });
   });
 
   it("merges existing value", () => {
