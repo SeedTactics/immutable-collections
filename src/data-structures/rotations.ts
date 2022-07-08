@@ -11,8 +11,8 @@ the functions differ on the assumption of the relative sizes of the left vs righ
 
 First, if you want to combine a left tree, a (key, val), and a right tree, use one of the following:
 
-- combineAfterLeftIncrease: use if the left tree has only grown and/or the right tree has only gotten smaller by 1.
-- combineAfterRightIncrease: use if the right tree has only grown and/or the left tree has only gotten smaller by 1.
+- combineAfterLeftIncrease: use if the left tree has only grown or the right tree has only gotten smaller.
+- combineAfterRightIncrease: use if the right tree has only grown or the left tree has only gotten smaller.
 - combineAfterInsertOrRemove: use if the sizes of the left or right subtrees has changed by at most 1.
 - combineDifferentSizes: use if the sizes of the left and right subtrees differ by any amount.
 
@@ -257,8 +257,8 @@ function rotateRight<K, V>(k: K, v: V, left: TreeNode<K, V>, right: TreeNode<K, 
   };
 }
 
-// call this when the left subtree might have been inserted to or the right subtree might have been deleted from
-export function combineAfterLeftIncrease<K, V>(
+// call this when the left subtree might have been inserted to or the right subtree might have been deleted from, but not both
+function combineAfterLeftIncrease<K, V>(
   left: TreeNode<K, V> | null,
   k: K,
   v: V,
@@ -271,19 +271,24 @@ export function combineAfterLeftIncrease<K, V>(
     return balanceRightUndefined(k, v, left);
   }
 
-  if (left === null) {
-    return { key: k, val: v, size: 1 + right.size, left: null, right };
+  // We know right is not null because it was checked above.
+  // Left cannot be null here
+  // There are two cases:
+  //   - If the left tree increased in size, it of course is not null
+  //   - If the right tree decreased in size, we know it is not null so it must have started
+  //     with at least 2 elements before the change.  But then left = null would have
+  //     been an inbalanced tree since the right had 2 elements before the change.
+  const l = left!;
+
+  if (l.size > delta * right.size) {
+    return rotateRight(k, v, l, right);
   }
 
-  if (left.size > delta * right.size) {
-    return rotateRight(k, v, left, right);
-  }
-
-  return { key: k, val: v, size: 1 + left.size + right.size, left, right };
+  return { key: k, val: v, size: 1 + l.size + right.size, left, right };
 }
 
-// call this when the right subtree might have been inserted to or the left subtree might have been deleted from
-export function combineAfterRightIncrease<K, V>(
+// call this when the right subtree might have been inserted to or the left subtree might have been deleted from, but not both
+function combineAfterRightIncrease<K, V>(
   left: TreeNode<K, V> | null,
   k: K,
   v: V,
@@ -296,15 +301,20 @@ export function combineAfterRightIncrease<K, V>(
     return balanceLeftUndefined(k, v, right);
   }
 
-  if (right === null) {
-    return { key: k, val: v, size: 1 + left.size, left, right: null };
+  // We know left is not null because it was checked above.
+  // Right cannot be null here
+  // There are two cases:
+  //   - If the right tree increased in size, it of course is not null
+  //   - If the left tree decreased in size, we know it is not null so it must have started
+  //     with at least 2 elements before the change.  But then right = null would have
+  //     been an inbalanced tree since the left had 2 elements before the change.
+  const r = right!;
+
+  if (r.size > delta * left.size) {
+    return rotateLeft(k, v, left, r);
   }
 
-  if (right.size > delta * left.size) {
-    return rotateLeft(k, v, left, right);
-  }
-
-  return { key: k, val: v, size: 1 + left.size + right.size, left, right };
+  return { key: k, val: v, size: 1 + left.size + r.size, left, right };
 }
 
 // call when either left or right has changed size by at most one
@@ -365,7 +375,7 @@ export function combineDifferentSizes<K, V>(
   return { key: k, val: v, size: 1 + left.size + right.size, left, right };
 }
 
-function removeMin<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, V> | null } {
+export function removeMin<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, V> | null } {
   const left = node.left;
   if (left === null) {
     return { k: node.key, v: node.val, rest: node.right };
@@ -376,7 +386,7 @@ function removeMin<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, 
   }
 }
 
-function removeMax<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, V> | null } {
+export function removeMax<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, V> | null } {
   const right = node.right;
   if (right === null) {
     return { k: node.key, v: node.val, rest: node.left };
