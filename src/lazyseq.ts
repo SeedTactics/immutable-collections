@@ -1,6 +1,6 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
-import { HashKey } from "./data-structures/hashing.js";
+import { HashKey, hashValues, ToHashable } from "./data-structures/hashing.js";
 import {
   ToComparableDirection,
   mkCompareByProperties,
@@ -10,6 +10,7 @@ import {
 import { HashMap } from "./api/hashmap.js";
 import { HashSet } from "./api/hashset.js";
 import { OrderedMap } from "./api/orderedmap.js";
+import * as hamt from "./data-structures/hamt.js";
 
 type JsMapKey = number | string | boolean;
 
@@ -126,7 +127,7 @@ export class LazySeq<T> {
     });
   }
 
-  distinct(this: LazySeq<T & (string | number | null | undefined)>): LazySeq<T> {
+  distinct(this: LazySeq<T & (string | number | null)>): LazySeq<T> {
     const iter = this.iter;
     return LazySeq.ofIterator(function* () {
       const s = new Set<T>();
@@ -134,6 +135,29 @@ export class LazySeq<T> {
         if (!s.has(x)) {
           s.add(x);
           yield x;
+        }
+      }
+    });
+  }
+
+  distinctBy(...fs: ReadonlyArray<ToHashable<T>>) {
+    const iter = this.iter;
+    const cfg = {
+      hash: (x: T) => hashValues(...fs.map((f) => f(x))),
+      compare: mkCompareByProperties(...fs),
+    };
+    return LazySeq.ofIterator(function* () {
+      let s = null;
+      let inserted = false;
+      function constTrue(old: boolean | undefined): true {
+        inserted = old === undefined;
+        return true;
+      }
+      for (const x of iter) {
+        const newS: hamt.MutableHamtNode<T, boolean> = hamt.mutateInsert(cfg, x, true, constTrue, s);
+        if (inserted) {
+          yield x;
+          s = newS;
         }
       }
     });

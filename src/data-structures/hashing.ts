@@ -18,6 +18,13 @@ export function isHashableObj(k: unknown): k is HashableObj {
   return k !== null && typeof k === "object" && "hash" in k;
 }
 
+export type ToHashable<T> =
+  | ((t: T) => number | null)
+  | ((t: T) => string | null)
+  | ((t: T) => boolean | null)
+  | ((t: T) => Date | null)
+  | ((t: T) => (HashableObj & ComparableObj) | null);
+
 export type HashKey = string | number | boolean | Date | (HashableObj & ComparableObj);
 
 export type HashConfig<K> = ComparisionConfig<K> & {

@@ -137,6 +137,40 @@ describe("LazySeq", () => {
     expect(seq.toRArray()).to.deep.equal([1, 2, 3, 4, 5, 6]);
   });
 
+  it("returns a distinct sequence by properties", () => {
+    const seq = LazySeq.ofIterable([
+      { foo: 1, bar: "a", baz: 60 },
+      { foo: 1, bar: "a", baz: 65 },
+      { foo: 1, bar: "b", baz: 70 },
+      { foo: 2, bar: "c", baz: 80 },
+      { foo: 2, bar: "d", baz: 90 },
+      { foo: 2, bar: "d", baz: 95 },
+      { foo: 3, bar: "f", baz: 100 },
+      { foo: 3, bar: "f", baz: 110 },
+    ]);
+
+    expect(seq.distinctBy((x) => x.foo).toRArray()).to.deep.equal([
+      { foo: 1, bar: "a", baz: 60 },
+      { foo: 2, bar: "c", baz: 80 },
+      { foo: 3, bar: "f", baz: 100 },
+    ]);
+
+    expect(
+      seq
+        .distinctBy(
+          (x) => x.foo,
+          (x) => x.bar
+        )
+        .toRArray()
+    ).to.deep.equal([
+      { foo: 1, bar: "a", baz: 60 },
+      { foo: 1, bar: "b", baz: 70 },
+      { foo: 2, bar: "c", baz: 80 },
+      { foo: 2, bar: "d", baz: 90 },
+      { foo: 3, bar: "f", baz: 100 },
+    ]);
+  });
+
   it("drops a number of elements", () => {
     const seq = LazySeq.ofRange(1, 10);
     const seq2 = seq.drop(3);
