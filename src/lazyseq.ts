@@ -1,9 +1,15 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
 import { HashKey } from "./data-structures/hashing.js";
-import { ToComparableDirection, mkCompareByProperties, ToComparable } from "./data-structures/comparison.js";
+import {
+  ToComparableDirection,
+  mkCompareByProperties,
+  ToComparable,
+  OrderedMapKey,
+} from "./data-structures/comparison.js";
 import { HashMap } from "./api/hashmap.js";
 import { HashSet } from "./api/hashset.js";
+import { OrderedMap } from "./api/orderedmap.js";
 
 type JsMapKey = number | string | boolean;
 
@@ -412,6 +418,25 @@ export class LazySeq<T> {
   buildHashMap<K, S>(key: (x: T) => K & HashKey, val: (old: S | undefined, t: T) => S): HashMap<K & HashKey, S>;
   buildHashMap<K, S>(key: (x: T) => K & HashKey, val?: (old: S | undefined, t: T) => S): HashMap<K & HashKey, S> {
     return HashMap.build(this.iter, key, val as (old: S | undefined, t: T) => S);
+  }
+
+  toOrderedMap<K, S>(
+    f: (x: T) => readonly [K & OrderedMapKey, S],
+    merge?: (v1: S, v2: S) => S
+  ): OrderedMap<K & OrderedMapKey, S> {
+    return OrderedMap.from(this.map(f), merge);
+  }
+
+  buildOrderedMap<K>(key: (x: T) => K & OrderedMapKey): OrderedMap<K & OrderedMapKey, T>;
+  buildOrderedMap<K, S>(
+    key: (x: T) => K & OrderedMapKey,
+    val: (old: S | undefined, t: T) => S
+  ): OrderedMap<K & OrderedMapKey, S>;
+  buildOrderedMap<K, S>(
+    key: (x: T) => K & OrderedMapKey,
+    val?: (old: S | undefined, t: T) => S
+  ): OrderedMap<K & OrderedMapKey, S> {
+    return OrderedMap.build(this.iter, key, val as (old: S | undefined, t: T) => S);
   }
 
   toMutableMap<K, S>(f: (x: T) => readonly [K & JsMapKey, S], merge?: (v1: S, v2: S) => S): Map<K, S> {

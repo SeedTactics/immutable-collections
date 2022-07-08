@@ -579,6 +579,87 @@ describe("LazySeq", () => {
     ]);
   });
 
+  it("converts to an OrderedMap", () => {
+    const seq = LazySeq.ofIterable([
+      {
+        foo: 1,
+        bar: "hello",
+      },
+      {
+        foo: 1,
+        bar: "world",
+      },
+      {
+        foo: 2,
+        bar: "!!!",
+      },
+      {
+        foo: 3,
+        bar: "??!?",
+      },
+    ]);
+
+    const m = seq.toOrderedMap(
+      (x) => [x.foo, x.bar],
+      (x, y) => x + y
+    );
+
+    expect(Array.from(m).sort(([k1], [k2]) => k1 - k2)).to.deep.equal([
+      [1, "helloworld"],
+      [2, "!!!"],
+      [3, "??!?"],
+    ]);
+
+    // try without a merge function
+    const m3 = seq.toOrderedMap((x) => [x.foo, x.bar]);
+    expect(Array.from(m3).sort(([k1], [k2]) => k1 - k2)).to.deep.equal([
+      [1, "world"],
+      [2, "!!!"],
+      [3, "??!?"],
+    ]);
+  });
+
+  it("builds an OrderedMap", () => {
+    const seq = LazySeq.ofIterable([
+      {
+        foo: 1,
+        bar: "hello",
+      },
+      {
+        foo: 1,
+        bar: "world",
+      },
+      {
+        foo: 2,
+        bar: "!!!",
+      },
+      {
+        foo: 3,
+        bar: "??!?",
+      },
+    ]);
+
+    const m = seq.buildOrderedMap((x) => x.foo);
+
+    expect(Array.from(m).sort(([k1], [k2]) => k1 - k2)).to.deep.equal([
+      [1, { foo: 1, bar: "world" }],
+      [2, { foo: 2, bar: "!!!" }],
+      [3, { foo: 3, bar: "??!?" }],
+    ]);
+
+    // now with a value function
+    const m2 = seq.buildOrderedMap<number, string>(
+      (x) => x.foo,
+      (old, x) => (old ?? "") + x.bar + "_" + x.foo.toString()
+    );
+
+    expect(Array.from(m2).sort(([k1], [k2]) => k1 - k2)).to.deep.equal([
+      [1, "hello_1world_1"],
+      [2, "!!!_2"],
+      [3, "??!?_3"],
+    ]);
+  });
+
   it("converts to a JS map", () => {
     const seq = LazySeq.ofIterable([
       {
