@@ -80,16 +80,19 @@ function balanceLeftUndefined<K, V>(k: K, v: V, right: TreeNode<K, V>): TreeNode
     };
   }
 
-  if (rl.size < ratio * rr.size) {
-    // single rotation, making right the root
-    return {
-      key: right.key,
-      val: right.val,
-      size: 1 + right.size,
-      left: { key: k, val: v, size: 1 + rl.size, left: null, right: rl },
-      right: rr,
-    };
-  }
+  // single rotation, making right the root
+  return {
+    key: right.key,
+    val: right.val,
+    size: 1 + right.size,
+    left: { key: k, val: v, size: 1 + rl.size, left: null, right: rl },
+    right: rr,
+  };
+
+  /*
+  In all the uses of balanceLeftUndefined below, the size of the right subtree is never more than 3 when
+  left is null.  This is because whenever left is null, we have reduced the size of the left by exactly 1
+  from 1 to 0 (due to insert/remove) so right has size at most 3.
 
   // double rotation, making rl the new root
   return {
@@ -111,6 +114,7 @@ function balanceLeftUndefined<K, V>(k: K, v: V, right: TreeNode<K, V>): TreeNode
       right: rr,
     },
   };
+  */
 }
 
 function balanceRightUndefined<K, V>(k: K, v: V, left: TreeNode<K, V>): TreeNode<K, V> {
@@ -140,16 +144,19 @@ function balanceRightUndefined<K, V>(k: K, v: V, left: TreeNode<K, V>): TreeNode
     };
   }
 
-  if (lr.size < ratio * ll.size) {
-    // single rotation, making left the root
-    return {
-      key: left.key,
-      val: left.val,
-      size: 1 + left.size,
-      left: ll,
-      right: { key: k, val: v, size: 1 + lr.size, left: lr, right: null },
-    };
-  }
+  // single rotation, making left the root
+  return {
+    key: left.key,
+    val: left.val,
+    size: 1 + left.size,
+    left: ll,
+    right: { key: k, val: v, size: 1 + lr.size, left: lr, right: null },
+  };
+
+  /*
+  In all the uses of balanceRightUndefined below, the size of the left subtree is never more than 3 when
+  right is null.  This is because whenever right is null, we have reduced the size of the right by exactly 1
+  from 1 to zero (due to insert/remove) so left has size at most 3.
 
   // double rotation, making lr the new root
   return {
@@ -171,6 +178,7 @@ function balanceRightUndefined<K, V>(k: K, v: V, left: TreeNode<K, V>): TreeNode
       right: null,
     },
   };
+  */
 }
 
 function rotateLeft<K, V>(k: K, v: V, left: TreeNode<K, V>, right: TreeNode<K, V>): TreeNode<K, V> {
