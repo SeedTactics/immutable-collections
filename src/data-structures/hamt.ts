@@ -522,7 +522,7 @@ function hasSingleLeafOrCollision<K, V>(node: HamtNode<K, V>): LeafNode<K, V> | 
       return node;
     }
   }
-  return null;
+  throw new Error("Internal immutable-collections violation: hamt hasSingleLeafOrCollision reached null");
 }
 
 function removeChildFromEndOfSpine<K, V>(

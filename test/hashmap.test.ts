@@ -300,7 +300,7 @@ describe("HashMap", () => {
         });
         newJsMap.delete(k.toString());
       } else {
-        // add new value (use odd key)
+        // add new value
         const newK = randomCollisionKey();
         const newVal = faker.datatype.string();
         newM = newM.alter(newK, (oldV) => {
@@ -309,6 +309,24 @@ describe("HashMap", () => {
         });
         newJsMap.set(newK.toString(), [newK, newVal]);
       }
+
+      // also try deleting same hash but different key
+      const kDifferent = distinctKeyWithHash(k.h);
+      const m = newM.alter(kDifferent, (oldV) => {
+        expect(oldV).to.be.undefined;
+        return undefined;
+      });
+      expect(m).to.equal(newM);
+    }
+
+    for (let i = 0; i < 100; i++) {
+      // delete something not present
+      const k = randomCollisionKey();
+      const m = newM.alter(k, (oldV) => {
+        expect(oldV).to.be.undefined;
+        return undefined;
+      });
+      expect(m).to.equal(newM);
     }
 
     expectEqual(newM, newJsMap);
