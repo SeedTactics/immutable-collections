@@ -500,7 +500,8 @@ function mutateRotateRight<K, V>(node: MutableTreeNode<K, V>): MutableTreeNode<K
 }
 
 export function mutateBalanceAfterLeftIncrease<K, V>(node: MutableTreeNode<K, V>): MutableTreeNode<K, V> {
-  const leftSize = node.left?.size ?? 0;
+  // mutate is only used to insert (not remove), so after left increase we know left is not null
+  const leftSize = node.left!.size;
   const rightSize = node.right?.size ?? 0;
 
   if (leftSize > delta * rightSize && leftSize + rightSize > 1) {
@@ -520,7 +521,8 @@ export function mutateBalanceAfterLeftIncrease<K, V>(node: MutableTreeNode<K, V>
 
 export function mutateBalanceAfterRightIncrease<K, V>(node: MutableTreeNode<K, V>): MutableTreeNode<K, V> {
   const leftSize = node.left?.size ?? 0;
-  const rightSize = node.right?.size ?? 0;
+  // mutate is only used to insert (not remove), so after right increase we know right is not null
+  const rightSize = node.right!.size;
 
   if (rightSize > delta * leftSize && leftSize + rightSize > 1) {
     const rlSize = node.right!.left?.size ?? 0;
