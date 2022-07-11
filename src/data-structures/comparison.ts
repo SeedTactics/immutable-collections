@@ -8,16 +8,16 @@ export function isComparableObj(o: unknown): o is ComparableObj {
   return o !== null && typeof o === "object" && "compare" in o;
 }
 
-export type ToComparable<T> =
+export type ToComparableBase<T> =
   | ((t: T) => number | null)
   | ((t: T) => string | null)
   | ((t: T) => boolean | null)
   | ((t: T) => Date | null)
   | ((t: T) => ComparableObj | null);
 
-export type ToComparableDirection<T> = { asc: ToComparable<T> } | { desc: ToComparable<T> };
+export type ToComparable<T> = { asc: ToComparableBase<T> } | { desc: ToComparableBase<T> } | ToComparableBase<T>;
 
-export type ReturnOfComparable<T, F extends ToComparable<T> | ToComparableDirection<T>> = F extends {
+export type ReturnOfComparable<T, F extends ToComparable<T>> = F extends {
   asc: (t: T) => infer R;
 }
   ? R
@@ -27,22 +27,17 @@ export type ReturnOfComparable<T, F extends ToComparable<T> | ToComparableDirect
   ? R
   : never;
 
-export function evalComparable<T, F extends ToComparable<T> | ToComparableDirection<T>>(
-  f: F,
-  t: T
-): ReturnOfComparable<T, F> {
+export function evalComparable<T, F extends ToComparable<T>>(f: F, t: T): ReturnOfComparable<T, F> {
   if ("asc" in f) {
-    return (f as { asc: ToComparable<T> }).asc(t) as ReturnOfComparable<T, F>;
+    return (f as { asc: ToComparableBase<T> }).asc(t) as ReturnOfComparable<T, F>;
   } else if ("desc" in f) {
-    return (f as { desc: ToComparable<T> }).desc(t) as ReturnOfComparable<T, F>;
+    return (f as { desc: ToComparableBase<T> }).desc(t) as ReturnOfComparable<T, F>;
   } else {
     return f(t) as ReturnOfComparable<T, F>;
   }
 }
 
-export function mkCompareByProperties<T>(
-  ...getKeys: ReadonlyArray<ToComparable<T> | ToComparableDirection<T>>
-): (a: T, b: T) => -1 | 0 | 1 {
+export function mkCompareByProperties<T>(...getKeys: ReadonlyArray<ToComparable<T>>): (a: T, b: T) => -1 | 0 | 1 {
   return (x, y) => {
     for (const getKey of getKeys) {
       if ("desc" in getKey) {

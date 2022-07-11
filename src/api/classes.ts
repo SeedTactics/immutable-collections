@@ -3,7 +3,7 @@
 export { HashKey, HashableObj, isHashableObj, hashValues } from "../data-structures/hashing.js";
 export {
   mkCompareByProperties,
-  ToComparableDirection,
+  ToComparableBase,
   ToComparable,
   ComparableObj,
   isComparableObj,

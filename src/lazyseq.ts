@@ -2,7 +2,6 @@
 
 import { HashKey, hashValues, ToHashable } from "./data-structures/hashing.js";
 import {
-  ToComparableDirection,
   mkCompareByProperties,
   ToComparable,
   OrderedMapKey,
@@ -17,15 +16,13 @@ import * as tree from "./data-structures/tree.js";
 
 type JsMapKey = number | string | boolean;
 
-type ReturnsOfHashable<T, FS extends ToHashable<T>[]> = FS extends [(t: T) => infer R]
+type TupleOfHashProps<T, FS extends ToHashable<T>[]> = FS extends [(t: T) => infer R]
   ? R
   : {
       [k in keyof FS]: FS[k] extends (t: T) => infer R ? R : never;
     };
 
-type ReturnsOfComparable<T, FS extends (ToComparable<T> | ToComparableDirection<T>)[]> = FS extends [
-  ToComparable<T> | ToComparableDirection<T>
-]
+type TupleOfCmpProps<T, FS extends ToComparable<T>[]> = FS extends [ToComparable<T>]
   ? ReturnOfComparable<T, FS[0]>
   : {
       [k in keyof FS]: ReturnOfComparable<T, FS[k]>;
@@ -252,7 +249,11 @@ export class LazySeq<T> {
     return soFar;
   }
 
-  groupBy<Props extends ToHashable<T>[]>(...fs: Props): LazySeq<[ReturnsOfHashable<T, Props>, ReadonlyArray<T>]> {
+  groupBy<PropFn extends ToHashable<T>, PropFns extends ToHashable<T>[]>(
+    propFn: PropFn,
+    ...fs: PropFns
+  ): LazySeq<[TupleOfHashProps<T, [PropFn, ...PropFns]>, ReadonlyArray<T>]> {
+    fs.unshift(propFn);
     const cfg = {
       hash: (x: T) => hashValues(...fs.map((f) => f(x))),
       compare: mkCompareByProperties(...fs),
@@ -271,21 +272,23 @@ export class LazySeq<T> {
       s = hamt.mutateInsert(cfg, x, x, appendVal, s);
     }
     return LazySeq.ofIterable(
-      hamt.iterate<T, Array<T>, [ReturnsOfHashable<T, Props>, ReadonlyArray<T>]>((t, ts) => {
+      hamt.iterate<T, Array<T>, [TupleOfHashProps<T, [PropFn, ...PropFns]>, ReadonlyArray<T>]>((t, ts) => {
         if (fs.length === 1) {
-          return [fs[0](t) as ReturnsOfHashable<T, Props>, ts];
+          return [fs[0](t) as TupleOfHashProps<T, [PropFn, ...PropFns]>, ts];
         } else {
-          return [fs.map((f) => f(t)) as ReturnsOfHashable<T, Props>, ts];
+          return [fs.map((f) => f(t)) as TupleOfHashProps<T, [PropFn, ...PropFns]>, ts];
         }
       }, s)
     );
   }
 
-  orderedGroupBy<KeyProps extends (ToComparable<T> | ToComparableDirection<T>)[]>(
-    ...keys: KeyProps
-  ): LazySeq<[ReturnsOfComparable<T, KeyProps>, ReadonlyArray<T>]> {
+  orderedGroupBy<PropFn extends ToComparable<T>, PropFns extends ToComparable<T>[]>(
+    propfn: PropFn,
+    ...fns: PropFns
+  ): LazySeq<[TupleOfCmpProps<T, [PropFn, ...PropFns]>, ReadonlyArray<T>]> {
+    fns.unshift(propfn);
     const cfg = {
-      compare: mkCompareByProperties(...keys),
+      compare: mkCompareByProperties(...fns),
     };
 
     let s = null;
@@ -301,11 +304,11 @@ export class LazySeq<T> {
       s = tree.mutateInsert(cfg, x, x, appendVal, s);
     }
     return LazySeq.ofIterable(
-      tree.iterateAsc<T, Array<T>, [ReturnsOfComparable<T, KeyProps>, ReadonlyArray<T>]>((t, ts) => {
-        if (keys.length === 1) {
-          return [evalComparable(keys[0], t) as ReturnsOfComparable<T, KeyProps>, ts];
+      tree.iterateAsc<T, Array<T>, [TupleOfCmpProps<T, [PropFn, ...PropFns]>, ReadonlyArray<T>]>((t, ts) => {
+        if (fns.length === 1) {
+          return [evalComparable(fns[0], t) as TupleOfCmpProps<T, [PropFn, ...PropFns]>, ts];
         } else {
-          return [keys.map((f) => evalComparable(f, t)) as ReturnsOfComparable<T, KeyProps>, ts];
+          return [fns.map((f) => evalComparable(f, t)) as TupleOfCmpProps<T, [PropFn, ...PropFns]>, ts];
         }
       }, s)
     );
@@ -402,7 +405,7 @@ export class LazySeq<T> {
     return LazySeq.ofIterable(Array.from(this.iter).sort(compare));
   }
 
-  sort(...getKeys: ReadonlyArray<ToComparable<T> | ToComparableDirection<T>>): LazySeq<T> {
+  sort(...getKeys: ReadonlyArray<ToComparable<T>>): LazySeq<T> {
     return LazySeq.ofIterable(Array.from(this.iter).sort(mkCompareByProperties(...getKeys)));
   }
 
@@ -479,10 +482,7 @@ export class LazySeq<T> {
     return Array.from(this.iter);
   }
 
-  toSortedArray(
-    getKey: ToComparable<T> | ToComparableDirection<T>,
-    ...getKeys: ReadonlyArray<ToComparable<T> | ToComparableDirection<T>>
-  ): ReadonlyArray<T> {
+  toSortedArray(getKey: ToComparable<T>, ...getKeys: ReadonlyArray<ToComparable<T>>): ReadonlyArray<T> {
     return Array.from(this.iter).sort(mkCompareByProperties(getKey, ...getKeys));
   }
 
@@ -617,6 +617,8 @@ export class LazySeq<T> {
     }
     return HashMap.build(this.iter, key1, merge);
   }
+
+  // TODO: toLookupOrderedMap
 
   toRLookup<K>(key: (x: T) => K): ReadonlyMap<K, ReadonlyArray<T>>;
   toRLookup<K, S>(key: (x: T) => K, val: (x: T) => S): ReadonlyMap<K, ReadonlyArray<S>>;
