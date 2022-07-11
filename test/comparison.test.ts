@@ -1,8 +1,7 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
 import { expect } from "chai";
-//import { faker } from "@faker-js/faker";
-import { mkCompareByProperties, mkComparisonConfig } from "../src/data-structures/comparison.js";
+import { mkCompareByProperties, mkComparisonConfig, OrderedMapKey } from "../src/data-structures/comparison.js";
 
 class IntStr {
   readonly i: number;
@@ -121,5 +120,13 @@ describe("Comparison", () => {
 
     expect(cfg.compare(new IntStr(5, "a"), new IntStr(5, "z"))).to.be.lessThan(0);
     expect(cfg.compare(new IntStr(5, "z"), new IntStr(5, "a"))).to.be.greaterThan(0);
+  });
+
+  it("throws error when invalid class", () => {
+    // typescript will prevent this, but check if give error when used from js (for example)
+    const cfg = mkComparisonConfig<{ foo: number } & OrderedMapKey>();
+    expect(() =>
+      cfg.compare({ foo: 1 } as { foo: number } & OrderedMapKey, { foo: 2 } as { foo: number } & OrderedMapKey)
+    ).to.throw("key type must have compare method");
   });
 });

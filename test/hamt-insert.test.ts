@@ -272,4 +272,20 @@ describe("HAMT insert and lookup", () => {
     // no deep equal, should have returned unchanged
     expect(node3).to.equal(node2);
   });
+
+  it("does not go into an infinite loop", () => {
+    // this is impossible unless nodes get corrupted/modified outside of immutable-collections (or there is a bug in immutable collections)
+    // check that lookup and insert on invalid trees don't go into an infinite loop
+
+    const cfg = mkHashConfig<number>();
+    const badNode = { bitmap: 1 << 5, children: [null] } as unknown as HamtNode<number, string>;
+
+    expect(() => lookup(cfg, 5, badNode)).to.throw(
+      "Internal immutable-collections violation: node undefined during lookup"
+    );
+
+    expect(() => insert(cfg, 5, () => "hello", badNode)).to.throw(
+      "Internal immutable-collections violation: hamt insert reached null"
+    );
+  });
 });

@@ -3,7 +3,7 @@
 import { expect } from "chai";
 import { CollidingKey as Key } from "./collision-key.js";
 import { mkHashConfig } from "../src/data-structures/hashing.js";
-import { InternalNode, mutateInsert } from "../src/data-structures/hamt.js";
+import { InternalNode, MutableHamtNode, mutateInsert } from "../src/data-structures/hamt.js";
 import { LazySeq } from "../src/lazyseq.js";
 
 function setNewVal(str: string, val: number): (old: number | undefined, t: string) => number {
@@ -218,5 +218,17 @@ describe("hamt mutate insert", () => {
       key: k1,
       val: 200,
     });
+  });
+
+  it("does not go into an infinite loop", () => {
+    // this is impossible unless nodes get corrupted/modified outside of immutable-collections (or there is a bug in immutable collections)
+    // check that lookup and insert on invalid trees don't go into an infinite loop
+
+    const cfg = mkHashConfig<number>();
+    const badNode = { bitmap: 1 << 5, children: [null] } as unknown as MutableHamtNode<number, string>;
+
+    expect(() => mutateInsert(cfg, 5, "abc", () => "hello", badNode)).to.throw(
+      "Internal immutable-collections violation: hamt mutate insert reached null"
+    );
   });
 });

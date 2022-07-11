@@ -3,7 +3,7 @@
 
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
-import { hashValues, isHashableObj, mkHashConfig } from "../src/data-structures/hashing.js";
+import { HashKey, hashValues, isHashableObj, mkHashConfig } from "../src/data-structures/hashing.js";
 
 class IntStrKey {
   readonly i: number;
@@ -144,5 +144,25 @@ describe("Hashing", () => {
 
   it("hashes an array of a single value", () => {
     expect(hashValues(100)).to.equal(100);
+  });
+
+  it("throws error when invalid class", () => {
+    // typescript will prevent this, but check if give error when used from js (for example)
+    const cfg = mkHashConfig<{ foo: number } & HashKey>();
+    expect(() => cfg.hash({ foo: 1 } as { foo: number } & HashKey)).to.throw(
+      "key type must have compare and hash methods"
+    );
+  });
+
+  it("hashes using toString", () => {
+    // typescript should prevent this, but it is an (undocumented) fallback if used from js
+    const foo = {
+      foo: 10,
+      toString() {
+        return "foo10";
+      },
+    };
+
+    expect(hashValues(foo as unknown as string)).to.equal(hashValues("foo10"));
   });
 });

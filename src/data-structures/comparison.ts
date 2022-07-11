@@ -157,7 +157,7 @@ export function mkComparisonConfig<K extends OrderedMapKey>(): ComparisionConfig
           m.compare = objCompare as unknown as (a: K, b: K) => number;
           return;
         } else {
-          throw new Error("key type must have equals and hash methods");
+          throw new Error("key type must have compare method");
         }
 
       case "string":

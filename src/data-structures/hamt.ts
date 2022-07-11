@@ -74,7 +74,6 @@ export type MutableHamtNode<K, V> = MutableLeafNode<K, V> | MutableCollisionNode
 
 const bitsPerSubkey = 5;
 const subkeyMask = (1 << bitsPerSubkey) - 1;
-const maxChildren = 1 << bitsPerSubkey;
 const fullBitmap = ~0;
 
 // given the hash and the shift (the tree level), returns a bitmap with a 1 in the position of the index of the hash at this level
@@ -175,7 +174,8 @@ function two<K, V>(
   // parent array.
   let parent: Array<HamtNode<K, V>> | undefined;
 
-  do {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
     const mask1 = mask(hash1, shift);
     const mask2 = mask(hash2, shift);
 
@@ -203,10 +203,7 @@ function two<K, V>(
       }
       return root ?? newNode;
     }
-  } while (shift <= maxChildren);
-  throw new Error(
-    "Internal immutable-collections violation: shift > maxShift for two " + JSON.stringify({ shift, leaf1, leaf2 })
-  );
+  }
 }
 
 export function insert<K, V>(
@@ -510,7 +507,8 @@ export function build<T, K, V>(
 }
 
 function hasSingleLeafOrCollision<K, V>(node: HamtNode<K, V>): LeafNode<K, V> | CollisionNode<K, V> | null {
-  while (node) {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
     if ("children" in node) {
       if (node.children.length === 1) {
         // loop
@@ -522,7 +520,6 @@ function hasSingleLeafOrCollision<K, V>(node: HamtNode<K, V>): LeafNode<K, V> | 
       return node;
     }
   }
-  throw new Error("Internal immutable-collections violation: hamt hasSingleLeafOrCollision reached null");
 }
 
 function removeChildFromEndOfSpine<K, V>(
