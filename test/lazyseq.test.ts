@@ -943,6 +943,47 @@ describe("LazySeq", () => {
     ]);
   });
 
+  it("builds a lookup in an OrderedMap", () => {
+    const seq = LazySeq.ofIterable([
+      { foo: 1, bar: "aa" },
+      { foo: 1, bar: "aaaa" },
+      { foo: 2, bar: "bb" },
+      { foo: 3, bar: "c" },
+      { foo: 2, bar: "bbbb" },
+    ]);
+
+    const lookup = seq.toOrderedLookup(
+      (x) => x.foo,
+      (x) => x.bar
+    );
+
+    expect(Array.from(lookup)).to.deep.equal([
+      [1, ["aa", "aaaa"]],
+      [2, ["bb", "bbbb"]],
+      [3, ["c"]],
+    ]);
+
+    const lookupKey = seq.toOrderedLookup((x) => x.foo);
+
+    expect(Array.from(lookupKey)).to.deep.equal([
+      [
+        1,
+        [
+          { foo: 1, bar: "aa" },
+          { foo: 1, bar: "aaaa" },
+        ],
+      ],
+      [
+        2,
+        [
+          { foo: 2, bar: "bb" },
+          { foo: 2, bar: "bbbb" },
+        ],
+      ],
+      [3, [{ foo: 3, bar: "c" }]],
+    ]);
+  });
+
   it("builds a lookupMap in an HashMap", () => {
     const seq = LazySeq.ofIterable([
       { foo: 1, bar: "aa" },
@@ -1040,6 +1081,109 @@ describe("LazySeq", () => {
         .sort(([k1], [k2]) => k1 - k2)
         .map(([k, vs]) => [k, Array.from(vs).sort(([k1], [k2]) => k1.localeCompare(k2))])
     ).to.deep.equal([
+      [
+        1,
+        [
+          ["aa", 1 + 2],
+          ["aaaa", 1 + 4 + 1 + 4 + 1000],
+        ],
+      ],
+      [
+        2,
+        [
+          ["bb", 2 + 2],
+          ["bbbb", 2 + 4],
+        ],
+      ],
+      [3, [["c", 3 + 1]]],
+    ]);
+  });
+
+  it("builds a lookupMap in an OrderedMap", () => {
+    const seq = LazySeq.ofIterable([
+      { foo: 1, bar: "aa" },
+      { foo: 1, bar: "aaaa" },
+      { foo: 2, bar: "bb" },
+      { foo: 3, bar: "c" },
+      { foo: 2, bar: "bbbb" },
+    ]);
+
+    const lookup = seq.toLookupOrderedMap(
+      (x) => x.foo,
+      (x) => x.bar
+    );
+
+    expect(Array.from(lookup).map(([k, m]) => [k, Array.from(m)])).to.deep.equal([
+      [
+        1,
+        [
+          ["aa", { foo: 1, bar: "aa" }],
+          ["aaaa", { foo: 1, bar: "aaaa" }],
+        ],
+      ],
+      [
+        2,
+        [
+          ["bb", { foo: 2, bar: "bb" }],
+          ["bbbb", { foo: 2, bar: "bbbb" }],
+        ],
+      ],
+      [3, [["c", { foo: 3, bar: "c" }]]],
+    ]);
+  });
+
+  it("builds a lookupMap in an OrderedMap and transforms the value", () => {
+    const seq = LazySeq.ofIterable([
+      { foo: 1, bar: "aa" },
+      { foo: 1, bar: "aaaa" },
+      { foo: 2, bar: "bb" },
+      { foo: 3, bar: "c" },
+      { foo: 2, bar: "bbbb" },
+    ]);
+
+    const lookup = seq.toLookupOrderedMap(
+      (x) => x.foo,
+      (x) => x.bar,
+      (x) => x.foo + x.bar.length
+    );
+
+    expect(Array.from(lookup).map(([k, m]) => [k, Array.from(m)])).to.deep.equal([
+      [
+        1,
+        [
+          ["aa", 1 + 2],
+          ["aaaa", 1 + 4],
+        ],
+      ],
+      [
+        2,
+        [
+          ["bb", 2 + 2],
+          ["bbbb", 2 + 4],
+        ],
+      ],
+      [3, [["c", 3 + 1]]],
+    ]);
+  });
+
+  it("builds a lookupMap in an OrderedMap and merges", () => {
+    const seq = LazySeq.ofIterable([
+      { foo: 1, bar: "aa" },
+      { foo: 1, bar: "aaaa" },
+      { foo: 1, bar: "aaaa" },
+      { foo: 2, bar: "bb" },
+      { foo: 3, bar: "c" },
+      { foo: 2, bar: "bbbb" },
+    ]);
+
+    const lookup = seq.toLookupOrderedMap(
+      (x) => x.foo,
+      (x) => x.bar,
+      (x) => x.foo + x.bar.length,
+      (x, y) => x + y + 1000
+    );
+
+    expect(Array.from(lookup).map(([k, m]) => [k, Array.from(m)])).to.deep.equal([
       [
         1,
         [

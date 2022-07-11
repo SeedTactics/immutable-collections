@@ -576,15 +576,55 @@ export class LazySeq<T> {
   toLookup<K>(key: (x: T) => K & HashKey): HashMap<K & HashKey, ReadonlyArray<T>>;
   toLookup<K, S>(key: (x: T) => K & HashKey, val: (x: T) => S): HashMap<K & HashKey, ReadonlyArray<S>>;
   toLookup<K, S>(key: (x: T) => K & HashKey, val?: (x: T) => S): HashMap<K & HashKey, ReadonlyArray<S>> {
-    function merge(old: Array<S> | undefined, t: T): Array<S> {
-      if (old) {
-        old.push(val === undefined ? (t as unknown as S) : val(t));
-        return old;
-      } else {
-        return [val === undefined ? (t as unknown as S) : val(t)];
-      }
+    let merge: (old: Array<S> | undefined, t: T) => Array<S>;
+    if (val === undefined) {
+      merge = (old, t) => {
+        if (old === undefined) {
+          return [t as unknown as S];
+        } else {
+          return [...old, t as unknown as S];
+        }
+      };
+    } else {
+      merge = (old, t) => {
+        if (old === undefined) {
+          return [val(t)];
+        } else {
+          return [...old, val(t)];
+        }
+      };
     }
     return HashMap.build(this.iter, key, merge);
+  }
+
+  toOrderedLookup<K>(key: (x: T) => K & OrderedMapKey): OrderedMap<K & OrderedMapKey, ReadonlyArray<T>>;
+  toOrderedLookup<K, S>(
+    key: (x: T) => K & OrderedMapKey,
+    val: (x: T) => S
+  ): OrderedMap<K & OrderedMapKey, ReadonlyArray<S>>;
+  toOrderedLookup<K, S>(
+    key: (x: T) => K & OrderedMapKey,
+    val?: (x: T) => S
+  ): OrderedMap<K & OrderedMapKey, ReadonlyArray<S>> {
+    let merge: (old: Array<S> | undefined, t: T) => Array<S>;
+    if (val === undefined) {
+      merge = (old, t) => {
+        if (old === undefined) {
+          return [t as unknown as S];
+        } else {
+          return [...old, t as unknown as S];
+        }
+      };
+    } else {
+      merge = (old, t) => {
+        if (old === undefined) {
+          return [val(t)];
+        } else {
+          return [...old, val(t)];
+        }
+      };
+    }
+    return OrderedMap.build(this.iter, key, merge);
   }
 
   toLookupMap<K1, K2>(
@@ -603,22 +643,50 @@ export class LazySeq<T> {
     val?: (x: T) => S,
     mergeVals?: (v1: S, v2: S) => S
   ): HashMap<K1 & HashKey, HashMap<K2 & HashKey, T | S>> {
-    function merge(old: HashMap<K2 & HashKey, T | S> | undefined, t: T): HashMap<K2 & HashKey, T | S> {
-      if (old === undefined) {
-        old = HashMap.empty<K2 & HashKey, T | S>();
-      }
-      if (val === undefined) {
-        return old.set(key2(t), t);
-      } else if (mergeVals === undefined) {
-        return old.set(key2(t), val(t));
-      } else {
-        return old.modify(key2(t), (oldV) => (oldV === undefined ? val(t) : mergeVals(oldV as S, val(t))));
-      }
+    let merge: (old: HashMap<K2 & HashKey, T | S> | undefined, t: T) => HashMap<K2 & HashKey, T | S>;
+    if (val === undefined) {
+      merge = (old: HashMap<K2 & HashKey, T | S> | undefined, t: T) => (old ?? HashMap.empty()).set(key2(t), t);
+    } else if (mergeVals === undefined) {
+      merge = (old: HashMap<K2 & HashKey, T | S> | undefined, t: T) => (old ?? HashMap.empty()).set(key2(t), val(t));
+    } else {
+      merge = (old: HashMap<K2 & HashKey, T | S> | undefined, t: T) =>
+        (old ?? HashMap.empty()).alter(key2(t), (oldV) => (oldV === undefined ? val(t) : mergeVals(oldV as S, val(t))));
     }
+
     return HashMap.build(this.iter, key1, merge);
   }
 
-  // TODO: toLookupOrderedMap
+  toLookupOrderedMap<K1, K2>(
+    key1: (x: T) => K1 & OrderedMapKey,
+    key2: (x: T) => K2 & OrderedMapKey
+  ): OrderedMap<K1 & OrderedMapKey, OrderedMap<K2 & OrderedMapKey, T>>;
+  toLookupOrderedMap<K1, K2, S>(
+    key1: (x: T) => K1 & OrderedMapKey,
+    key2: (x: T) => K2 & OrderedMapKey,
+    val: (x: T) => S,
+    mergeVals?: (v1: S, v2: S) => S
+  ): OrderedMap<K1 & OrderedMapKey, OrderedMap<K2 & OrderedMapKey, S>>;
+  toLookupOrderedMap<K1, K2, S>(
+    key1: (x: T) => K1 & OrderedMapKey,
+    key2: (x: T) => K2 & OrderedMapKey,
+    val?: (x: T) => S,
+    mergeVals?: (v1: S, v2: S) => S
+  ): OrderedMap<K1 & OrderedMapKey, OrderedMap<K2 & OrderedMapKey, T | S>> {
+    let merge: (old: OrderedMap<K2 & OrderedMapKey, T | S> | undefined, t: T) => OrderedMap<K2 & OrderedMapKey, T | S>;
+    if (val === undefined) {
+      merge = (old: OrderedMap<K2 & OrderedMapKey, T | S> | undefined, t: T) =>
+        (old ?? OrderedMap.empty()).set(key2(t), t);
+    } else if (mergeVals === undefined) {
+      merge = (old: OrderedMap<K2 & OrderedMapKey, T | S> | undefined, t: T) =>
+        (old ?? OrderedMap.empty()).set(key2(t), val(t));
+    } else {
+      merge = (old: OrderedMap<K2 & OrderedMapKey, T | S> | undefined, t: T) =>
+        (old ?? OrderedMap.empty()).alter(key2(t), (oldV) =>
+          oldV === undefined ? val(t) : mergeVals(oldV as S, val(t))
+        );
+    }
+    return OrderedMap.build(this.iter, key1, merge);
+  }
 
   toRLookup<K>(key: (x: T) => K): ReadonlyMap<K, ReadonlyArray<T>>;
   toRLookup<K, S>(key: (x: T) => K, val: (x: T) => S): ReadonlyMap<K, ReadonlyArray<S>>;
