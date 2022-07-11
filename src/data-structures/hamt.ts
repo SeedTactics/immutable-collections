@@ -1574,8 +1574,8 @@ export function difference<K, V1, V2>(
         // delete this child
 
         // oldArr cannot have length 1 because we are deleting everything from a single hash (node2.hash)
-        // and getting null which means oldArr must have only a single hash as a child in which case
-        // this bitmap node should not exist
+        // and getting null, but if oldArr.length = 1, it would mean oldArr must have had only a single hash
+        // as a child in which case this bitmap node should not exist.
         if (oldArr.length === 2) {
           const other = oldArr[1 - idx];
           return hasSingleLeafOrCollision(other) ?? { bitmap: node1bitmap & ~m, children: [other] };
@@ -1647,6 +1647,8 @@ export function adjust<K, V1, V2>(
             return null;
           } else if (newVal === node1.val) {
             return node1;
+          } else if ((newVal as unknown) === node2.val) {
+            return node2 as unknown as HamtNode<K, V1>;
           } else {
             return { hash: node1.hash, key: node1.key, val: newVal };
           }
@@ -1672,12 +1674,12 @@ export function adjust<K, V1, V2>(
       }
     } else if ("collision" in node1 && "key" in node2) {
       if (node1.hash === node2.hash) {
-        const newCol1 = tree.alter(cfg, node2.key, (oldV) => f(oldV, node2.val, node2.key), node1.collision);
+        // altering the node1 tree cannot produce null, because node1 has at least two elements and we are
+        // adjusting only a single key (noed2.key)
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const newCol1 = tree.alter(cfg, node2.key, (oldV) => f(oldV, node2.val, node2.key), node1.collision)!;
         if (newCol1 === node1.collision) {
           return node1;
-        } else if (newCol1 === null) {
-          numRemoved += node1.collision.size;
-          return null;
         } else if (newCol1.size === 1) {
           numRemoved += node1.collision.size - 1;
           return { hash: node1.hash, key: newCol1.key, val: newCol1.val };
@@ -1705,9 +1707,6 @@ export function adjust<K, V1, V2>(
         if (newCol === null) {
           numRemoved += 1;
           return null;
-        } else if ((newCol as unknown) === (node2.collision as unknown)) {
-          numRemoved += 1 - node2.collision.size;
-          return node2 as unknown as HamtNode<K, V1>;
         } else {
           numRemoved += 1 - newCol.size;
           return { hash: node1.hash, collision: newCol };
@@ -1850,9 +1849,11 @@ export function adjust<K, V1, V2>(
         const newNode = loop(shift + bitsPerSubkey, oldChild, node2);
         if (newNode === null) {
           // delete this child
-          if (oldArr.length === 1) {
-            return null;
-          } else if (oldArr.length === 2) {
+
+          // oldArr cannot have length 1 because we are deleting everything from a single hash (node2.hash)
+          // and getting null, but if oldArr.length = 1, it would mean oldArr must have had only a single hash
+          // as a child in which case this bitmap node should not exist.
+          if (oldArr.length === 2) {
             const other = oldArr[1 - idx];
             return hasSingleLeafOrCollision(other) ?? { bitmap: node1bitmap & ~m, children: [other] };
           } else {
