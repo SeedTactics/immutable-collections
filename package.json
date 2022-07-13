@@ -1,6 +1,6 @@
 {
   "name": "@seedtactics/immutable-collections",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "author": "John Lenz",
   "license": "BSD-3-Clause",
   "type": "module",
