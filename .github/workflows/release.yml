@@ -27,9 +27,6 @@ jobs:
       - name: Test Suite
         run: pnpm run test
 
-      - name: Build
-        run: pnpm run build
-
       - name: Git configuration
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -69,6 +66,9 @@ jobs:
           git add "CHANGELOG.md"
           git commit -m "chore: release ${{ env.NEW_VERSION }}"
           git tag ${{ env.NEW_VERSION }}
+
+      - name: Build
+        run: pnpm run build
 
       - name: Publish
         run: pnpm publish --access public --tag ${{ env.RELEASE_TAG }}
