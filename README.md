@@ -1,6 +1,8 @@
 # Persistent immutable collections for typescript
 
+[![npm](https://img.shields.io/npm/v/@seedtactics/immutable-collections)](https://www.npmjs.com/package/@seedtactics/immutable-collections)
 [![codecov](https://codecov.io/gh/SeedTactics/immutable-collections/branch/main/graph/badge.svg?token=GOYMOGYAOE)](https://codecov.io/gh/SeedTactics/immutable-collections)
+[![CI](https://github.com/seedtactics/immutable-collections/actions/workflows/ci.yaml/badge.svg)](https://github.com/SeedTactics/immutable-collections/actions/workflows/ci.yaml)
 
 - `HashMap`, a hash based immutable map built using a hash array mapped trie (HAMT)
 - `OrderedMap`, an key-ordered immutable map built using a balanced binary tree
