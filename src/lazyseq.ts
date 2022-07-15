@@ -154,11 +154,12 @@ export class LazySeq<T> {
     });
   }
 
-  distinctBy(...fs: ReadonlyArray<ToHashable<T>>) {
+  distinctBy(prop: ToHashable<T>, ...props: Array<ToHashable<T>>) {
+    props.unshift(prop);
     const iter = this.iter;
     const cfg = {
-      hash: (x: T) => hashValues(...fs.map((f) => f(x))),
-      compare: mkCompareByProperties(...fs),
+      hash: (x: T) => hashValues(...props.map((f) => f(x))),
+      compare: mkCompareByProperties(...props),
     };
     return LazySeq.ofIterator(function* () {
       let s = null;
@@ -355,8 +356,8 @@ export class LazySeq<T> {
     });
   }
 
-  maxOn(...props: ReadonlyArray<ToComparable<T>>): T | undefined {
-    const compare = mkCompareByProperties<T>(...props);
+  maxBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): T | undefined {
+    const compare = mkCompareByProperties<T>(prop, ...props);
     let ret: T | undefined = undefined;
     for (const x of this.iter) {
       if (ret === undefined) {
@@ -370,8 +371,8 @@ export class LazySeq<T> {
     return ret;
   }
 
-  minOn(...props: ReadonlyArray<ToComparable<T>>): T | undefined {
-    const compare = mkCompareByProperties<T>(...props);
+  minBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): T | undefined {
+    const compare = mkCompareByProperties<T>(prop, ...props);
     let ret: T | undefined = undefined;
     for (const x of this.iter) {
       if (ret === undefined) {
@@ -405,8 +406,8 @@ export class LazySeq<T> {
     return LazySeq.ofIterable(Array.from(this.iter).sort(compare));
   }
 
-  sort(...getKeys: ReadonlyArray<ToComparable<T>>): LazySeq<T> {
-    return LazySeq.ofIterable(Array.from(this.iter).sort(mkCompareByProperties(...getKeys)));
+  sortBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): LazySeq<T> {
+    return LazySeq.ofIterable(Array.from(this.iter).sort(mkCompareByProperties(prop, ...props)));
   }
 
   sumOn(getNumber: (v: T) => number): number {
@@ -482,8 +483,8 @@ export class LazySeq<T> {
     return Array.from(this.iter);
   }
 
-  toSortedArray(getKey: ToComparable<T>, ...getKeys: ReadonlyArray<ToComparable<T>>): ReadonlyArray<T> {
-    return Array.from(this.iter).sort(mkCompareByProperties(getKey, ...getKeys));
+  toSortedArray(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): ReadonlyArray<T> {
+    return Array.from(this.iter).sort(mkCompareByProperties(prop, ...props));
   }
 
   toHashMap<K, S>(f: (x: T) => readonly [K & HashKey, S], merge?: (v1: S, v2: S) => S): HashMap<K & HashKey, S> {

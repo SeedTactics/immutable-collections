@@ -398,7 +398,7 @@ describe("LazySeq", () => {
 
   it("maximizes a sequence", () => {
     const seq = LazySeq.ofRange(1, 5).concat(LazySeq.ofRange(-10, -4));
-    const seq2 = seq.map((i) => ({ foo: i })).maxOn((x) => x.foo);
+    const seq2 = seq.map((i) => ({ foo: i })).maxBy((x) => x.foo);
 
     expect(seq.toRArray()).to.deep.equal([1, 2, 3, 4, -10, -9, -8, -7, -6, -5]);
     expect(seq2).to.deep.equal({ foo: 4 });
@@ -406,12 +406,12 @@ describe("LazySeq", () => {
 
   it("returns undefined for the max of an empty sequence", () => {
     const seq = LazySeq.ofIterable([]);
-    expect(seq.maxOn(() => 40)).to.be.undefined;
+    expect(seq.maxBy(() => 40)).to.be.undefined;
   });
 
   it("minimizes a sequence", () => {
     const seq = LazySeq.ofRange(8, 12).concat(LazySeq.ofRange(1, 3));
-    const seq2 = seq.map((i) => ({ foo: i })).minOn((x) => x.foo);
+    const seq2 = seq.map((i) => ({ foo: i })).minBy((x) => x.foo);
 
     expect(seq.toRArray()).to.deep.equal([8, 9, 10, 11, 1, 2]);
     expect(seq2).to.deep.equal({ foo: 1 });
@@ -419,7 +419,7 @@ describe("LazySeq", () => {
 
   it("returns undefined for the min of an empty sequence", () => {
     const seq = LazySeq.ofIterable([]);
-    expect(seq.minOn(() => 40)).to.be.undefined;
+    expect(seq.minBy(() => 40)).to.be.undefined;
   });
 
   it("prepends to a sequence", () => {
@@ -460,7 +460,7 @@ describe("LazySeq", () => {
 
     expect(
       seq
-        .sort(
+        .sortBy(
           (x) => x.foo,
           (x) => x.bar
         )
@@ -477,7 +477,7 @@ describe("LazySeq", () => {
     ]);
 
     // try desc
-    expect(seq.sort({ desc: (x) => x.foo }, (x) => x.bar).toRArray()).to.deep.equal([
+    expect(seq.sortBy({ desc: (x) => x.foo }, (x) => x.bar).toRArray()).to.deep.equal([
       { foo: 6, bar: "u" },
       { foo: 5, bar: "v" },
       { foo: 4, bar: "w" },
@@ -489,7 +489,7 @@ describe("LazySeq", () => {
     ]);
 
     // bar first
-    expect(seq.sort({ asc: (x) => x.bar }).toRArray()).to.deep.equal([
+    expect(seq.sortBy({ asc: (x) => x.bar }).toRArray()).to.deep.equal([
       { foo: 6, bar: "u" },
       { foo: 5, bar: "v" },
       { foo: 4, bar: "w" },
@@ -514,7 +514,7 @@ describe("LazySeq", () => {
     ]);
 
     // asc
-    expect(seq.sort((x) => x).toRArray()).to.deep.equal([
+    expect(seq.sortBy((x) => x).toRArray()).to.deep.equal([
       new ComparableInt(1),
       new ComparableInt(2),
       new ComparableInt(3),
@@ -526,7 +526,7 @@ describe("LazySeq", () => {
     ]);
 
     // desc
-    expect(seq.sort({ desc: (x) => x }).toRArray()).to.deep.equal([
+    expect(seq.sortBy({ desc: (x) => x }).toRArray()).to.deep.equal([
       null,
       new ComparableInt(8),
       new ComparableInt(7),
