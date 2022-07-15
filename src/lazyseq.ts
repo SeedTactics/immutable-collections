@@ -410,7 +410,7 @@ export class LazySeq<T> {
     return LazySeq.ofIterable(Array.from(this.iter).sort(mkCompareByProperties(prop, ...props)));
   }
 
-  sumOn(getNumber: (v: T) => number): number {
+  sumBy(getNumber: (v: T) => number): number {
     let sum = 0;
     for (const x of this.iter) {
       sum += getNumber(x);

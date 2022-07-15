@@ -540,7 +540,7 @@ describe("LazySeq", () => {
 
   it("sums a sequence", () => {
     const seq = LazySeq.ofRange(1, 10);
-    const sum = seq.sumOn((i) => i * 2);
+    const sum = seq.sumBy((i) => i * 2);
     expect(sum).to.equal(90);
   });
 
