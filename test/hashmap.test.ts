@@ -197,6 +197,30 @@ describe("HashMap", () => {
     }
   });
 
+  it("iterates twice", () => {
+    const { imMap, jsMap } = createMap(500, randomCollisionKey);
+    const expected = sortEntries(jsMap.values());
+
+    // iterate it twice
+    expect(sortEntries(imMap)).to.deep.equal(expected);
+    expect(sortEntries(imMap)).to.deep.equal(expected);
+
+    // iterate keys twice
+    const keys: Iterable<CollidingKey> = imMap.keysToLazySeq();
+    expect(sortKeys(keys)).to.deep.equal(expected.map(([k]) => k));
+    expect(sortKeys(keys)).to.deep.equal(expected.map(([k]) => k));
+
+    // iterate values twice
+    const vals: Iterable<string> = imMap.valuesToLazySeq();
+    expect(sortValues(vals)).to.deep.equal(sortValues(expected.map(([, v]) => v)));
+    expect(sortValues(vals)).to.deep.equal(sortValues(expected.map(([, v]) => v)));
+
+    // iterate entries twoce
+    const entries: Iterable<readonly [CollidingKey, string]> = imMap.toLazySeq();
+    expect(sortEntries(entries)).to.deep.equal(expected);
+    expect(sortEntries(entries)).to.deep.equal(expected);
+  });
+
   it("leaves map unchanged when modifying the same value", () => {
     const maps = createMap(500, () => faker.datatype.string());
 

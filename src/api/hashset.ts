@@ -74,7 +74,8 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
   }
 
   toLazySeq(): LazySeq<T> {
-    return LazySeq.ofIterable(this.keys());
+    const root = this.root;
+    return LazySeq.ofIterator(() => iterate((k) => k, root));
   }
 
   // Methods modifying the map

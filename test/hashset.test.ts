@@ -90,6 +90,20 @@ describe("HashSet", () => {
     expectEqual(imSet, jsMap);
   });
 
+  it("iterates more than once", () => {
+    const { imSet, jsMap } = createSet(500, () => faker.datatype.string());
+    const expected = sortKeys(jsMap.values());
+
+    // iterate object itself twice
+    expect(sortKeys(imSet)).to.deep.equal(expected);
+    expect(sortKeys(imSet)).to.deep.equal(expected);
+
+    // iterate toLazySeq twice
+    const vals = imSet.toLazySeq();
+    expect(sortKeys(vals)).to.deep.equal(expected);
+    expect(sortKeys(vals)).to.deep.equal(expected);
+  });
+
   it("creates via from", () => {
     const size = 1000;
     const entries = new Array<number>(size);

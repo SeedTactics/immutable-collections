@@ -222,6 +222,40 @@ describe("Ordered Map", () => {
     expectEqual(ordMap, jsMap);
   });
 
+  it("iterates the tree more than once", () => {
+    const { ordMap, jsMap } = createMap(500, mkNumKeyGenerator(1000));
+    const entries = sortEntries(jsMap.values());
+    const revEntries = [...entries].reverse();
+
+    // iterate itself more than once
+    expect([...ordMap]).to.deep.equal(entries);
+    expect([...ordMap]).to.deep.equal(entries);
+
+    const keyAsc = ordMap.keysToAscLazySeq();
+    expect([...keyAsc]).to.deep.equal(entries.map(([k]) => k));
+    expect([...keyAsc]).to.deep.equal(entries.map(([k]) => k));
+
+    const keyDesc = ordMap.keysToDescLazySeq();
+    expect([...keyDesc]).to.deep.equal(revEntries.map(([k]) => k));
+    expect([...keyDesc]).to.deep.equal(revEntries.map(([k]) => k));
+
+    const valAsc = ordMap.valuesToAscLazySeq();
+    expect([...valAsc]).to.deep.equal(entries.map(([, v]) => v));
+    expect([...valAsc]).to.deep.equal(entries.map(([, v]) => v));
+
+    const valDesc = ordMap.valuesToDescLazySeq();
+    expect([...valDesc]).to.deep.equal(revEntries.map(([, v]) => v));
+    expect([...valDesc]).to.deep.equal(revEntries.map(([, v]) => v));
+
+    const enAsc = ordMap.toAscLazySeq();
+    expect([...enAsc]).to.deep.equal(entries);
+    expect([...enAsc]).to.deep.equal(entries);
+
+    const enDesc = ordMap.toDescLazySeq();
+    expect([...enDesc]).to.deep.equal(revEntries);
+    expect([...enDesc]).to.deep.equal(revEntries);
+  });
+
   it("leaves map unchanged when setting the same value", () => {
     const { ordMap } = createMap(10_000, mkNumKeyGenerator(20_000));
 

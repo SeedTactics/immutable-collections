@@ -92,27 +92,33 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
   }
 
   toAscLazySeq(): LazySeq<readonly [K, V]> {
-    return LazySeq.ofIterable(this.entries());
+    const root = this.root;
+    return LazySeq.ofIterator(() => iterateAsc((k, v) => [k, v], root));
   }
 
   keysToAscLazySeq(): LazySeq<K> {
-    return LazySeq.ofIterable(this.keys());
+    const root = this.root;
+    return LazySeq.ofIterator(() => iterateAsc((k) => k, root));
   }
 
   valuesToAscLazySeq(): LazySeq<V> {
-    return LazySeq.ofIterable(this.values());
+    const root = this.root;
+    return LazySeq.ofIterator(() => iterateAsc((_, v) => v, root));
   }
 
   toDescLazySeq(): LazySeq<readonly [K, V]> {
-    return LazySeq.ofIterable(iterateDesc((k, v) => [k, v], this.root));
+    const root = this.root;
+    return LazySeq.ofIterator(() => iterateDesc((k, v) => [k, v], root));
   }
 
   keysToDescLazySeq(): LazySeq<K> {
-    return LazySeq.ofIterable(iterateDesc((k) => k, this.root));
+    const root = this.root;
+    return LazySeq.ofIterator(() => iterateDesc((k) => k, root));
   }
 
   valuesToDescLazySeq(): LazySeq<V> {
-    return LazySeq.ofIterable(iterateDesc((_, v) => v, this.root));
+    const root = this.root;
+    return LazySeq.ofIterator(() => iterateDesc((_, v) => v, root));
   }
 
   // Methods modifying the map

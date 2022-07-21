@@ -80,15 +80,18 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   }
 
   toLazySeq(): LazySeq<readonly [K, V]> {
-    return LazySeq.ofIterable(this.entries());
+    const root = this.root;
+    return LazySeq.ofIterator(() => iterate((k, v) => [k, v], root));
   }
 
   keysToLazySeq(): LazySeq<K> {
-    return LazySeq.ofIterable(this.keys());
+    const root = this.root;
+    return LazySeq.ofIterator(() => iterate((k) => k, root));
   }
 
   valuesToLazySeq(): LazySeq<V> {
-    return LazySeq.ofIterable(this.values());
+    const root = this.root;
+    return LazySeq.ofIterator(() => iterate((_, v) => v, root));
   }
 
   keySet(): HashSet<K> {
