@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The LazySeq.filter function now can restrict the type if the function has a type guard.
 
+## 0.9.2 - 2022-07-21
+
 ### Changed
 
 - The toLazySeq (and friends) methods on HashMap, HashSet, and OrderedMap now correctly
