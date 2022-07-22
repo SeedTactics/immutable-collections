@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The LazySeq.filter function now can restrict the type if the function has a type guard.
+
+### Changed
+
 - The toLazySeq (and friends) methods on HashMap, HashSet, and OrderedMap now correctly
   allow iteration more than once (so implementing the iterable protocol).
 

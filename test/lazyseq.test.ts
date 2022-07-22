@@ -213,6 +213,17 @@ describe("LazySeq", () => {
     expect(seq2.toRArray()).to.deep.equal([2, 4, 6, 8]);
   });
 
+  it("removes null from a sequence and changes the type", () => {
+    function notNull<T>(value: T | null): value is T {
+      return value !== null;
+    }
+
+    const seq: LazySeq<number | null> = LazySeq.ofIterable([1, 2, null, 3, 4, 5, null, 6, 7, 8]);
+    const seq2: LazySeq<number> = seq.filter(notNull);
+
+    expect(seq2.toRArray()).to.deep.equal([1, 2, 3, 4, 5, 6, 7, 8]);
+  });
+
   it("finds an element", () => {
     const seq = LazySeq.ofRange(1, 10);
     const v5 = seq.find((i) => i === 5);

@@ -213,6 +213,8 @@ export class LazySeq<T> {
     return first.done === true;
   }
 
+  filter<S extends T>(f: (x: T) => x is S): LazySeq<S>;
+  filter(f: (x: T) => boolean): LazySeq<T>;
   filter(f: (x: T) => boolean): LazySeq<T> {
     const iter = this.iter;
     return LazySeq.ofIterator(function* () {
