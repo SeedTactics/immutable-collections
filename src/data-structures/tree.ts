@@ -389,6 +389,31 @@ export function split<K, V>({ compare }: ComparisionConfig<K>, k: K, root: TreeN
   return loop(root);
 }
 
+export function partition<K, V>(
+  f: (k: K, v: V) => boolean,
+  root: TreeNode<K, V> | null
+): readonly [TreeNode<K, V> | null, TreeNode<K, V> | null] {
+  function loop(node: TreeNode<K, V> | null): readonly [TreeNode<K, V> | null, TreeNode<K, V> | null] {
+    if (node === null) return [null, null];
+    const [leftTrue, leftFalse] = loop(node.left);
+    const [rightTrue, rightFalse] = loop(node.right);
+    if (f(node.key, node.val)) {
+      const newL =
+        leftTrue === node.left && rightTrue === node.right
+          ? node
+          : combineDifferentSizes(leftTrue, node.key, node.val, rightTrue);
+      return [newL, glueDifferentSizes(leftFalse, rightFalse)];
+    } else {
+      const newR =
+        rightFalse === node.right && leftFalse === node.left
+          ? node
+          : combineDifferentSizes(leftFalse, node.key, node.val, rightFalse);
+      return [glueDifferentSizes(leftTrue, rightTrue), newR];
+    }
+  }
+  return loop(root);
+}
+
 export interface ViewResult<K, V> {
   k: K;
   v: V;

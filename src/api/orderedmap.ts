@@ -23,6 +23,7 @@ import {
   maxView,
   lookupMin,
   lookupMax,
+  partition,
 } from "../data-structures/tree.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -152,9 +153,16 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     }
   }
 
-  // TODO: partition(f: (v: V, k: K) => boolean): readonly [OrderedMap<K, V>, OrderedMap<K, V>]
-
-  // TODO: indexing access: findIndex, lookupIndex, elemAt, take, drop, splitAt, updateAt, deleteAt
+  partition(f: (k: K, v: V) => boolean): readonly [OrderedMap<K, V>, OrderedMap<K, V>] {
+    const [trueRoot, falseRoot] = partition(f, this.root);
+    if (trueRoot === this.root) {
+      return [this, new OrderedMap(this.cfg, null)];
+    } else if (falseRoot === this.root) {
+      return [new OrderedMap(this.cfg, null), this];
+    } else {
+      return [new OrderedMap(this.cfg, trueRoot), new OrderedMap(this.cfg, falseRoot)];
+    }
+  }
 
   mapValues<V2>(f: (v: V, k: K) => V2): OrderedMap<K, V2> {
     const newRoot = mapValues(f, this.root);

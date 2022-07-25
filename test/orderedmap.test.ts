@@ -635,6 +635,46 @@ describe("Ordered Map", () => {
     expectEqual(empty, new Map());
   });
 
+  it("returns unchanged if everything is partitioned", () => {
+    const { ordMap } = createMap(5000, mkNumKeyGenerator(10_000));
+    const [t, f] = ordMap.partition(() => true);
+    expect(t).to.equal(ordMap);
+    expect(f.size).to.equal(0);
+  });
+
+  it("returns unchanged if nothing is partitioned", () => {
+    const { ordMap } = createMap(5000, mkNumKeyGenerator(10_000));
+    const [t, f] = ordMap.partition(() => false);
+    expect(t.size).to.equal(0);
+    expect(f).to.equal(ordMap);
+  });
+
+  it("partitions a map", () => {
+    const { ordMap, jsMap } = createMap(5000, mkNumKeyGenerator(10_000));
+
+    const expectedTrue = new Map<string, [number, string]>();
+    const expectedFalse = new Map<string, [number, string]>();
+    const [t, f] = ordMap.partition((k, v) => {
+      expect(v).to.equal(jsMap.get(k.toString())![1]);
+      if (Math.random() < 0.3) {
+        expectedTrue.set(k.toString(), [k, v]);
+        return true;
+      } else {
+        expectedFalse.set(k.toString(), [k, v]);
+        return false;
+      }
+    });
+
+    // saw all the keys
+    expect(expectedTrue.size + expectedFalse.size).to.equal(jsMap.size);
+
+    checkMapBalanceAndSize(t);
+    checkMapBalanceAndSize(f);
+
+    expectEqual(t, expectedTrue);
+    expectEqual(f, expectedFalse);
+  });
+
   it("returns undefined for min/max of empty tree", () => {
     const m = OrderedMap.empty<number, string>();
     expect(m.minView()).to.be.undefined;

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add LazySeq.distinctAndSortBy which allows distinct and also sorting by one or more
   properties.
 - Add deleteMin, deleteMax, lookupMin, lookupMax to OrderedMap
+- Add OrderedMap.partition to partition the map into two maps
 
 ### Changed
 
