@@ -639,12 +639,20 @@ describe("Ordered Map", () => {
     const m = OrderedMap.empty<number, string>();
     expect(m.minView()).to.be.undefined;
     expect(m.maxView()).to.be.undefined;
+    expect(m.lookupMin()).to.be.undefined;
+    expect(m.lookupMax()).to.be.undefined;
+  });
+
+  it("doesn't delete min/max of empty tree", () => {
+    const m = OrderedMap.empty<number, string>();
+    expect(m.deleteMin()).to.equal(m);
+    expect(m.deleteMax()).to.equal(m);
   });
 
   it("returns and pops the minimum element", () => {
     let m = OrderedMap.from(
       (function* () {
-        for (let i = 9; i >= 0; i--) {
+        for (let i = 99; i >= 0; i--) {
           yield [i, i.toString()];
         }
       })()
@@ -654,7 +662,7 @@ describe("Ordered Map", () => {
     deepFreeze(m);
 
     const jsMap = new Map<string, [number, string]>();
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 100; i++) {
       jsMap.set(i.toString(), [i, i.toString()]);
     }
 
@@ -664,11 +672,16 @@ describe("Ordered Map", () => {
       const v = m.minView();
       expect(v!.minKey).to.equal(i);
       expect(v!.minVal).to.equal(i.toString());
+      expect(m.lookupMin()).to.deep.equal([i, i.toString()]);
       jsMap.delete(i.toString());
 
       checkMapBalanceAndSize(v!.rest);
       deepFreeze(v!.rest);
       expectEqual(v!.rest, jsMap);
+
+      const afterDelete = m.deleteMin();
+      checkMapBalanceAndSize(afterDelete);
+      expectEqual(afterDelete, jsMap);
 
       m = v!.rest;
     }
@@ -677,7 +690,7 @@ describe("Ordered Map", () => {
   it("returns and pops the maximum element", () => {
     let m = OrderedMap.from(
       (function* () {
-        for (let i = 0; i < 1000; i++) {
+        for (let i = 0; i < 100; i++) {
           yield [i, i.toString()];
         }
       })()
@@ -687,21 +700,26 @@ describe("Ordered Map", () => {
     deepFreeze(m);
 
     const jsMap = new Map<string, [number, string]>();
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 100; i++) {
       jsMap.set(i.toString(), [i, i.toString()]);
     }
 
     expectEqual(m, jsMap);
 
-    for (let i = 999; i > 950; i--) {
+    for (let i = 99; i > 89; i--) {
       const v = m.maxView();
       expect(v!.maxKey).to.equal(i);
       expect(v!.maxVal).to.equal(i.toString());
+      expect(m.lookupMax()).to.deep.equal([i, i.toString()]);
       jsMap.delete(i.toString());
 
       checkMapBalanceAndSize(v!.rest);
       deepFreeze(v!.rest);
       expectEqual(v!.rest, jsMap);
+
+      const afterDelete = m.deleteMax();
+      checkMapBalanceAndSize(afterDelete);
+      expectEqual(afterDelete, jsMap);
 
       m = v!.rest;
     }

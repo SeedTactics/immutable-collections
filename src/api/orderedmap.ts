@@ -21,6 +21,8 @@ import {
   TreeNode,
   minView,
   maxView,
+  lookupMin,
+  lookupMax,
 } from "../data-structures/tree.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -186,7 +188,27 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     return { below: new OrderedMap(this.cfg, s.below), val: s.val, above: new OrderedMap(this.cfg, s.above) };
   }
 
-  // TODO: min/max values: lookupMin, lookupMax, deleteMin, deleteMax, updateMin, updateMax
+  lookupMin(): readonly [K, V] | undefined {
+    if (this.root === null) return undefined;
+    else return lookupMin(this.root);
+  }
+
+  lookupMax(): readonly [K, V] | undefined {
+    if (this.root === null) return undefined;
+    else return lookupMax(this.root);
+  }
+
+  deleteMin(): OrderedMap<K, V> {
+    if (this.root === null) return this;
+    const m = minView(this.root);
+    return new OrderedMap(this.cfg, m.rest);
+  }
+
+  deleteMax(): OrderedMap<K, V> {
+    if (this.root === null) return this;
+    const m = maxView(this.root);
+    return new OrderedMap(this.cfg, m.rest);
+  }
 
   minView(): { readonly minKey: K; readonly minVal: V; readonly rest: OrderedMap<K, V> } | undefined {
     if (this.root === null) {

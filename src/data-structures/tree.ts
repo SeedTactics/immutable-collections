@@ -38,6 +38,32 @@ export function lookup<K, V>({ compare }: ComparisionConfig<K>, k: K, root: Tree
   return undefined;
 }
 
+export function lookupMin<K, V>(root: TreeNode<K, V>): readonly [K, V] {
+  let node = root;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const left = node.left;
+    if (left) {
+      node = left;
+    } else {
+      return [node.key, node.val];
+    }
+  }
+}
+
+export function lookupMax<K, V>(root: TreeNode<K, V>): readonly [K, V] {
+  let node = root;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const right = node.right;
+    if (right) {
+      node = right;
+    } else {
+      return [node.key, node.val];
+    }
+  }
+}
+
 /* Benchmarking a variety of implementation strategies (see  commit 785942937019aa44527605bb4231d68f2692ec56)
    showed that a recursive function was faster than a loop+stack, and that dedicated insert/remove
    functions had roughly the same performance as the generalized alter function.
