@@ -262,6 +262,16 @@ describe("LazySeq", () => {
       [1, [3, 2]],
       [0, [1]],
     ]);
+
+    //seq2 should be able to be iterated more than once
+    expect(seq2.toRArray()).to.deep.equal([
+      [5, [10]],
+      [4, [9, 8]],
+      [3, [7, 6]],
+      [2, [5, 4]],
+      [1, [3, 2]],
+      [0, [1]],
+    ]);
   });
 
   it("groups a sequence by multiple properties", () => {
@@ -318,6 +328,16 @@ describe("LazySeq", () => {
     const seq2: LazySeq<[number, ReadonlyArray<number>]> = seq.orderedGroupBy((i) => Math.floor(i / 2));
 
     expect(seq.toRArray()).to.deep.equal([10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
+    expect(seq2.toRArray()).to.deep.equal([
+      [0, [1]],
+      [1, [3, 2]],
+      [2, [5, 4]],
+      [3, [7, 6]],
+      [4, [9, 8]],
+      [5, [10]],
+    ]);
+
+    // should allow iterating more than once
     expect(seq2.toRArray()).to.deep.equal([
       [0, [1]],
       [1, [3, 2]],

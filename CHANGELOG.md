@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The LazySeq.filter function now can restrict the type if the function has a type guard.
+- The LazySeq.groupBy and LazySeq.orderedGroupBy now correctly allow iteration more than
+  once.
 
 ## 0.9.2 - 2022-07-21
 

@@ -262,7 +262,7 @@ export class LazySeq<T> {
       compare: mkCompareByProperties(...fs),
     };
 
-    let s = null;
+    let s: hamt.MutableHamtNode<T, Array<T>> | null = null;
     function appendVal(old: Array<T> | undefined, x: T): Array<T> {
       if (old === undefined) {
         return [x];
@@ -274,7 +274,7 @@ export class LazySeq<T> {
     for (const x of this.iter) {
       s = hamt.mutateInsert(cfg, x, x, appendVal, s);
     }
-    return LazySeq.ofIterable(
+    return LazySeq.ofIterator(() =>
       hamt.iterate<T, Array<T>, [TupleOfHashProps<T, [PropFn, ...PropFns]>, ReadonlyArray<T>]>((t, ts) => {
         if (fs.length === 1) {
           return [fs[0](t) as TupleOfHashProps<T, [PropFn, ...PropFns]>, ts];
@@ -294,7 +294,7 @@ export class LazySeq<T> {
       compare: mkCompareByProperties(...fns),
     };
 
-    let s = null;
+    let s: tree.MutableTreeNode<T, Array<T>> | null = null;
     function appendVal(old: Array<T> | undefined, x: T): Array<T> {
       if (old === undefined) {
         return [x];
@@ -306,7 +306,7 @@ export class LazySeq<T> {
     for (const x of this.iter) {
       s = tree.mutateInsert(cfg, x, x, appendVal, s);
     }
-    return LazySeq.ofIterable(
+    return LazySeq.ofIterator(() =>
       tree.iterateAsc<T, Array<T>, [TupleOfCmpProps<T, [PropFn, ...PropFns]>, ReadonlyArray<T>]>((t, ts) => {
         if (fns.length === 1) {
           return [evalComparable(fns[0], t) as TupleOfCmpProps<T, [PropFn, ...PropFns]>, ts];
