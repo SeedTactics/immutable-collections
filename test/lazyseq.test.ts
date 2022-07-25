@@ -171,6 +171,40 @@ describe("LazySeq", () => {
     ]);
   });
 
+  it("returns a distinct sorted sequence by properties", () => {
+    const seq = LazySeq.ofIterable([
+      { foo: 1, bar: "a", baz: 60 },
+      { foo: 1, bar: "b", baz: 70 },
+      { foo: 3, bar: "f", baz: 110 },
+      { foo: 2, bar: "d", baz: 95 },
+      { foo: 2, bar: "d", baz: 90 },
+      { foo: 1, bar: "a", baz: 65 },
+      { foo: 2, bar: "c", baz: 80 },
+      { foo: 3, bar: "f", baz: 100 },
+    ]);
+
+    expect(seq.distinctAndSortBy((x) => x.foo).toRArray()).to.deep.equal([
+      { foo: 1, bar: "a", baz: 60 },
+      { foo: 2, bar: "d", baz: 95 },
+      { foo: 3, bar: "f", baz: 110 },
+    ]);
+
+    expect(
+      seq
+        .distinctAndSortBy(
+          (x) => x.foo,
+          (x) => x.bar
+        )
+        .toRArray()
+    ).to.deep.equal([
+      { foo: 1, bar: "a", baz: 60 },
+      { foo: 1, bar: "b", baz: 70 },
+      { foo: 2, bar: "c", baz: 80 },
+      { foo: 2, bar: "d", baz: 95 },
+      { foo: 3, bar: "f", baz: 110 },
+    ]);
+  });
+
   it("drops a number of elements", () => {
     const seq = LazySeq.ofRange(1, 10);
     const seq2 = seq.drop(3);

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Add LazySeq.distinctAndSortBy which allows distinct and also sorting by one or more
+  properties.
+
 ### Changed
 
 - The LazySeq.filter function now can restrict the type if the function has a type guard.

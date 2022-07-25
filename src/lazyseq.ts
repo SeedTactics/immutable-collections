@@ -154,7 +154,7 @@ export class LazySeq<T> {
     });
   }
 
-  distinctBy(prop: ToHashable<T>, ...props: Array<ToHashable<T>>) {
+  distinctBy(prop: ToHashable<T>, ...props: Array<ToHashable<T>>): LazySeq<T> {
     props.unshift(prop);
     const iter = this.iter;
     const cfg = {
@@ -175,6 +175,21 @@ export class LazySeq<T> {
         }
       }
     });
+  }
+
+  distinctAndSortBy(prop: ToComparable<T>, ...props: Array<ToComparable<T>>): LazySeq<T> {
+    props.unshift(prop);
+    const cfg = {
+      compare: mkCompareByProperties(...props),
+    };
+    let s: tree.MutableTreeNode<T, T> | null = null;
+    function fst(old: T | undefined, x: T): T {
+      return old === undefined ? x : old;
+    }
+    for (const x of this.iter) {
+      s = tree.mutateInsert(cfg, x, x, fst, s);
+    }
+    return LazySeq.ofIterator(() => tree.iterateAsc((k) => k, s));
   }
 
   drop(n: number): LazySeq<T> {
