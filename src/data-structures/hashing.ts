@@ -39,13 +39,17 @@ type InternalHashConfig<K> = {
 // the number to a signed 32-bit integer.  Thus each hash function should return a number which
 // is within the range of a signed 32-bit integer.
 
+// https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
+// NOTE: NOT SECURE!!!!!
+// Users must use something like highwayhash for secure https://github.com/google/highwayhash
+
 function hash2Ints(h1: number, h2: number): number {
   // combines two 32-bit hashes into a 32-bit hash
   return (h1 * 16777619) ^ h2;
 }
 
 function stringHash(str: string): number {
-  let hash = 0;
+  let hash = 2166136261;
   for (let i = 0; i < str.length; i++) {
     hash = hash2Ints(hash, str.charCodeAt(i));
   }
@@ -67,7 +71,7 @@ function numHash(a: number): number {
     const buff = new ArrayBuffer(8);
     new Float64Array(buff)[0] = a;
     const intarr = new Int32Array(buff);
-    return hash2Ints(intarr[0], intarr[1]);
+    return hash2Ints(hash2Ints(2166136261, intarr[0]), intarr[1]);
   }
 }
 
@@ -75,8 +79,10 @@ function dateHash(d: Date): number {
   return numHash(d.getTime());
 }
 
-export function hashValues(...vals: ReadonlyArray<string | number | boolean | Date | HashableObj | null | undefined>) {
-  let hash = 0;
+export function hashValues(
+  ...vals: ReadonlyArray<string | number | boolean | Date | HashableObj | null | undefined>
+) {
+  let hash = vals.length === 1 ? 0 : 2166136261;
   for (let i = 0; i < vals.length; i++) {
     const p = vals[i];
     if (p === null || p === undefined) {

@@ -48,12 +48,12 @@ describe("Hashing", () => {
 
   it("hashes a string", () => {
     const cfg = mkHashConfig<string>();
-    expect(cfg.hash("abc")).to.equal(-1380653785);
+    expect(cfg.hash("abc")).to.equal(-1109017657);
     // cfg.hash should be replaced with the direct hash function, check it again
-    expect(cfg.hash("abc")).to.equal(-1380653785);
+    expect(cfg.hash("abc")).to.equal(-1109017657);
 
-    expect(cfg.hash("def")).to.equal(-30874749);
-    expect(cfg.hash("defg")).to.equal(22987937);
+    expect(cfg.hash("def")).to.equal(282338077);
+    expect(cfg.hash("defg")).to.equal(-151791745);
   });
 
   it("hashes a boolean", () => {
@@ -92,15 +92,15 @@ describe("Hashing", () => {
     const large = faker.datatype.number({ min: max32bit + 1, max: Number.MAX_SAFE_INTEGER });
     expect(cfg.hash(large)).not.to.equal(large);
 
-    expect(cfg.hash(12345678901234)).to.equal(1750440167);
+    expect(cfg.hash(12345678901234)).to.equal(1013586311);
   });
 
   it("hashes doubles", () => {
     const cfg = mkHashConfig<number>();
 
-    expect(cfg.hash(1.2)).to.equal(-211113349);
-    expect(cfg.hash(1.2)).to.equal(-211113349);
-    expect(cfg.hash(4.8)).to.equal(-1937069445);
+    expect(cfg.hash(1.2)).to.equal(1193899227);
+    expect(cfg.hash(1.2)).to.equal(1193899227);
+    expect(cfg.hash(4.8)).to.equal(952726747);
   });
 
   it("hash config works when compare is called first", () => {
@@ -111,35 +111,37 @@ describe("Hashing", () => {
   });
 
   it("hashes an object", () => {
-    expect(new IntStrKey(1, "2").hash()).to.equal(1836881326);
+    expect(new IntStrKey(1, "2").hash()).to.equal(-651666130);
     // cfg.hash should be replaced with the direct hash function, check it again
-    expect(new IntStrKey(1, "2").hash()).to.equal(1836881326);
+    expect(new IntStrKey(1, "2").hash()).to.equal(-651666130);
 
     // try different keys to see the hash changes
-    expect(new IntStrKey(1, "3").hash()).to.equal(-1853826110);
-    expect(new IntStrKey(6, "2").hash()).to.equal(-1586431198);
+    expect(new IntStrKey(1, "3").hash()).to.equal(-1120967549);
+    expect(new IntStrKey(6, "2").hash()).to.equal(-1724595107);
   });
 
   it("hashes a complex key", () => {
     const k1 = new ComplexKey(true, new Date(Date.UTC(2022, 5, 6, 10, 2, 2)), 100, "str");
     const k1a = new ComplexKey(true, new Date(Date.UTC(2022, 5, 6, 10, 2, 2)), 100, "str");
 
-    expect(k1.hash()).to.equal(-298682581);
-    expect(k1.hash()).to.equal(-298682581);
-    expect(k1a.hash()).to.equal(-298682581);
+    expect(k1.hash()).to.equal(-2118882045);
+    expect(k1.hash()).to.equal(-2118882045);
+    expect(k1a.hash()).to.equal(-2118882045);
 
-    expect(new ComplexKey(false, k1.d, k1.k.i, k1.k.s).hash()).to.equal(1886983859);
-    expect(new ComplexKey(k1.b, new Date(Date.UTC(2022, 5, 4, 10, 2, 2)), k1.k.i, k1.k.s).hash()).to.equal(1043564563);
-    expect(new ComplexKey(k1.b, k1.d, 102, k1.k.s).hash()).to.equal(-60260645);
-    expect(new ComplexKey(k1.b, k1.d, k1.k.i, "hello").hash()).to.equal(1803504075);
+    expect(new ComplexKey(false, k1.d, k1.k.i, k1.k.s).hash()).to.equal(1408291771);
+    expect(new ComplexKey(k1.b, new Date(Date.UTC(2022, 5, 4, 10, 2, 2)), k1.k.i, k1.k.s).hash()).to.equal(
+      1439714075
+    );
+    expect(new ComplexKey(k1.b, k1.d, 102, k1.k.s).hash()).to.equal(1753788917);
+    expect(new ComplexKey(k1.b, k1.d, k1.k.i, "hello").hash()).to.equal(1731446667);
   });
 
   it("hashes null and undefined", () => {
     const knull = new ComplexKey(true, null, 20, "str");
     const kundef = new ComplexKey(true, undefined, 20, "str");
 
-    expect(knull.hash()).to.equal(1633561911);
-    expect(kundef.hash()).to.equal(1633561911);
+    expect(knull.hash()).to.equal(-1505453057);
+    expect(kundef.hash()).to.equal(-1505453057);
   });
 
   it("hashes an array of a single value", () => {
