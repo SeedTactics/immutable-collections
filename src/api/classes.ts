@@ -12,4 +12,5 @@ export {
 export { HashMap } from "./hashmap.js";
 export { HashSet } from "./hashset.js";
 export { OrderedMap } from "./orderedmap.js";
+export { OrderedSet } from "./orderedset.js";
 export { LazySeq } from "../lazyseq.js";

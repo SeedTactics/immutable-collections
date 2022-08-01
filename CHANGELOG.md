@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   properties.
 - Add deleteMin, deleteMax, lookupMin, lookupMax to OrderedMap
 - Add OrderedMap.partition to partition the map into two maps
+- Add OrderedSet class
 
 ### Changed
 

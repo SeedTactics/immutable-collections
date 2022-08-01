@@ -4,12 +4,21 @@ import { expect } from "chai";
 import { TreeNode } from "../src/data-structures/tree.js";
 import { ComparisionConfig, OrderedMapKey } from "../src/data-structures/comparison.js";
 import { OrderedMap } from "../src/api/orderedmap.js";
+import { OrderedSet } from "../src/api/orderedset.js";
 
 export function checkMapBalanceAndSize<K extends OrderedMapKey, V>(map: OrderedMap<K, V>) {
   // access private properties
   const privateMap = map as unknown as { root: TreeNode<K, V> | undefined; cfg: ComparisionConfig<K> };
   if (privateMap.root) {
     return checkBalanceAndSize(privateMap.cfg, privateMap.root);
+  }
+}
+
+export function checkSetBalanceAndSize<K extends OrderedMapKey>(set: OrderedSet<K>) {
+  // access private properties
+  const privateSet = set as unknown as { root: TreeNode<K, unknown> | undefined; cfg: ComparisionConfig<K> };
+  if (privateSet.root) {
+    return checkBalanceAndSize(privateSet.cfg, privateSet.root);
   }
 }
 

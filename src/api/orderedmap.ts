@@ -25,6 +25,7 @@ import {
   lookupMax,
   partition,
 } from "../data-structures/tree.js";
+import { OrderedSet } from "./orderedset.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 type NotUndefined = {} | null;
@@ -124,6 +125,10 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     return LazySeq.ofIterator(() => iterateDesc((_, v) => v, root));
   }
 
+  keySet(): OrderedSet<K> {
+    return OrderedSet.ofKeys(this);
+  }
+
   // Methods modifying the map
 
   set(k: K, v: V): OrderedMap<K, V> {
@@ -191,7 +196,11 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     }
   }
 
-  split(k: K): { readonly below: OrderedMap<K, V>; readonly val: V | undefined; readonly above: OrderedMap<K, V> } {
+  split(k: K): {
+    readonly below: OrderedMap<K, V>;
+    readonly val: V | undefined;
+    readonly above: OrderedMap<K, V>;
+  } {
     const s = split(this.cfg, k, this.root);
     return { below: new OrderedMap(this.cfg, s.below), val: s.val, above: new OrderedMap(this.cfg, s.above) };
   }
@@ -263,7 +272,15 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     }
   }
 
-  // TODO: withoutKeys(other: OrderedSet<K>): OrderedMap<K, V>  can just use difference once OrderedSet is defined
+  withoutKeys(other: OrderedSet<K>): OrderedMap<K, V> {
+    const setPrivate = other as unknown as { root: TreeNode<K, unknown> | null };
+    const newRoot = difference(this.cfg, this.root, setPrivate.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedMap(this.cfg, newRoot);
+    }
+  }
 
   adjust<V2>(
     keysToAdjust: OrderedMap<K, V2>,

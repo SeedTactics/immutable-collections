@@ -8,6 +8,7 @@ import { deepFreeze } from "./deepfreeze.js";
 import { OrderedMap } from "../src/api/orderedmap.js";
 import { checkMapBalanceAndSize } from "./check-balance.js";
 import { randomCollisionKey } from "./collision-key.js";
+import { OrderedSet } from "../src/api/orderedset.js";
 
 interface OrderedMapAndJsMap<K extends OrderedMapKey, V> {
   readonly ordMap: OrderedMap<K, V>;
@@ -31,7 +32,7 @@ function combineNullableStr(a: string | null, b: string | null): string | null {
   return a + b;
 }
 
-function mkNumKeyGenerator(size: number, offset?: number): () => number {
+export function mkNumKeyGenerator(size: number, offset?: number): () => number {
   const n = Math.random();
   if (n < 0.33) {
     // balanced
@@ -63,7 +64,10 @@ function mkNumKeyGenerator(size: number, offset?: number): () => number {
   }
 }
 
-function createMap<K extends OrderedMapKey>(size: number, key: () => K): OrderedMapAndJsMap<K, string> {
+export function createMap<K extends OrderedMapKey>(
+  size: number,
+  key: () => K
+): OrderedMapAndJsMap<K, string> {
   let ordMap = OrderedMap.empty<K, string>();
   const jsMap = new Map<string, [K, string]>();
 
@@ -420,7 +424,9 @@ describe("Ordered Map", () => {
     }
 
     const imMap = OrderedMap.build(values, (v) => v + 40_000);
-    const jsMap = new Map<string, [number, number]>(values.map((v) => [(v + 40_000).toString(), [v + 40_000, v]]));
+    const jsMap = new Map<string, [number, number]>(
+      values.map((v) => [(v + 40_000).toString(), [v + 40_000, v]])
+    );
 
     checkMapBalanceAndSize(imMap);
     expectEqual(imMap, jsMap);
@@ -1071,8 +1077,12 @@ describe("Ordered Map", () => {
 
     const imDiff = imMap1.difference(imMap2);
     expectEqual(imDiff, jsMap1);
-
     checkMapBalanceAndSize(imDiff);
+
+    // withoutKeys is the same
+    const withoutKeys = imMap1.withoutKeys(imMap2.keySet());
+    expectEqual(withoutKeys, jsMap1);
+    checkMapBalanceAndSize(withoutKeys);
   });
 
   it("difference with itself is the empty map", () => {
@@ -1091,8 +1101,17 @@ describe("Ordered Map", () => {
     expect(diff).to.equal(ordMap);
   });
 
+  it("withoutKeys with the empty set is unchanged", () => {
+    const { ordMap } = createMap(500, mkNumKeyGenerator(1000));
+
+    const diff = ordMap.withoutKeys(OrderedSet.empty());
+    expect(diff).to.equal(ordMap);
+  });
+
   it("adjusts a map", () => {
-    function* adjValues(): Generator<{ map1K: number; map1V: string | null } | { map2K: number; map2V: AdjustType }> {
+    function* adjValues(): Generator<
+      { map1K: number; map1V: string | null } | { map2K: number; map2V: AdjustType }
+    > {
       const keygen = mkNumKeyGenerator(10_000);
 
       // want a bunch of keys to be deleted
