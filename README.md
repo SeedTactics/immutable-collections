@@ -25,4 +25,3 @@ directly), and call methods on them to manipulate them.
 
 - Docs
 - More benchmarks
-- A couple more utility/convenience functions

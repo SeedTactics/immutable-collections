@@ -13,6 +13,7 @@ import { HashSet } from "./api/hashset.js";
 import { OrderedMap } from "./api/orderedmap.js";
 import * as hamt from "./data-structures/hamt.js";
 import * as tree from "./data-structures/tree.js";
+import { OrderedSet } from "./api/orderedset.js";
 
 type JsMapKey = number | string | boolean;
 
@@ -589,6 +590,10 @@ export class LazySeq<T> {
 
   toHashSet<S>(converter: (x: T) => S & HashKey): HashSet<S & HashKey> {
     return HashSet.build(this.iter, converter);
+  }
+
+  toOrderedSet<S>(converter: (x: T) => S & OrderedMapKey): OrderedSet<S & OrderedMapKey> {
+    return OrderedSet.build(this.iter, converter);
   }
 
   toMutableSet<S>(converter: (x: T) => S & JsMapKey): Set<S> {
