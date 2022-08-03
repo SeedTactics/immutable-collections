@@ -83,8 +83,6 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     );
   }
 
-  // TODO: lookupLT, lookupLE, lookupGT, lookupGE
-
   // Other read methods
 
   foldl<T>(f: (acc: T, key: K, val: V) => T, zero: T): T {

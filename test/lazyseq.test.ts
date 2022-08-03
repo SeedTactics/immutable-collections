@@ -19,7 +19,7 @@ describe("LazySeq", () => {
   it("constructs from an iterable", () => {
     const arr = faker.datatype.array();
 
-    const seq = LazySeq.ofIterable(arr);
+    const seq = LazySeq.of(arr);
 
     expect(seq.toRArray()).to.deep.equal(arr);
   });
@@ -94,7 +94,7 @@ describe("LazySeq", () => {
     expect(seq.allMatch((i) => i > 0)).to.be.true;
     expect(seq.allMatch((i) => i % 2 === 0)).to.be.false;
 
-    const empty = LazySeq.ofIterable([]);
+    const empty = LazySeq.of([]);
     expect(empty.allMatch(() => false)).to.be.true;
   });
 
@@ -104,7 +104,7 @@ describe("LazySeq", () => {
     expect(seq.anyMatch((i) => i > 2)).to.be.true;
     expect(seq.anyMatch((i) => i < 0)).to.be.false;
 
-    const empty = LazySeq.ofIterable([]);
+    const empty = LazySeq.of([]);
     expect(empty.anyMatch(() => true)).to.be.false;
   });
 
@@ -132,13 +132,13 @@ describe("LazySeq", () => {
   });
 
   it("returns a distinct sequence", () => {
-    const seq = LazySeq.ofIterable([1, 2, 3, 4, 1, 5, 2, 6]).distinct();
+    const seq = LazySeq.of([1, 2, 3, 4, 1, 5, 2, 6]).distinct();
 
     expect(seq.toRArray()).to.deep.equal([1, 2, 3, 4, 5, 6]);
   });
 
   it("returns a distinct sequence by properties", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       { foo: 1, bar: "a", baz: 60 },
       { foo: 1, bar: "a", baz: 65 },
       { foo: 1, bar: "b", baz: 70 },
@@ -172,7 +172,7 @@ describe("LazySeq", () => {
   });
 
   it("returns a distinct sorted sequence by properties", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       { foo: 1, bar: "a", baz: 60 },
       { foo: 1, bar: "b", baz: 70 },
       { foo: 3, bar: "f", baz: 110 },
@@ -233,7 +233,7 @@ describe("LazySeq", () => {
 
   it("checks isEmpty", () => {
     const seq = LazySeq.ofRange(1, 10);
-    const seq2 = LazySeq.ofIterable([]);
+    const seq2 = LazySeq.of([]);
 
     expect(seq.isEmpty()).to.be.false;
     expect(seq2.isEmpty()).to.be.true;
@@ -252,7 +252,7 @@ describe("LazySeq", () => {
       return value !== null;
     }
 
-    const seq: LazySeq<number | null> = LazySeq.ofIterable([1, 2, null, 3, 4, 5, null, 6, 7, 8]);
+    const seq: LazySeq<number | null> = LazySeq.of([1, 2, null, 3, 4, 5, null, 6, 7, 8]);
     const seq2: LazySeq<number> = seq.filter(notNull);
 
     expect(seq2.toRArray()).to.deep.equal([1, 2, 3, 4, 5, 6, 7, 8]);
@@ -309,7 +309,7 @@ describe("LazySeq", () => {
   });
 
   it("groups a sequence by multiple properties", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       { foo: 1, bar: "a", baz: 60 },
       { foo: 1, bar: "a", baz: 65 },
       { foo: 1, bar: "b", baz: 70 },
@@ -320,10 +320,11 @@ describe("LazySeq", () => {
       { foo: 3, bar: "f", baz: 110 },
     ]);
 
-    const grouped: LazySeq<[[number, string], ReadonlyArray<{ foo: number; bar: string; baz: number }>]> = seq.groupBy(
-      (x) => x.foo,
-      (x) => x.bar
-    );
+    const grouped: LazySeq<[[number, string], ReadonlyArray<{ foo: number; bar: string; baz: number }>]> =
+      seq.groupBy(
+        (x) => x.foo,
+        (x) => x.bar
+      );
 
     expect(
       grouped.toSortedArray(
@@ -383,7 +384,7 @@ describe("LazySeq", () => {
   });
 
   it("groups and sorts a sequence by multiple properties", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       { foo: 1, bar: "a", baz: 60 },
       { foo: 1, bar: "a", baz: 65 },
       { foo: 1, bar: "b", baz: 70 },
@@ -426,7 +427,7 @@ describe("LazySeq", () => {
 
   it("returns the head of a list", () => {
     const seq = LazySeq.ofRange(1, 10);
-    const empty = LazySeq.ofIterable([]);
+    const empty = LazySeq.of([]);
 
     expect(seq.head()).to.equal(1);
     expect(empty.head()).to.be.undefined;
@@ -470,7 +471,7 @@ describe("LazySeq", () => {
   });
 
   it("returns undefined for the max of an empty sequence", () => {
-    const seq = LazySeq.ofIterable([]);
+    const seq = LazySeq.of([]);
     expect(seq.maxBy(() => 40)).to.be.undefined;
   });
 
@@ -483,7 +484,7 @@ describe("LazySeq", () => {
   });
 
   it("returns undefined for the min of an empty sequence", () => {
-    const seq = LazySeq.ofIterable([]);
+    const seq = LazySeq.of([]);
     expect(seq.minBy(() => 40)).to.be.undefined;
   });
 
@@ -512,7 +513,7 @@ describe("LazySeq", () => {
   });
 
   it("sorts by custom keys", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       { foo: 1, bar: "z" },
       { foo: 2, bar: "yA" },
       { foo: 2, bar: "yB" },
@@ -567,7 +568,7 @@ describe("LazySeq", () => {
   });
 
   it("sorts by custom comparable object", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       new ComparableInt(1),
       new ComparableInt(7),
       new ComparableInt(4),
@@ -618,7 +619,7 @@ describe("LazySeq", () => {
   });
 
   it("takes the tail of the empty sequence", () => {
-    const seq = LazySeq.ofIterable([]);
+    const seq = LazySeq.of([]);
     const seq2 = seq.tail();
     expect(seq.toRArray()).to.deep.equal([]);
     expect(seq2.toRArray()).to.deep.equal([]);
@@ -673,7 +674,7 @@ describe("LazySeq", () => {
   });
 
   it("converts to a mutable array", () => {
-    const seq = LazySeq.ofIterable([1, 2, 3, 4, 5]);
+    const seq = LazySeq.of([1, 2, 3, 4, 5]);
     const arr = seq.toMutableArray();
     arr.push(100);
 
@@ -682,14 +683,14 @@ describe("LazySeq", () => {
   });
 
   it("converts to a sorted array", () => {
-    const seq = LazySeq.ofIterable([1, 2, 3, 4, 5]);
+    const seq = LazySeq.of([1, 2, 3, 4, 5]);
     const sorted = seq.toSortedArray({ desc: (x) => x });
 
     expect(sorted).to.deep.equal([5, 4, 3, 2, 1]);
   });
 
   it("converts to a HashMap", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       {
         foo: 1,
         bar: "hello",
@@ -729,7 +730,7 @@ describe("LazySeq", () => {
   });
 
   it("builds a HashMap", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       {
         foo: 1,
         bar: "hello",
@@ -770,7 +771,7 @@ describe("LazySeq", () => {
   });
 
   it("converts to an OrderedMap", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       {
         foo: 1,
         bar: "hello",
@@ -810,7 +811,7 @@ describe("LazySeq", () => {
   });
 
   it("builds an OrderedMap", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       {
         foo: 1,
         bar: "hello",
@@ -851,7 +852,7 @@ describe("LazySeq", () => {
   });
 
   it("converts to a JS map", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       {
         foo: 1,
         bar: "hello",
@@ -909,7 +910,7 @@ describe("LazySeq", () => {
   });
 
   it("converts to an object", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       {
         foo: 1,
         bar: "hello",
@@ -968,7 +969,7 @@ describe("LazySeq", () => {
   });
 
   it("builds a lookup in an HashMap", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       { foo: 1, bar: "aa" },
       { foo: 1, bar: "aaaa" },
       { foo: 2, bar: "bb" },
@@ -1009,7 +1010,7 @@ describe("LazySeq", () => {
   });
 
   it("builds a lookup in an OrderedMap", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       { foo: 1, bar: "aa" },
       { foo: 1, bar: "aaaa" },
       { foo: 2, bar: "bb" },
@@ -1050,7 +1051,7 @@ describe("LazySeq", () => {
   });
 
   it("builds a lookupMap in an HashMap", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       { foo: 1, bar: "aa" },
       { foo: 1, bar: "aaaa" },
       { foo: 2, bar: "bb" },
@@ -1087,7 +1088,7 @@ describe("LazySeq", () => {
   });
 
   it("builds a lookupMap in an HashMap and transforms the value", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       { foo: 1, bar: "aa" },
       { foo: 1, bar: "aaaa" },
       { foo: 2, bar: "bb" },
@@ -1125,7 +1126,7 @@ describe("LazySeq", () => {
   });
 
   it("builds a lookupMap in an HashMap and merges", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       { foo: 1, bar: "aa" },
       { foo: 1, bar: "aaaa" },
       { foo: 1, bar: "aaaa" },
@@ -1165,7 +1166,7 @@ describe("LazySeq", () => {
   });
 
   it("builds a lookupMap in an OrderedMap", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       { foo: 1, bar: "aa" },
       { foo: 1, bar: "aaaa" },
       { foo: 2, bar: "bb" },
@@ -1198,7 +1199,7 @@ describe("LazySeq", () => {
   });
 
   it("builds a lookupMap in an OrderedMap and transforms the value", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       { foo: 1, bar: "aa" },
       { foo: 1, bar: "aaaa" },
       { foo: 2, bar: "bb" },
@@ -1232,7 +1233,7 @@ describe("LazySeq", () => {
   });
 
   it("builds a lookupMap in an OrderedMap and merges", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       { foo: 1, bar: "aa" },
       { foo: 1, bar: "aaaa" },
       { foo: 1, bar: "aaaa" },
@@ -1268,7 +1269,7 @@ describe("LazySeq", () => {
   });
 
   it("builds a lookup in a ReadonlyMap", () => {
-    const seq = LazySeq.ofIterable([
+    const seq = LazySeq.of([
       {
         foo: 1,
         bar: "hello",

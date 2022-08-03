@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## Breaking
+
+- Rename `LazySeq.ofIterable` to just `LazySeq.of`. This is used frequently and a short name
+  is better, and this is the last chance before the 1.0 API release.
+
 ### Added
 
 - Add LazySeq.distinctAndSortBy which allows distinct and also sorting by one or more

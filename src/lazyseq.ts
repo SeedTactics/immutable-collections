@@ -29,7 +29,7 @@ type TupleOfCmpProps<T, FS extends ToComparable<T>[]> = FS extends [ToComparable
     };
 
 export class LazySeq<T> {
-  static ofIterable<T>(iter: Iterable<T>): LazySeq<T> {
+  static of<T>(iter: Iterable<T>): LazySeq<T> {
     return new LazySeq(iter);
   }
 
@@ -87,7 +87,7 @@ export class LazySeq<T> {
         m.set(k, combine(v, val(x)));
       }
     }
-    return LazySeq.ofIterable(m);
+    return LazySeq.of(m);
   }
 
   allMatch(f: (x: T) => boolean): boolean {
@@ -420,11 +420,11 @@ export class LazySeq<T> {
   }
 
   sortWith(compare: (v1: T, v2: T) => number): LazySeq<T> {
-    return LazySeq.ofIterable(Array.from(this.iter).sort(compare));
+    return LazySeq.of(Array.from(this.iter).sort(compare));
   }
 
   sortBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): LazySeq<T> {
-    return LazySeq.ofIterable(Array.from(this.iter).sort(mkCompareByProperties(prop, ...props)));
+    return LazySeq.of(Array.from(this.iter).sort(mkCompareByProperties(prop, ...props)));
   }
 
   sumBy(getNumber: (v: T) => number): number {
@@ -504,13 +504,22 @@ export class LazySeq<T> {
     return Array.from(this.iter).sort(mkCompareByProperties(prop, ...props));
   }
 
-  toHashMap<K, S>(f: (x: T) => readonly [K & HashKey, S], merge?: (v1: S, v2: S) => S): HashMap<K & HashKey, S> {
+  toHashMap<K, S>(
+    f: (x: T) => readonly [K & HashKey, S],
+    merge?: (v1: S, v2: S) => S
+  ): HashMap<K & HashKey, S> {
     return HashMap.from(this.map(f), merge);
   }
 
   buildHashMap<K>(key: (x: T) => K & HashKey): HashMap<K & HashKey, T>;
-  buildHashMap<K, S>(key: (x: T) => K & HashKey, val: (old: S | undefined, t: T) => S): HashMap<K & HashKey, S>;
-  buildHashMap<K, S>(key: (x: T) => K & HashKey, val?: (old: S | undefined, t: T) => S): HashMap<K & HashKey, S> {
+  buildHashMap<K, S>(
+    key: (x: T) => K & HashKey,
+    val: (old: S | undefined, t: T) => S
+  ): HashMap<K & HashKey, S>;
+  buildHashMap<K, S>(
+    key: (x: T) => K & HashKey,
+    val?: (old: S | undefined, t: T) => S
+  ): HashMap<K & HashKey, S> {
     return HashMap.build(this.iter, key, val as (old: S | undefined, t: T) => S);
   }
 
@@ -557,7 +566,10 @@ export class LazySeq<T> {
 
   toObject<S>(f: (x: T) => readonly [string, S], merge?: (v1: S, v2: S) => S): { [key: string]: S };
   toObject<S>(f: (x: T) => readonly [number, S], merge?: (v1: S, v2: S) => S): { [key: number]: S };
-  toObject<S>(f: (x: T) => readonly [string | number, S], merge?: (v1: S, v2: S) => S): { [key: string | number]: S } {
+  toObject<S>(
+    f: (x: T) => readonly [string | number, S],
+    merge?: (v1: S, v2: S) => S
+  ): { [key: string | number]: S } {
     const m: { [key: string | number]: S } = {};
     for (const x of this.iter) {
       const [k, s] = f(x);
@@ -663,12 +675,16 @@ export class LazySeq<T> {
   ): HashMap<K1 & HashKey, HashMap<K2 & HashKey, T | S>> {
     let merge: (old: HashMap<K2 & HashKey, T | S> | undefined, t: T) => HashMap<K2 & HashKey, T | S>;
     if (val === undefined) {
-      merge = (old: HashMap<K2 & HashKey, T | S> | undefined, t: T) => (old ?? HashMap.empty()).set(key2(t), t);
+      merge = (old: HashMap<K2 & HashKey, T | S> | undefined, t: T) =>
+        (old ?? HashMap.empty()).set(key2(t), t);
     } else if (mergeVals === undefined) {
-      merge = (old: HashMap<K2 & HashKey, T | S> | undefined, t: T) => (old ?? HashMap.empty()).set(key2(t), val(t));
+      merge = (old: HashMap<K2 & HashKey, T | S> | undefined, t: T) =>
+        (old ?? HashMap.empty()).set(key2(t), val(t));
     } else {
       merge = (old: HashMap<K2 & HashKey, T | S> | undefined, t: T) =>
-        (old ?? HashMap.empty()).alter(key2(t), (oldV) => (oldV === undefined ? val(t) : mergeVals(oldV as S, val(t))));
+        (old ?? HashMap.empty()).alter(key2(t), (oldV) =>
+          oldV === undefined ? val(t) : mergeVals(oldV as S, val(t))
+        );
     }
 
     return HashMap.build(this.iter, key1, merge);
@@ -690,7 +706,10 @@ export class LazySeq<T> {
     val?: (x: T) => S,
     mergeVals?: (v1: S, v2: S) => S
   ): OrderedMap<K1 & OrderedMapKey, OrderedMap<K2 & OrderedMapKey, T | S>> {
-    let merge: (old: OrderedMap<K2 & OrderedMapKey, T | S> | undefined, t: T) => OrderedMap<K2 & OrderedMapKey, T | S>;
+    let merge: (
+      old: OrderedMap<K2 & OrderedMapKey, T | S> | undefined,
+      t: T
+    ) => OrderedMap<K2 & OrderedMapKey, T | S>;
     if (val === undefined) {
       merge = (old: OrderedMap<K2 & OrderedMapKey, T | S> | undefined, t: T) =>
         (old ?? OrderedMap.empty()).set(key2(t), t);
