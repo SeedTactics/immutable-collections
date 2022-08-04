@@ -1,0 +1,7 @@
+// typedoc.json
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["./src/api/classes.ts", "./src/data-structures/hamt.ts", "./src/data-structures/tree.ts"],
+  "plugin": ["./typedoc-theme/dist/entry.js"],
+  "out": "doc"
+}
