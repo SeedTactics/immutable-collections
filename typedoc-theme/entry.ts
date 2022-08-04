@@ -8,7 +8,7 @@ import {
   UrlMapping,
   ReflectionKind,
 } from "typedoc";
-import { classTemplate, pageTemplate } from "./layout";
+import { pageTemplate } from "./page";
 
 class DocTheme extends Theme {
   constructor(renderer: Renderer) {
@@ -24,22 +24,12 @@ class DocTheme extends Theme {
 
     for (const child of project.children ?? []) {
       if (child.kind === ReflectionKind.Module) {
-        switch (child.getAlias()) {
-          case "api_classes":
-            urls.push(new UrlMapping("class-api.md", child, pageTemplate));
-            break;
-          case "data_structures_hamt":
-            urls.push(new UrlMapping("hamt.md", child, pageTemplate));
-            break;
-          case "data_structures_tree":
-            urls.push(new UrlMapping("tree.md", child, pageTemplate));
-            break;
-        }
+        urls.push(new UrlMapping(child.getAlias() + ".mdx", child, pageTemplate));
       }
 
       for (const grandchild of child.children ?? []) {
         if (grandchild.kind === ReflectionKind.Class) {
-          urls.push(new UrlMapping(grandchild.getAlias() + ".md", grandchild, classTemplate));
+          urls.push(new UrlMapping(grandchild.getAlias() + ".mdx", grandchild, pageTemplate));
         }
       }
     }
