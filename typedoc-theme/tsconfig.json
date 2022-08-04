@@ -21,6 +21,6 @@
     "noPropertyAccessFromIndexSignature": true,
     "noUnusedLocals": true
   },
-  "include": ["*.ts", "*.tsx"],
+  "include": ["*.ts"],
   "exclude": []
 }
