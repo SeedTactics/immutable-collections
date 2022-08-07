@@ -81,7 +81,14 @@ export function renderProperty(page: PageEvent<unknown>, decl: DeclarationReflec
 }
 
 export function renderClassSummary(page: PageEvent<unknown>, decl: DeclarationReflection): string {
-  return [renderExport(decl, `class ${decl.name};`), renderComment(page, decl.comment), ""].join("\n");
+  return [
+    renderExport(decl, `class ${decl.name};`),
+    renderComment(page, decl.comment),
+    "",
+    `[See ${decl.name} Class Details](./${decl.getAlias()})`,
+    "",
+    "",
+  ].join("\n");
 }
 
 export function renderConstructor(page: PageEvent<unknown>, decl: DeclarationReflection): string {
