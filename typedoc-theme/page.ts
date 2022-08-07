@@ -1,6 +1,6 @@
 import { Comment, DeclarationReflection, PageEvent, ReflectionFlag, ReflectionKind } from "typedoc";
 import { renderBlocks } from "./blocks";
-import { renderClassSummary, renderConstructor, renderMethodOrFunction, renderProperty } from "./decl";
+import { renderClassSummary, renderConstructor, renderMethod, renderFunction, renderProperty } from "./decl";
 import { renderInterface, renderTypeAlias } from "./types";
 
 function firstParagraphOfRemarks(comment: Comment | null | undefined): string | null {
@@ -19,6 +19,7 @@ function firstParagraphOfRemarks(comment: Comment | null | undefined): string | 
 
 export function pageTemplate(page: PageEvent<DeclarationReflection>): string {
   const module = page.model;
+  const pageU = page as PageEvent<unknown>;
   let str = "---\n";
   str += `id: api_${module.getAlias()}\n`;
   if (module.comment && module.comment.summary.length >= 1) {
@@ -32,25 +33,27 @@ export function pageTemplate(page: PageEvent<DeclarationReflection>): string {
 
   if (module.comment && module.comment.summary.length >= 1) {
     str += `# ${module.comment.summary[0].text}\n\n`;
-    str += renderBlocks(module.comment.blockTags);
+    str += renderBlocks(pageU, module.comment.blockTags);
   }
 
   for (const child of page.model.children ?? []) {
     if (child.flags.hasFlag(ReflectionFlag.Private)) continue;
     switch (child.kind) {
       case ReflectionKind.Method:
+        str += renderMethod(pageU, child);
+        break;
       case ReflectionKind.Function:
-        str += renderMethodOrFunction(child);
+        str += renderFunction(pageU, child);
         break;
       case ReflectionKind.Class:
-        str += renderClassSummary(child);
+        str += renderClassSummary(pageU, child);
         break;
       case ReflectionKind.Property:
       case ReflectionKind.Accessor:
-        str += renderProperty(child);
+        str += renderProperty(pageU, child);
         break;
       case ReflectionKind.Constructor:
-        str += renderConstructor(child);
+        str += renderConstructor(pageU, child);
         break;
 
       case ReflectionKind.TypeAlias:

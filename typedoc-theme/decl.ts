@@ -1,15 +1,24 @@
 import {
   DeclarationReflection,
+  PageEvent,
   ParameterReflection,
-  ReflectionKind,
   ReflectionType,
   SomeType,
+  TypeParameterReflection,
 } from "typedoc";
 import { renderComment } from "./blocks";
+import { renderExport } from "./render-export";
+
+function formatTypeParams(params: TypeParameterReflection[] | undefined) {
+  if (!params) return "";
+  return "<" + params.map((p) => p.name).join(", ") + ">";
+}
 
 function formatParamsOfFunc(params: ParameterReflection[] | undefined) {
   if (!params) return "";
-  return params.map((param) => `${param.name}: ${formatType(param.type)}`).join(", ");
+  return params
+    .map((param) => `${param.flags.isRest ? "..." : ""}${param.name}: ${formatType(param.type)}`)
+    .join(", ");
 }
 
 function formatType(type: SomeType | undefined): string {
@@ -29,38 +38,57 @@ function formatType(type: SomeType | undefined): string {
   return type.toString();
 }
 
-function renderSignature(kind: string, body: string): string {
-  return [`<Signature type="${kind}">`, "```typescript", body, "```", "</Signature>"].join("\n");
-}
-
-export function renderMethodOrFunction(decl: DeclarationReflection): string {
-  const kind = decl.kind === ReflectionKind.Method ? "method" : "function";
+export function renderFunction(page: PageEvent<unknown>, decl: DeclarationReflection): string {
   return (decl.signatures ?? [])
     .flatMap((sig) => [
-      renderSignature(kind, `${sig.name}(${formatParamsOfFunc(sig.parameters)}): ${formatType(sig.type)}`),
-      renderComment(sig.comment),
+      renderExport(
+        decl,
+        `function ${sig.name}${formatTypeParams(sig.typeParameters)}(${formatParamsOfFunc(
+          sig.parameters
+        )}): ${formatType(sig.type)};`
+      ),
+      renderComment(page, sig.comment),
       "",
     ])
     .join("\n");
 }
 
-export function renderProperty(decl: DeclarationReflection): string {
+// use italic unicode characters to allow italic inside the code block
+const italicObj = "𝑜𝑏𝑗";
+
+export function renderMethod(page: PageEvent<unknown>, decl: DeclarationReflection): string {
+  const staticClassName = decl.flags.isStatic ? decl.parent?.name : undefined;
+  return (decl.signatures ?? [])
+    .flatMap((sig) => [
+      renderExport(
+        decl,
+        `${staticClassName ?? italicObj}.${sig.name}${formatTypeParams(
+          sig.typeParameters
+        )}(${formatParamsOfFunc(sig.parameters)}): ${formatType(sig.type)};`
+      ),
+      renderComment(page, sig.comment),
+      "",
+    ])
+    .join("\n");
+}
+
+export function renderProperty(page: PageEvent<unknown>, decl: DeclarationReflection): string {
   return [
-    renderSignature("property", `${decl.name}: ${formatType(decl.type)}`),
-    renderComment(decl.comment),
+    renderExport(decl, `${italicObj}.${decl.name}: ${formatType(decl.type)};`),
+    renderComment(page, decl.comment),
     "",
   ].join("\n");
 }
 
-export function renderClassSummary(decl: DeclarationReflection): string {
-  return [renderSignature("class", `class ${decl.name}`), renderComment(decl.comment), ""].join("\n");
+export function renderClassSummary(page: PageEvent<unknown>, decl: DeclarationReflection): string {
+  return [renderExport(decl, `class ${decl.name};`), renderComment(page, decl.comment), ""].join("\n");
 }
 
-export function renderConstructor(decl: DeclarationReflection): string {
+export function renderConstructor(page: PageEvent<unknown>, decl: DeclarationReflection): string {
   return (decl.signatures ?? [])
     .flatMap((sig) => [
-      renderSignature("constructor", `constructor(${formatParamsOfFunc(sig.parameters)})`),
-      renderComment(sig.comment),
+      renderExport(decl, `${decl.parent?.name ?? ""} constructor(${formatParamsOfFunc(sig.parameters)})`),
+      renderComment(page, sig.comment),
       "",
     ])
     .join("\n");

@@ -2,7 +2,7 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "entryPoints": ["./src/api/classes.ts", "./src/data-structures/hamt.ts", "./src/data-structures/tree.ts"],
-  "plugin": ["./typedoc-theme/dist/entry.js"],
+  "plugin": ["./typedoc-theme/dist/theme.js"],
   "theme": "immutable-collections-docs",
   "githubPages": false,
   "sort": ["source-order"],
