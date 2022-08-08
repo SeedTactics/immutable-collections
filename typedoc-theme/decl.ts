@@ -44,6 +44,7 @@ function formatSignature(sig: SigRefAndOriginalSource, includeName = true): stri
   for (const p of source.params) {
     if (p.indexOf("\n") >= 0) hasNewline = true;
     parts.push(p);
+    parts.push(",");
   }
   // if some param has a newline, add a final newline before the close paren
   if (hasNewline) parts.push("\n");
