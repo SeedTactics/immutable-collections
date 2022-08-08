@@ -221,7 +221,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
     return new OrderedSet(mkComparisonConfig(), null);
   }
 
-  public static ofKeys<K extends OrderedMapKey, V>(map: OrderedMap<K, V>) {
+  public static ofKeys<K extends OrderedMapKey, V>(map: OrderedMap<K, V>): OrderedSet<K> {
     // access private properties of OrderedMap
     const prvMap = map as unknown as { cfg: ComparisionConfig<K>; root: TreeNode<K, V> | null };
     return new OrderedSet(prvMap.cfg, prvMap.root);

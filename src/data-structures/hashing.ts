@@ -81,7 +81,7 @@ function dateHash(d: Date): number {
 
 export function hashValues(
   ...vals: ReadonlyArray<string | number | boolean | Date | HashableObj | null | undefined>
-) {
+): number {
   let hash = vals.length === 1 ? 0 : 2166136261;
   for (let i = 0; i < vals.length; i++) {
     const p = vals[i];

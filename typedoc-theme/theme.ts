@@ -9,7 +9,9 @@ import {
   ReflectionKind,
   DeclarationReflection,
   DefaultTheme,
+  Converter,
 } from "typedoc";
+import { onCreateSignature } from "./decl";
 import { pageTemplate } from "./page";
 
 class DocTheme extends Theme {
@@ -49,5 +51,6 @@ class DocTheme extends Theme {
 }
 
 export function load(app: Application) {
+  app.converter.on(Converter.EVENT_CREATE_SIGNATURE, onCreateSignature);
   app.renderer.defineTheme("immutable-collections-docs", DocTheme);
 }

@@ -144,7 +144,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
     return new HashSet(mkHashConfig(), null, 0);
   }
 
-  public static ofKeys<K extends HashKey, V>(map: HashMap<K, V>) {
+  public static ofKeys<K extends HashKey, V>(map: HashMap<K, V>): HashSet<K> {
     // access private properties of HashMap
     const prvMap = map as unknown as { cfg: HashConfig<K>; root: HamtNode<K, V> | null; size: number };
     return new HashSet(prvMap.cfg, prvMap.root, prvMap.size);
