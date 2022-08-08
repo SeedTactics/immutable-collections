@@ -31,6 +31,8 @@ export function pageTemplate(page: PageEvent<DeclarationReflection>): string {
   }
   str += "---\n\n";
 
+  str += 'import Export from "@site/src/components/ApiExport";\n\n';
+
   if (module.comment && module.comment.summary.length >= 1) {
     str += `# ${module.comment.summary[0].text}\n\n`;
     str += renderBlocks(pageU, module.comment.blockTags);

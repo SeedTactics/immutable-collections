@@ -1,4 +1,5 @@
 node_modules/
 dist/
 coverage/
-doc/
+website/.docusaurus/
+website/docs/api/

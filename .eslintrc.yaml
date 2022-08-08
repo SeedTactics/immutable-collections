@@ -23,6 +23,7 @@ parserOptions:
   project:
     - ./tsconfig.json
     - ./typedoc-theme/tsconfig.json
+    - ./website/tsconfig.json
   sourceType: "module"
 
 root: true

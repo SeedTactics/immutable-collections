@@ -6,9 +6,11 @@ export function renderExport(decl: DeclarationReflection, body: string): string 
     `<Export kind="${decl.kindString ?? "unknown"}" ${decl.anchor ? `anchor="${decl.anchor}"` : ""} ${
       src ? `src="${src}"` : ""
     } ${decl.flags.isStatic ? "static" : ""}>`,
+    "",
     "```typescript",
     body,
     "```",
+    "",
     "</Export>",
   ].join("\n");
 }
