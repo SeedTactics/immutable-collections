@@ -21,7 +21,7 @@ export function pageTemplate(page: PageEvent<DeclarationReflection>): string {
   const module = page.model;
   const pageU = page as PageEvent<unknown>;
   let str = "---\n";
-  str += `id: api_${module.getAlias()}\n`;
+  str += `id: ${module.getAlias()}\n`;
   if (module.comment && module.comment.summary.length >= 1) {
     str += `title: ${module.comment.summary[0].text}\n`;
   }

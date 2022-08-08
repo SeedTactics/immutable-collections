@@ -35,19 +35,17 @@ function formatSignature(sig: SigRefAndOriginalSource, includeName = true): stri
 
   if (source.typeParams) {
     parts.push("<");
-    for (const p of source.typeParams) parts.push(p);
+    parts.push(source.typeParams.join(","));
     parts.push(">");
   }
 
   parts.push("(");
-  let hasNewline = false;
-  for (const p of source.params) {
-    if (p.indexOf("\n") >= 0) hasNewline = true;
-    parts.push(p);
-    parts.push(",");
-  }
+  parts.push(source.params.join(","));
+
   // if some param has a newline, add a final newline before the close paren
+  const hasNewline = source.params.find((p) => p.indexOf("\n") >= 0) !== undefined;
   if (hasNewline) parts.push("\n");
+
   parts.push("):");
 
   if (!source.type) {
