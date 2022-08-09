@@ -49,7 +49,7 @@ function displayPartsToMarkdown(page: PageEvent<unknown>, parts: ReadonlyArray<C
 
 export function renderComment(page: PageEvent<unknown>, comment: Comment | undefined): string {
   if (!comment) return "";
-  let str = displayPartsToMarkdown(page, comment.summary);
+  let str = displayPartsToMarkdown(page, comment.summary) + "\n";
   str += renderBlocks(page, comment.blockTags);
   return str;
 }
