@@ -55,3 +55,9 @@ div.seedtactics-api-export button {
 div.seedtactics-api-export pre {
   background-color: var(--seedtactics-export-color)
 }
+
+div.seedtactics-api-summary {
+  font-style: italic;
+  font-size: large;
+  margin-top: 0.5em;
+}

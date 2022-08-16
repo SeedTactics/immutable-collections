@@ -10,5 +10,6 @@ export function renderExport(decl: DeclarationReflection, body: string): string 
     "```",
     "",
     "</Export>",
+    "",
   ].join("\n");
 }

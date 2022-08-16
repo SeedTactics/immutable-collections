@@ -49,17 +49,31 @@ function displayPartsToMarkdown(page: PageEvent<unknown>, parts: ReadonlyArray<C
 
 export function renderComment(page: PageEvent<unknown>, comment: Comment | undefined): string {
   if (!comment) return "";
-  let str = displayPartsToMarkdown(page, comment.summary) + "\n";
+  let str = `<Summary>\n\n${displayPartsToMarkdown(page, comment.summary)}</Summary>\n\n`;
   str += renderBlocks(page, comment.blockTags);
   return str;
 }
 
 export function renderBlocks(page: PageEvent<unknown>, blocks: ReadonlyArray<CommentTag>): string {
   let str = "";
+  let hasExample = false;
   for (const block of blocks) {
-    if ((block.tag === "@remarks" || block.tag === "@example") && block.content) {
+    if (block.tag === "@remarks" && block.content) {
       str += displayPartsToMarkdown(page, block.content);
     }
+    if (block.tag === "@example" && block.content) {
+      hasExample = true;
+    }
+  }
+  if (hasExample) {
+    str += "<details>\n\n";
+    for (const block of blocks) {
+      if (block.tag === "@example" && block.content) {
+        str += "<summary>Example</summary>\n\n";
+        str += `<div>\n\n${displayPartsToMarkdown(page, block.content)}</div>\n\n`;
+      }
+    }
+    str += "</details>\n\n";
   }
   return str;
 }
