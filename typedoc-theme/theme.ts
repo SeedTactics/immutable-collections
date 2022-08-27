@@ -10,9 +10,37 @@ import {
   DeclarationReflection,
   DefaultTheme,
   Converter,
+  SignatureReflection,
 } from "typedoc";
 import { onCreateSignature } from "./decl";
 import { pageTemplate } from "./page";
+
+function applyAnchors(reflection: Reflection, page: Reflection): void {
+  if (!(reflection instanceof DeclarationReflection) && !(reflection instanceof SignatureReflection)) {
+    return;
+  }
+
+  if (reflection.hasOwnDocument) {
+    return;
+  }
+
+  if (reflection.url) {
+    console.log(
+      `Reflection ${reflection.name} already has a url ${reflection.url} when processing page ${page.name}`
+    );
+    return;
+  }
+
+  const anchor = DefaultTheme.getUrl(reflection, page);
+  reflection.url = (page.url ?? "") + "#" + anchor;
+  reflection.anchor = anchor;
+  reflection.hasOwnDocument = false;
+
+  reflection.traverse((child) => {
+    applyAnchors(child, page);
+    return true;
+  });
+}
 
 class DocTheme extends Theme {
   constructor(renderer: Renderer) {
@@ -43,7 +71,9 @@ class DocTheme extends Theme {
     }
 
     for (const url of urls) {
-      DefaultTheme.applyAnchorUrl(url.model, url.model);
+      url.model.traverse((c) => {
+        applyAnchors(c, url.model);
+      });
     }
 
     return urls;

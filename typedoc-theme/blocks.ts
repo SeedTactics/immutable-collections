@@ -1,7 +1,4 @@
 import { Comment, CommentDisplayPart, CommentTag, PageEvent } from "typedoc";
-import * as Path from "node:path";
-
-const urlPrefix = /^https?:\/\//;
 
 function displayPartsToMarkdown(page: PageEvent<unknown>, parts: ReadonlyArray<CommentDisplayPart>) {
   const result: string[] = [];
@@ -22,12 +19,7 @@ function displayPartsToMarkdown(page: PageEvent<unknown>, parts: ReadonlyArray<C
               if (typeof part.target === "string") {
                 url = part.target;
               } else if (part.target.url) {
-                if (urlPrefix.test(part.target.url)) {
-                  url = part.target.url;
-                } else {
-                  const relative = Path.relative(Path.dirname(page.filename), Path.dirname(part.target.url));
-                  url = Path.join(relative, Path.basename(part.target.url)).replace(/\\/g, "/");
-                }
+                url = part.target.url;
               }
               const wrap = part.tag === "@linkcode" ? "`" : "";
               result.push(url ? `[${wrap}${part.text}${wrap}](${url})` : part.text);
