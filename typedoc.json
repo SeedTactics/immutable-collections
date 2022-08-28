@@ -6,5 +6,6 @@
   "theme": "immutable-collections-docs",
   "githubPages": false,
   "sort": ["source-order"],
+  "categorizeByGroup": false,
   "out": "website/docs/api"
 }

@@ -17,6 +17,32 @@ function firstParagraphOfRemarks(comment: Comment | null | undefined): string | 
   return null;
 }
 
+function renderChild(pageU: PageEvent<unknown>, child: DeclarationReflection): string {
+  switch (child.kind) {
+    case ReflectionKind.Method:
+      return renderMethod(pageU, child);
+    case ReflectionKind.Function:
+      return renderFunction(pageU, child);
+    case ReflectionKind.Class:
+      return renderClassSummary(pageU, child);
+    case ReflectionKind.Property:
+    case ReflectionKind.Accessor:
+      return renderProperty(pageU, child);
+    case ReflectionKind.Constructor:
+      return renderConstructor(pageU, child);
+
+    case ReflectionKind.TypeAlias:
+      return renderTypeAlias(child);
+    case ReflectionKind.Interface:
+      return renderInterface(child);
+
+    default:
+      throw new Error(
+        "Documentation does not support kind 0x" + child.kind.toString(16) + " for " + child.getAlias()
+      );
+  }
+}
+
 export function pageTemplate(page: PageEvent<DeclarationReflection>): string {
   const module = page.model;
   const pageU = page as PageEvent<unknown>;
@@ -39,37 +65,18 @@ export function pageTemplate(page: PageEvent<DeclarationReflection>): string {
     str += renderBlocks(pageU, module.comment.blockTags);
   }
 
-  for (const child of page.model.children ?? []) {
-    if (child.flags.hasFlag(ReflectionFlag.Private)) continue;
-    switch (child.kind) {
-      case ReflectionKind.Method:
-        str += renderMethod(pageU, child);
-        break;
-      case ReflectionKind.Function:
-        str += renderFunction(pageU, child);
-        break;
-      case ReflectionKind.Class:
-        str += renderClassSummary(pageU, child);
-        break;
-      case ReflectionKind.Property:
-      case ReflectionKind.Accessor:
-        str += renderProperty(pageU, child);
-        break;
-      case ReflectionKind.Constructor:
-        str += renderConstructor(pageU, child);
-        break;
-
-      case ReflectionKind.TypeAlias:
-        str += renderTypeAlias(child);
-        break;
-      case ReflectionKind.Interface:
-        str += renderInterface(child);
-        break;
-
-      default:
-        throw new Error(
-          "Documentation does not support kind 0x" + child.kind.toString(16) + " for " + child.getAlias()
-        );
+  if (page.model.categories) {
+    for (const group of page.model.categories) {
+      str += `## ${group.title}\n\n`;
+      for (const child of group.children) {
+        if (child.flags.hasFlag(ReflectionFlag.Private)) continue;
+        str += renderChild(pageU, child);
+      }
+    }
+  } else {
+    for (const child of page.model.children ?? []) {
+      if (child.flags.hasFlag(ReflectionFlag.Private)) continue;
+      str += renderChild(pageU, child);
     }
   }
 
