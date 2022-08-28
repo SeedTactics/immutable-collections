@@ -66,7 +66,13 @@ export function pageTemplate(page: PageEvent<DeclarationReflection>): string {
   }
 
   if (page.model.categories) {
-    for (const group of page.model.categories) {
+    // sort categories by source file position
+    const cats = [...page.model.categories].sort((a, b) => {
+      const aLine = a.children[0].sources?.[0].line ?? -1;
+      const bLine = b.children[0].sources?.[0].line ?? -1;
+      return aLine - bLine;
+    });
+    for (const group of cats) {
       str += `## ${group.title}\n\n`;
       for (const child of group.children) {
         if (child.flags.hasFlag(ReflectionFlag.Private)) continue;
