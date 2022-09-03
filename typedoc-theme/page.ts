@@ -1,11 +1,24 @@
-import { Comment, DeclarationReflection, PageEvent, ReflectionFlag, ReflectionKind } from "typedoc";
+import {
+  Comment,
+  DeclarationReflection,
+  PageEvent,
+  ReflectionFlag,
+  ReflectionKind,
+} from "typedoc";
 import { renderBlocks } from "./blocks";
-import { renderClassSummary, renderConstructor, renderMethod, renderFunction, renderProperty } from "./decl";
+import {
+  renderClassSummary,
+  renderConstructor,
+  renderMethod,
+  renderFunction,
+  renderProperty,
+} from "./decl";
 import { renderInterface, renderTypeAlias } from "./types";
 
 function firstParagraphOfRemarks(comment: Comment | null | undefined): string | null {
   if (!comment) return null;
-  const remarks = comment.blockTags.filter((t) => t.tag === "@remarks")?.[0]?.content?.[0]?.text;
+  const remarks = comment.blockTags.filter((t) => t.tag === "@remarks")?.[0]?.content?.[0]
+    ?.text;
   if (remarks) {
     const idx = remarks.indexOf("\n\n");
     if (idx >= 0) {
@@ -38,7 +51,10 @@ function renderChild(pageU: PageEvent<unknown>, child: DeclarationReflection): s
 
     default:
       throw new Error(
-        "Documentation does not support kind 0x" + child.kind.toString(16) + " for " + child.getAlias()
+        "Documentation does not support kind 0x" +
+          child.kind.toString(16) +
+          " for " +
+          child.getAlias()
       );
   }
 }
@@ -67,11 +83,17 @@ export function pageTemplate(page: PageEvent<DeclarationReflection>): string {
 
   if (page.model.categories) {
     // sort categories by source file position
-    const cats = [...page.model.categories].sort((a, b) => {
-      const aLine = a.children[0].sources?.[0].line ?? -1;
-      const bLine = b.children[0].sources?.[0].line ?? -1;
-      return aLine - bLine;
-    });
+    const cats = [...page.model.categories]
+      .sort((a, b) => {
+        const aLine = a.children[0].sources?.[0].line ?? -1;
+        const bLine = b.children[0].sources?.[0].line ?? -1;
+        return aLine - bLine;
+      })
+      .filter(
+        (c) =>
+          c.children.findIndex((child) => !child.flags.hasFlag(ReflectionFlag.Private)) >=
+          0
+      );
     for (const group of cats) {
       str += `## ${group.title}\n\n`;
       for (const child of group.children) {
