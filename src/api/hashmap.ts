@@ -30,16 +30,14 @@ type NotUndefined = {} | null;
  * @remarks
  * The `HashMap<K, V>` class stores key-value pairs where the keys have type `K` and the values type `V`.
  * Keys can be numbers, strings, booleans, dates, or custom objects which implement the `HashableObj` interface.
+ * `HashMap` implements the typescript-builtin `ReadonlyMap` interface (which consists of the read-only methods of
+ * [the JS builtin Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map).
  *
  * The HashMap is immutable, which means that no changes or mutations are allowed directly to the HashMap.
  * Instead, modification operations such as {@link HashMap#delete} return a new HashMap which contains the
  * result of the modification.  The original HashMap is unchanged and can continue to be accessed and used.
  * The HashMap implements this efficiently using structural sharing and does not require a full copy; indeed,
  * the `delete` method will copy at most `O(log n)` entries.
- *
- * ```ts
- * public class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
- * ```
  */
 export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   /** Static method to create a new empty HashMap
