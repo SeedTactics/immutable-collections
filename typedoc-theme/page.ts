@@ -45,7 +45,7 @@ function renderChild(pageU: PageEvent<unknown>, child: DeclarationReflection): s
       return renderConstructor(pageU, child);
 
     case ReflectionKind.TypeAlias:
-      return renderTypeAlias(child);
+      return renderTypeAlias(pageU, child);
     case ReflectionKind.Interface:
       return renderInterface(child);
 
