@@ -406,7 +406,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
 
   /** Split an OrderedMap into two OrderedMaps based on a function
    *
-   * @category Modification
+   * @category Transformation
    *
    * @remarks
    * The function `f` is applied to each key and value.  The entries for which `f` returns `true`
