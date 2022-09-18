@@ -404,7 +404,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * looks for the key in the map.  The function `f` is then applied to the existing value
    * if the key was found and `undefined` if the key does not exist.  If the function `f`
    * returns `undefined`, the entry is deleted and if `f` returns a value, the entry is updated
-   * to use the new value. and the result is used to set the new value.
+   * to use the new value.
    *
    * If the key is not found and `f` returns undefined or the key exists and the function `f` returns
    * a value `===` to the existing value, then the HashMap object instance is returned unchanged.
@@ -544,7 +544,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * @remarks
    * `HashMap.union` is the static version of {@link HashMap#union} and allows unioning more than two HashMaps
    * at once.  It produces a new HashMap which contains all the entries in all the HashMaps.  If a
-   * key appears in only one of the two maps, the value from the map is used.  If a key appears
+   * key appears in only one of the maps, the value from that map is used.  If a key appears
    * in multiple maps, the provided merge function is used to determine the value.  The order of merging
    * is equivalent to the order of maps in the sequence.
    *
