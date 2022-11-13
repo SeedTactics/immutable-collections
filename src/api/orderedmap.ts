@@ -43,9 +43,9 @@ function constUndefined() {
  *
  * @remarks
  * The `OrderedMap<K, V>` class stores key-value pairs where the keys have type `K` and the values type `V`.
- * Keys can be numbers, strings, booleans, dates, or custom objects which implement the `ComparableObj` interface.
+ * Keys can be numbers, strings, booleans, dates, or custom objects which implement the {@link class_api!ComparableObj} interface.
  * The entries are stored in a balanced binary tree, and various methods can iterate over the entries in either ascending
- * or descending order of keys.  `OrderedMap` implements the typescript-builtin `ReadonlyMap` interface (which
+ * or descending order of keys.  OrderedMap implements the typescript-builtin `ReadonlyMap` interface (which
  * consists of the read-only methods of [the JS builtin Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)).
  *
  * The OrderedMap is immutable, which means that no changes or mutations are allowed directly to the OrderedMap.

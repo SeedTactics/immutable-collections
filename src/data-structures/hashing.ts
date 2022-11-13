@@ -10,6 +10,32 @@ import {
   stringCompare,
 } from "./comparison.js";
 
+/** Interface allowing custom key objects in a HashMap
+ *
+ * If you wish to use a custom object as a key in a HashMap, you must implement the `hash` function
+ * defined in the HashableObj type and the `compare` function defined in the {@link ComparableObj} type.
+ * The hash value must be a 32-bit integer.
+ *
+ * @example
+ * ```ts
+ * class SomeKey {
+ *  public readonly a: number;
+ *  public readonly b: string;
+ *  constructor(a: number, b: string) {
+ *    this.a = a;
+ *    this.b = b;
+ *  }
+ *
+ *  hash(): number {
+ *    return hashValues(this.a, this.b);
+ *  }
+ *
+ *  compare(other: SomeKey): number {
+ *    return this.a - other.a || this.b.localeCompare(other.b);
+ *  }
+ * }
+ * ```
+ */
 export type HashableObj = {
   hash(): number;
 };
@@ -18,6 +44,10 @@ export function isHashableObj(k: unknown): k is HashableObj {
   return k !== null && typeof k === "object" && "hash" in k;
 }
 
+/** A function which converts or extracts a hashable value
+ *
+ * This is used primarily by {@link LazySeq} to extract hashable values from an object for grouping.
+ */
 export type ToHashable<T> =
   | ((t: T) => number | null)
   | ((t: T) => string | null)
@@ -25,6 +55,7 @@ export type ToHashable<T> =
   | ((t: T) => Date | null)
   | ((t: T) => (HashableObj & ComparableObj) | null);
 
+/** The possible types for a key in a {@link HashMap} */
 export type HashKey = string | number | boolean | Date | (HashableObj & ComparableObj);
 
 export type HashConfig<K> = ComparisionConfig<K> & {
@@ -79,8 +110,16 @@ function dateHash(d: Date): number {
   return numHash(d.getTime());
 }
 
+/** Combine multiple hashable values into a single hash
+ *
+ * Useful helper function to implement the {@link HashableObj} type to allow custom keys in a {@link HashMap}.
+ * This uses the [FNV-1 hash function](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function), which is
+ * **NOT** secure.  If you need a secure hash, use something like [highwayhash](https://github.com/google/highwayhash#third-party-implementations--bindings).
+ */
 export function hashValues(
-  ...vals: ReadonlyArray<string | number | boolean | Date | HashableObj | null | undefined>
+  ...vals: ReadonlyArray<
+    string | number | boolean | Date | HashableObj | null | undefined
+  >
 ): number {
   let hash = vals.length === 1 ? 0 : 2166136261;
   for (let i = 0; i < vals.length; i++) {

@@ -1,4 +1,5 @@
 import { DeclarationReflection, PageEvent } from "typedoc";
+import * as ts from "typescript";
 import { renderComment } from "./blocks";
 import { renderExport } from "./render-export";
 
@@ -14,6 +15,7 @@ export function renderTypeAlias(page: PageEvent<unknown>, decl: DeclarationRefle
   let txt = "";
   const children = d.getChildren();
   for (let i = 1; i < children.length; i++) {
+    if (children[i].kind === ts.SyntaxKind.SyntaxList) continue;
     txt += children[i].getFullText();
     if (i == 1) {
       txt = txt.trimStart();

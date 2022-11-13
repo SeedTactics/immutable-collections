@@ -27,9 +27,9 @@ function constTrue() {
  * Immutable Hash Set
  *
  * @remarks
- * The `HashSet<T>` class stores numbers, strings, booleans, dates, or custom objects which implement the `HashableObj` interface.
- * `HashSet` implements the typescript-builtin `ReadonlySet` interface (which consists of the read-only methods of
- * [the JS builtin Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set)).
+ * The `HashSet<T>` class stores numbers, strings, booleans, dates, or custom objects which implement the
+ * {@link class_api!HashableObj} interface. HashSet implements the typescript-builtin `ReadonlySet` interface
+ * (which consists of the read-only methods of [the JS builtin Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set)).
  *
  * The HashSet is immutable, which means that no changes or mutations are allowed directly to the HashSet.
  * Instead, modification operations such as {@link HashSet#delete} return a new HashSet which contains the

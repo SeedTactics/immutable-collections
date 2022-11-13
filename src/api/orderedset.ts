@@ -40,8 +40,9 @@ function constUndefined() {
  * Immutable Ordered Set
  *
  * @remarks
- * The `OrderedSet<T>` class stores numbers, strings, booleans, dates, or custom objects which implement the `ComparableObj` interface.
- * `OrderedSet` implements the typescript-builtin `ReadonlySet` interface (which consists of the read-only methods of
+ * The `OrderedSet<T>` class stores numbers, strings, booleans, dates, or custom objects which implement the
+ * {@link class_api!ComparableObj} interface. OrderedSet implements the typescript-builtin `ReadonlySet`
+ * interface (which consists of the read-only methods of
  * [the JS builtin Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set)).
  *
  * The OrderedSet is immutable, which means that no changes or mutations are allowed directly to the OrderedSet.

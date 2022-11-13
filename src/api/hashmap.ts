@@ -28,31 +28,37 @@ type NotUndefined = {} | null;
  * Immutable Hash Map
  *
  * @remarks
- * The `HashMap<K, V>` class stores key-value pairs where the keys have type `K` and the values type `V`.
- * Keys can be numbers, strings, booleans, dates, or custom objects which implement the `HashableObj` interface.
- * `HashMap` implements the typescript-builtin `ReadonlyMap` interface (which consists of the read-only methods of
- * [the JS builtin Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map).
+ * The `HashMap<K, V>` class stores key-value pairs where the keys have type `K`
+ * and the values type `V`.  Keys can be numbers, strings, booleans, dates, or
+ * custom objects which implement the {@link class_api!HashableObj} interface.
+ * `HashMap` implements the typescript-builtin `ReadonlyMap` interface (which
+ * consists of the read-only methods of [the JS builtin
+ * Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map).
  *
- * The HashMap is immutable, which means that no changes or mutations are allowed directly to the HashMap.
- * Instead, modification operations such as {@link HashMap#delete} return a new HashMap which contains the
- * result of the modification.  The original HashMap is unchanged and can continue to be accessed and used.
- * The HashMap implements this efficiently using structural sharing and does not require a full copy; indeed,
- * the `delete` method will copy at most `O(log n)` entries.
+ * The HashMap is immutable, which means that no changes or mutations are
+ * allowed directly to the HashMap.  Instead, modification operations such as
+ * {@link HashMap#delete} return a new HashMap which contains the result of the
+ * modification.  The original HashMap is unchanged and can continue to be
+ * accessed and used.  The HashMap implements this efficiently using structural
+ * sharing and does not require a full copy; indeed, the `delete` method will
+ * copy at most `O(log n)` entries.
  */
 export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   /** Static method to create a new empty HashMap
    *
    * @category Creating Hash Maps
    *
-   * @remarks
-   * The key type must extend `HashKey`, which consists of strings, numbers, dates, booleans, or a custom
-   * user-defined object which implements the `HashableObj` interface.  The `HashableObj` interface allows you
-   * to create complex keys which are made up of multiple properties.  Values can have any type but can not
-   * contain `undefined`.  The value type can include `null` if you wish to represent missing or empty values.
+   * @remarks The key type must extend `HashKey`, which consists of strings,
+   * numbers, dates, booleans, or a custom user-defined object which implements
+   * the `HashableObj` interface.  The `HashableObj` interface allows you to
+   * create complex keys which are made up of multiple properties.  Values can
+   * have any type but can not contain `undefined`.  The value type can include
+   * `null` if you wish to represent missing or empty values.
    *
-   * While you can start with an empty `HashMap` and then use {@link HashMap#set} to add entries, it
-   * is more efficient to create the HashMap in bulk using either the static {@link HashMap.from} or {@link HashMap.build}
-   * or using various methods on {@link LazySeq} to convert a `LazySeq` to a `HashMap`.
+   * While you can start with an empty `HashMap` and then use {@link HashMap#set}
+   * to add entries, it is more efficient to create the HashMap in bulk using
+   * either the static {@link HashMap.from} or {@link HashMap.build} or using
+   * various methods on {@link LazySeq} to convert a `LazySeq` to a `HashMap`.
    *
    * @example
    * ```ts
@@ -376,7 +382,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     }
   }
 
-  /** Return a new HashMap with entry with the given key removed (if it exists)
+  /** Return a new HashMap with the given key removed (if it exists)
    *
    * @category Modification
    *
