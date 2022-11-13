@@ -17,6 +17,9 @@ import { OrderedSet } from "./api/orderedset.js";
 
 type JsMapKey = number | string | boolean;
 
+// eslint-disable-next-line @typescript-eslint/ban-types
+type NotUndefined = {} | null;
+
 type TupleOfHashProps<T, FS extends ToHashable<T>[]> = FS extends [(t: T) => infer R]
   ? R
   : {
@@ -291,7 +294,11 @@ export class LazySeq<T> {
       s = hamt.mutateInsert(cfg, x, x, appendVal, s);
     }
     return LazySeq.ofIterator(() =>
-      hamt.iterate<T, Array<T>, [TupleOfHashProps<T, [PropFn, ...PropFns]>, ReadonlyArray<T>]>((t, ts) => {
+      hamt.iterate<
+        T,
+        Array<T>,
+        [TupleOfHashProps<T, [PropFn, ...PropFns]>, ReadonlyArray<T>]
+      >((t, ts) => {
         if (fs.length === 1) {
           return [fs[0](t) as TupleOfHashProps<T, [PropFn, ...PropFns]>, ts];
         } else {
@@ -323,11 +330,24 @@ export class LazySeq<T> {
       s = tree.mutateInsert(cfg, x, x, appendVal, s);
     }
     return LazySeq.ofIterator(() =>
-      tree.iterateAsc<T, Array<T>, [TupleOfCmpProps<T, [PropFn, ...PropFns]>, ReadonlyArray<T>]>((t, ts) => {
+      tree.iterateAsc<
+        T,
+        Array<T>,
+        [TupleOfCmpProps<T, [PropFn, ...PropFns]>, ReadonlyArray<T>]
+      >((t, ts) => {
         if (fns.length === 1) {
-          return [evalComparable(fns[0], t) as TupleOfCmpProps<T, [PropFn, ...PropFns]>, ts];
+          return [
+            evalComparable(fns[0], t) as TupleOfCmpProps<T, [PropFn, ...PropFns]>,
+            ts,
+          ];
         } else {
-          return [fns.map((f) => evalComparable(f, t)) as TupleOfCmpProps<T, [PropFn, ...PropFns]>, ts];
+          return [
+            fns.map((f) => evalComparable(f, t)) as TupleOfCmpProps<
+              T,
+              [PropFn, ...PropFns]
+            >,
+            ts,
+          ];
         }
       }, s)
     );
@@ -501,11 +521,14 @@ export class LazySeq<T> {
     return Array.from(this.iter);
   }
 
-  toSortedArray(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): ReadonlyArray<T> {
+  toSortedArray(
+    prop: ToComparable<T>,
+    ...props: ReadonlyArray<ToComparable<T>>
+  ): ReadonlyArray<T> {
     return Array.from(this.iter).sort(mkCompareByProperties(prop, ...props));
   }
 
-  toHashMap<K, S>(
+  toHashMap<K, S extends NotUndefined>(
     f: (x: T) => readonly [K & HashKey, S],
     merge?: (v1: S, v2: S) => S
   ): HashMap<K & HashKey, S> {
@@ -513,18 +536,18 @@ export class LazySeq<T> {
   }
 
   buildHashMap<K>(key: (x: T) => K & HashKey): HashMap<K & HashKey, T>;
-  buildHashMap<K, S>(
+  buildHashMap<K, S extends NotUndefined>(
     key: (x: T) => K & HashKey,
     val: (old: S | undefined, t: T) => S
   ): HashMap<K & HashKey, S>;
-  buildHashMap<K, S>(
+  buildHashMap<K, S extends NotUndefined>(
     key: (x: T) => K & HashKey,
     val?: (old: S | undefined, t: T) => S
   ): HashMap<K & HashKey, S> {
     return HashMap.build(this.iter, key, val as (old: S | undefined, t: T) => S);
   }
 
-  toOrderedMap<K, S>(
+  toOrderedMap<K, S extends NotUndefined>(
     f: (x: T) => readonly [K & OrderedMapKey, S],
     merge?: (v1: S, v2: S) => S
   ): OrderedMap<K & OrderedMapKey, S> {
@@ -532,18 +555,21 @@ export class LazySeq<T> {
   }
 
   buildOrderedMap<K>(key: (x: T) => K & OrderedMapKey): OrderedMap<K & OrderedMapKey, T>;
-  buildOrderedMap<K, S>(
+  buildOrderedMap<K, S extends NotUndefined>(
     key: (x: T) => K & OrderedMapKey,
     val: (old: S | undefined, t: T) => S
   ): OrderedMap<K & OrderedMapKey, S>;
-  buildOrderedMap<K, S>(
+  buildOrderedMap<K, S extends NotUndefined>(
     key: (x: T) => K & OrderedMapKey,
     val?: (old: S | undefined, t: T) => S
   ): OrderedMap<K & OrderedMapKey, S> {
     return OrderedMap.build(this.iter, key, val as (old: S | undefined, t: T) => S);
   }
 
-  toMutableMap<K, S>(f: (x: T) => readonly [K & JsMapKey, S], merge?: (v1: S, v2: S) => S): Map<K, S> {
+  toMutableMap<K, S>(
+    f: (x: T) => readonly [K & JsMapKey, S],
+    merge?: (v1: S, v2: S) => S
+  ): Map<K, S> {
     const m = new Map<K, S>();
     for (const x of this.iter) {
       const [k, s] = f(x);
@@ -561,12 +587,21 @@ export class LazySeq<T> {
     return m;
   }
 
-  toRMap<K, S>(f: (x: T) => readonly [K & JsMapKey, S], merge?: (v1: S, v2: S) => S): ReadonlyMap<K, S> {
+  toRMap<K, S>(
+    f: (x: T) => readonly [K & JsMapKey, S],
+    merge?: (v1: S, v2: S) => S
+  ): ReadonlyMap<K, S> {
     return this.toMutableMap(f, merge);
   }
 
-  toObject<S>(f: (x: T) => readonly [string, S], merge?: (v1: S, v2: S) => S): { [key: string]: S };
-  toObject<S>(f: (x: T) => readonly [number, S], merge?: (v1: S, v2: S) => S): { [key: number]: S };
+  toObject<S>(
+    f: (x: T) => readonly [string, S],
+    merge?: (v1: S, v2: S) => S
+  ): { [key: string]: S };
+  toObject<S>(
+    f: (x: T) => readonly [number, S],
+    merge?: (v1: S, v2: S) => S
+  ): { [key: number]: S };
   toObject<S>(
     f: (x: T) => readonly [string | number, S],
     merge?: (v1: S, v2: S) => S
@@ -609,8 +644,14 @@ export class LazySeq<T> {
   }
 
   toLookup<K>(key: (x: T) => K & HashKey): HashMap<K & HashKey, ReadonlyArray<T>>;
-  toLookup<K, S>(key: (x: T) => K & HashKey, val: (x: T) => S): HashMap<K & HashKey, ReadonlyArray<S>>;
-  toLookup<K, S>(key: (x: T) => K & HashKey, val?: (x: T) => S): HashMap<K & HashKey, ReadonlyArray<S>> {
+  toLookup<K, S>(
+    key: (x: T) => K & HashKey,
+    val: (x: T) => S
+  ): HashMap<K & HashKey, ReadonlyArray<S>>;
+  toLookup<K, S>(
+    key: (x: T) => K & HashKey,
+    val?: (x: T) => S
+  ): HashMap<K & HashKey, ReadonlyArray<S>> {
     let merge: (old: Array<S> | undefined, t: T) => Array<S>;
     if (val === undefined) {
       merge = (old, t) => {
@@ -632,7 +673,9 @@ export class LazySeq<T> {
     return HashMap.build(this.iter, key, merge);
   }
 
-  toOrderedLookup<K>(key: (x: T) => K & OrderedMapKey): OrderedMap<K & OrderedMapKey, ReadonlyArray<T>>;
+  toOrderedLookup<K>(
+    key: (x: T) => K & OrderedMapKey
+  ): OrderedMap<K & OrderedMapKey, ReadonlyArray<T>>;
   toOrderedLookup<K, S>(
     key: (x: T) => K & OrderedMapKey,
     val: (x: T) => S
@@ -666,29 +709,30 @@ export class LazySeq<T> {
     key1: (x: T) => K1 & HashKey,
     key2: (x: T) => K2 & HashKey
   ): HashMap<K1 & HashKey, HashMap<K2 & HashKey, T>>;
-  toLookupMap<K1, K2, S>(
+  toLookupMap<K1, K2, S extends NotUndefined>(
     key1: (x: T) => K1 & HashKey,
     key2: (x: T) => K2 & HashKey,
     val: (x: T) => S,
     mergeVals?: (v1: S, v2: S) => S
   ): HashMap<K1 & HashKey, HashMap<K2 & HashKey, S>>;
-  toLookupMap<K1, K2, S>(
+  toLookupMap<K1, K2, S extends NotUndefined>(
     key1: (x: T) => K1 & HashKey,
     key2: (x: T) => K2 & HashKey,
     val?: (x: T) => S,
     mergeVals?: (v1: S, v2: S) => S
-  ): HashMap<K1 & HashKey, HashMap<K2 & HashKey, T | S>> {
-    let merge: (old: HashMap<K2 & HashKey, T | S> | undefined, t: T) => HashMap<K2 & HashKey, T | S>;
+  ): HashMap<K1 & HashKey, HashMap<K2 & HashKey, S>> {
+    let merge: (
+      old: HashMap<K2 & HashKey, S> | undefined,
+      t: T
+    ) => HashMap<K2 & HashKey, S>;
     if (val === undefined) {
-      merge = (old: HashMap<K2 & HashKey, T | S> | undefined, t: T) =>
-        (old ?? HashMap.empty()).set(key2(t), t);
+      merge = (old, t) => (old ?? HashMap.empty()).set(key2(t), t as unknown as S);
     } else if (mergeVals === undefined) {
-      merge = (old: HashMap<K2 & HashKey, T | S> | undefined, t: T) =>
-        (old ?? HashMap.empty()).set(key2(t), val(t));
+      merge = (old, t) => (old ?? HashMap.empty()).set(key2(t), val(t));
     } else {
-      merge = (old: HashMap<K2 & HashKey, T | S> | undefined, t: T) =>
+      merge = (old, t) =>
         (old ?? HashMap.empty()).alter(key2(t), (oldV) =>
-          oldV === undefined ? val(t) : mergeVals(oldV as S, val(t))
+          oldV === undefined ? val(t) : mergeVals(oldV as unknown as S, val(t))
         );
     }
 
@@ -705,26 +749,24 @@ export class LazySeq<T> {
     val: (x: T) => S,
     mergeVals?: (v1: S, v2: S) => S
   ): OrderedMap<K1 & OrderedMapKey, OrderedMap<K2 & OrderedMapKey, S>>;
-  toLookupOrderedMap<K1, K2, S>(
+  toLookupOrderedMap<K1, K2, S extends NotUndefined>(
     key1: (x: T) => K1 & OrderedMapKey,
     key2: (x: T) => K2 & OrderedMapKey,
     val?: (x: T) => S,
     mergeVals?: (v1: S, v2: S) => S
-  ): OrderedMap<K1 & OrderedMapKey, OrderedMap<K2 & OrderedMapKey, T | S>> {
+  ): OrderedMap<K1 & OrderedMapKey, OrderedMap<K2 & OrderedMapKey, S>> {
     let merge: (
-      old: OrderedMap<K2 & OrderedMapKey, T | S> | undefined,
+      old: OrderedMap<K2 & OrderedMapKey, S> | undefined,
       t: T
-    ) => OrderedMap<K2 & OrderedMapKey, T | S>;
+    ) => OrderedMap<K2 & OrderedMapKey, S>;
     if (val === undefined) {
-      merge = (old: OrderedMap<K2 & OrderedMapKey, T | S> | undefined, t: T) =>
-        (old ?? OrderedMap.empty()).set(key2(t), t);
+      merge = (old, t) => (old ?? OrderedMap.empty()).set(key2(t), t as unknown as S);
     } else if (mergeVals === undefined) {
-      merge = (old: OrderedMap<K2 & OrderedMapKey, T | S> | undefined, t: T) =>
-        (old ?? OrderedMap.empty()).set(key2(t), val(t));
+      merge = (old, t) => (old ?? OrderedMap.empty()).set(key2(t), val(t));
     } else {
-      merge = (old: OrderedMap<K2 & OrderedMapKey, T | S> | undefined, t: T) =>
+      merge = (old, t) =>
         (old ?? OrderedMap.empty()).alter(key2(t), (oldV) =>
-          oldV === undefined ? val(t) : mergeVals(oldV as S, val(t))
+          oldV === undefined ? val(t) : mergeVals(oldV as unknown as S, val(t))
         );
     }
     return OrderedMap.build(this.iter, key1, merge);
@@ -732,7 +774,10 @@ export class LazySeq<T> {
 
   toRLookup<K>(key: (x: T) => K): ReadonlyMap<K, ReadonlyArray<T>>;
   toRLookup<K, S>(key: (x: T) => K, val: (x: T) => S): ReadonlyMap<K, ReadonlyArray<S>>;
-  toRLookup<K, S>(key: (x: T) => K, val?: (x: T) => S): ReadonlyMap<K, ReadonlyArray<T | S>> {
+  toRLookup<K, S>(
+    key: (x: T) => K,
+    val?: (x: T) => S
+  ): ReadonlyMap<K, ReadonlyArray<T | S>> {
     const m = new Map<K, Array<T | S>>();
     for (const x of this.iter) {
       const k = key(x);

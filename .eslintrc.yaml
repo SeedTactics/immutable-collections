@@ -18,6 +18,7 @@ rules:
 parser: "@typescript-eslint/parser"
 plugins:
   - "@typescript-eslint"
+  - "escompat"
 parserOptions:
   ecmaVersion: 2018
   project:
