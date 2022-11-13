@@ -3,9 +3,12 @@
   "configurations": [
     {
       "name": "Mocha Tests",
-      "type": "pwa-node",
+      "type": "node",
       "request": "launch",
-      "runtimeArgs": ["${workspaceRoot}/node_modules/mocha/bin/mocha.js", "${relativeFile}"]
+      "runtimeArgs": [
+        "${workspaceRoot}/node_modules/mocha/bin/mocha.js",
+        "${relativeFile}"
+      ]
     }
   ]
 }
