@@ -717,7 +717,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    *
    * @remarks
    * `adjust` is passed a HashMap of keys to adjust associated to helper values of type `V2` (the type `V2` can be
-   * anything).  For each key to modify, `adjust` then calls the `adjustVal` function with the current existing
+   * anything and does not need to be related `V`).  For each key to modify, `adjust` then calls the `adjustVal` function with the current existing
    * value in the HashMap (or `undefined` if the key does not exist) and the helper value associated with the key.
    * The return value is set as the new value for the key, or removed if the return value is `undefined`.
    *
@@ -738,9 +738,9 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * return m;
    * ```
    *
-   * `adjust` guarantees that if no entries are changed from `this`, then the HashMap object
-   * instance is returned unchanged. You can thus use shallow comparison of the HashMap object instance
-   * to reliably detect when the HashMap changes, for example memoized React components or `React.useMemo()`.
+   * Because adjust is so efficient, if the keys to adjust are only available in an array or some other data structure,
+   * it is still very fast to use {@link HashMap#from} or {@link HashMap#build} to create the `keysToAdjust` map and
+   * then pass it to `adjust`.
    */
   adjust<V2>(
     keysToAdjust: HashMap<K, V2>,
