@@ -12,9 +12,11 @@ import {
 
 /** Interface allowing custom key objects in a HashMap
  *
+ * @remarks
  * If you wish to use a custom object as a key in a HashMap, you must implement the `hash` function
  * defined in the HashableObj type and the `compare` function defined in the {@link ComparableObj} type.
- * The hash value must be a 32-bit integer.
+ * The hash value must be a 32-bit integer.  The {@link hashValues} function can help implementing
+ * the hash function.
  *
  * @example
  * ```ts
@@ -31,7 +33,7 @@ import {
  *  }
  *
  *  compare(other: SomeKey): number {
- *    return this.a - other.a || this.b.localeCompare(other.b);
+ *    return (this.a - other.a) || this.b.localeCompare(other.b);
  *  }
  * }
  * ```
@@ -46,7 +48,9 @@ export function isHashableObj(k: unknown): k is HashableObj {
 
 /** A function which converts or extracts a hashable value
  *
+ * @remarks
  * This is used primarily by {@link LazySeq} to extract hashable values from an object for grouping.
+ * For example, see {@link LazySeq.groupBy}.
  */
 export type ToHashable<T> =
   | ((t: T) => number | null)
@@ -112,9 +116,11 @@ function dateHash(d: Date): number {
 
 /** Combine multiple hashable values into a single hash
  *
+ * @remarks
  * Useful helper function to implement the {@link HashableObj} type to allow custom keys in a {@link HashMap}.
  * This uses the [FNV-1 hash function](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function), which is
- * **NOT** secure.  If you need a secure hash, use something like [highwayhash](https://github.com/google/highwayhash#third-party-implementations--bindings).
+ * **NOT** secure.  If you need a secure hash, use something like [highwayhash](https://github.com/google/highwayhash#third-party-implementations--bindings)
+ * and implement a custom {@link HashableObj} interface.
  */
 export function hashValues(
   ...vals: ReadonlyArray<

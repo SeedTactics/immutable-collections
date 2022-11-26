@@ -1,5 +1,30 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
+/** Interface allowing custom key objects in an OrderedMap
+ *
+ * @remarks
+ * If you wish to use a custom object as a key in a HashMap or OrderedMap, you must implement the `compare` function.
+ * The `compare` function should return a negative number if `this < other`, return zero if `this` equals `other`, and
+ * return a positive number if `this > other`.  A common technique is to use subtraction to compare numbers
+ * and [String.localeCompare](mdn link) to compare srings.  Comparing multiple properties can either use
+ * a sequence of `if` statements or use `||` to combine.
+ *
+ * @example
+ * ```ts
+ * class SomeKey {
+ *  public readonly a: number;
+ *  public readonly b: string;
+ *  constructor(a: number, b: string) {
+ *    this.a = a;
+ *    this.b = b;
+ *  }
+ *
+ *  compare(other: SomeKey): number {
+ *    return (this.a - other.a) || this.b.localeCompare(other.b);
+ *  }
+ * }
+ * ```
+ */
 export type ComparableObj = {
   compare(other: ComparableObj): number;
 };
@@ -8,6 +33,14 @@ export function isComparableObj(o: unknown): o is ComparableObj {
   return o !== null && typeof o === "object" && "compare" in o;
 }
 
+/** The possible types for a key in an {@link OrderedMap} */
+export type OrderedMapKey = string | number | boolean | Date | ComparableObj;
+
+/** A function which converts or extracts a comparable value
+ *
+ * @remarks
+ * This is used primarily by {@link LazySeq} to extract comparable values from an object for grouping.
+ */
 export type ToComparableBase<T> =
   | ((t: T) => number | null)
   | ((t: T) => string | null)
@@ -15,7 +48,17 @@ export type ToComparableBase<T> =
   | ((t: T) => Date | null)
   | ((t: T) => ComparableObj | null);
 
-export type ToComparable<T> = { asc: ToComparableBase<T> } | { desc: ToComparableBase<T> } | ToComparableBase<T>;
+/** A function which converts or extracts a comparable value and a direction
+ *
+ * @remarks
+ * This is used primarily by {@link LazySeq} to extract comparable values from an object for grouping,
+ * while also allowing you to specify if the ordering should be in ascending or descending order.
+ * For example, see {@link LazySeq#distinctAndSortBy}.
+ */
+export type ToComparable<T> =
+  | { asc: ToComparableBase<T> }
+  | { desc: ToComparableBase<T> }
+  | ToComparableBase<T>;
 
 export type ReturnOfComparable<T, F extends ToComparable<T>> = F extends {
   asc: (t: T) => infer R;
@@ -27,7 +70,10 @@ export type ReturnOfComparable<T, F extends ToComparable<T>> = F extends {
   ? R
   : never;
 
-export function evalComparable<T, F extends ToComparable<T>>(f: F, t: T): ReturnOfComparable<T, F> {
+export function evalComparable<T, F extends ToComparable<T>>(
+  f: F,
+  t: T
+): ReturnOfComparable<T, F> {
   if ("asc" in f) {
     return (f as { asc: ToComparableBase<T> }).asc(t) as ReturnOfComparable<T, F>;
   } else if ("desc" in f) {
@@ -37,7 +83,44 @@ export function evalComparable<T, F extends ToComparable<T>>(f: F, t: T): Return
   }
 }
 
-export function mkCompareByProperties<T>(...getKeys: ReadonlyArray<ToComparable<T>>): (a: T, b: T) => -1 | 0 | 1 {
+/** Combine multiple comparable properties into a single comparison function
+ *
+ * @remarks
+ * `mkCompareByProperties` will return a comparison function for the type `T` which
+ * compares multiple properties in order.  Each property is specified by an
+ * extraction function which extracts the property from the type `T`.  The comparison
+ * function will compare each property in order, returning as soon as a single property is
+ * not equal.  Strings are compared using [localeCompare](mdn link).
+ *
+ * This function can optionally be used to implement {@link ComparableObj}, but typically
+ * a direct implementation is shorter.  `mkCompareByProperties` is instead used primarily
+ * by {@link LazySeq}.
+ *
+ * @example
+ * ```ts
+ * type Foo = {
+ *   readonly someNum: number;
+ *   readonly someStr: string;
+ * }
+ *
+ * const compareFoo: (a: Foo, b: Foo) => -1 | 0 | 1 = mkCompareByProperties(
+ *   f => f.someNum,
+ *   { desc: f => f.someStr }
+ * );
+ *
+ * console.log(compareFoo(
+ *   { someNum: 1, someStr: "Hello"},
+ *   { someNum: 2, someStr: "Hello"}
+ * )); // prints -1
+ * console.log(compareFoo(
+ *   { someNum: 42, someStr: "AAA"},
+ *   { someNum: 42, someStr: "ZZZ"}
+ * )); // prints 1 due to descending ordering of the strings
+ * ```
+ */
+export function mkCompareByProperties<T>(
+  ...getKeys: ReadonlyArray<ToComparable<T>>
+): (a: T, b: T) => -1 | 0 | 1 {
   return (x, y) => {
     for (const getKey of getKeys) {
       if ("desc" in getKey) {
@@ -102,8 +185,6 @@ export function mkCompareByProperties<T>(...getKeys: ReadonlyArray<ToComparable<
     return 0;
   };
 }
-
-export type OrderedMapKey = string | number | boolean | Date | ComparableObj;
 
 export type ComparisionConfig<K> = {
   readonly compare: (a: K, b: K) => number;
