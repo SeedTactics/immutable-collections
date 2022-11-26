@@ -60,8 +60,8 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * @category Creating Ordered Maps
    *
    * @remarks
-   * The key type must extend `OrderedMapKey`, which consists of strings, numbers, dates, booleans, or a custom
-   * user-defined object which implements the `ComparableObj` interface.  The `ComparableObj` interface allows you
+   * The key type must extend {@link class_api!OrderedMapKey}, which consists of strings, numbers, dates, booleans, or a custom
+   * user-defined object which implements the {@link class_api!ComparableObj} interface.  The `ComparableObj` interface allows you
    * to create complex keys which are made up of multiple properties.  Values can have any type but can not
    * contain `undefined`.  The value type can include `null` if you wish to represent missing or empty values.
    *
@@ -87,7 +87,6 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * and the second parameter `v2` is the new value just recieved from the sequence. The return value from the
    * merge function is the value associated to the key.  If no merge function is provided, the second value `v2`
    * is used, overwriting the first value `v1`.
-   *
    * If you have a LazySeq, the LazySeq.{@link LazySeq#toOrderedMap} method is an easy way to call `from`.
    *
    * Runs in time O(n log n)
@@ -124,7 +123,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * `build` efficiently creates an OrderedMap from a sequence of items, a key extraction function, and a value extraction
    * function.  The sequence of items can have any type `T`, and for each item the key is extracted.  If the key does not
    * yet exist, the `val` extraction function is called with `undefined` to retrieve the value associated to the key.
-   * If the key already exists in the HashMap, the `val` extraction function is called with the `old` value to
+   * If the key already exists in the OrderedMap, the `val` extraction function is called with the `old` value to
    * merge the new item `t` into the existing value `old`.
    *
    * Runs in time O(n log n)
@@ -156,6 +155,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    *
    * @category IReadOnlyMap interface
    *
+   * @remarks
    * Runs in time O(log n)
    */
   get(k: K): V | undefined {
@@ -166,6 +166,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    *
    * @category IReadOnlyMap interface
    *
+   * @remarks
    * Runs in time O(log n)
    */
   has(k: K): boolean {
@@ -333,7 +334,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    *
    * @remarks
    * This function is O(1) and very fast because the backing data structure is reused.
-   * Essentially, the OrderedMap and OrderedSet classes are just two different APIs against the
+   * Essentially, the OrderedMap and {@link OrderedSet} classes are just two different APIs against the
    * same underlying balanced tree.  Since both OrderedSet and OrderedMap are immutable, they can both
    * share the same underlying tree without problems.
    */
@@ -386,7 +387,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     }
   }
 
-  /** Return a new OrderedMap with entry with the given key removed (if it exists)
+  /** Return a new OrderedMap with the given key removed (if it exists)
    *
    * @category Modification
    *
@@ -465,7 +466,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * the key and value is removed.  Otherwise, the returned value from `f` is used as the new value associated to the key k.
    * This can be done efficiently because the keys are unchanged the arrangement of the tree
    * is unchanged.  If you wish to transform both the keys and the values, either use {@link OrderedMap#toAscLazySeq},
-   * map the lazy sequence, and then convert the lazy sequence back to an Ordered or use {@link OrderedMap#alter} to change many keys
+   * map the lazy sequence, and then convert the lazy sequence back to an OrderedMap or use {@link OrderedMap#adjust} to change many keys
    * in bulk.
    *
    * `collectValues` guarantees that if no values are changed, then the OrderedMap object instance is returned
@@ -489,7 +490,6 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * @remarks
    * `filter` applies the function `f` to each value and key in the OrderedMap.  If `f` returns false, the
    * key is removed.
-   *
    * `filter` guarantees that if no values are removed, then the OrderedMap object instance is returned
    * unchanged.
    *
@@ -514,7 +514,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * the returned `val` property contains the value associated with the key `k`.  Otherwise, `val` is undefined.
    * Finally, the `above` property consists of all the entries in the OrderedMap with keys greater than `k`.
    *
-   * This runs in time O(log n)
+   * This runs in time O(log n) so is efficient.
    */
   split(k: K): {
     readonly below: OrderedMap<K, V>;
@@ -529,7 +529,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     };
   }
 
-  /** Find the minimum key and asscoiated value in the OrderedMap
+  /** Find the minimum key and associated value in the OrderedMap
    *
    * @category Min/Max Keys
    *
@@ -541,7 +541,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     else return lookupMin(this.root);
   }
 
-  /** Find the maximum key and asscoiated value in the OrderedMap
+  /** Find the maximum key and associated value in the OrderedMap
    *
    * @category Min/Max Keys
    *
@@ -717,7 +717,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * function is used to determine the resulting value.
    *
    * `intersection` guarantees that if the resulting OrderedMap is equal to the first non-empty OrderedMap, then the
-   * OrderedMap object * instance is returned unchanged.
+   * OrderedMap object instance is returned unchanged.
    */
   public static intersection<K extends OrderedMapKey, V extends NotUndefined>(
     merge: (v1: V, v2: V, k: K) => V,
@@ -770,7 +770,6 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * @remarks
    * `withoutKeys` produces a new OrderedMap which contains all the entries in `this` where the key does
    * **not** exist in the provided `keys` OrderedSet.
-   *
    * `withoutKeys` guarantees that if no entries are removed from `this`, then the OrderedMap object
    * instance is returned unchanged.
    *
@@ -791,10 +790,27 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * @category Bulk Modification
    *
    * @remarks
-   * `adjust` is passed a OrderedMap of keys to adjust associated to helper values of type `V2` (the type `V2` can be
+   * `adjust` is passed an OrderedMap of keys to adjust associated to helper values of type `V2` (the type `V2` can be
    * anything).  For each key to modify, `adjust` then calls the `adjustVal` function with the current existing
    * value in the OrderedMap (or `undefined` if the key does not exist) and the helper value associated with the key.
    * The return value is set as the new value for the key, or removed if the return value is `undefined`.
+   *
+   * `adjust` is equivalent to the following code, but is much more efficient since `adjust` can perform the operation
+   * in a single pass through the tree.
+   *
+   * ```ts
+   * const m = this;
+   * for (const [k, v2] of keysToAdjust) {
+   *   const v = m.get(k);
+   *   const newV = adjustVal(v, v2, k);
+   *   if (newV === undefined) {
+   *     m = m.delete(k);
+   *   } else {
+   *     m = m.set(k, newV);
+   *   }
+   * }
+   * return m;
+   * ```
    *
    * `adjust` guarantees that if no entries are changed from `this`, then the OrderedMap object
    * instance is returned unchanged.

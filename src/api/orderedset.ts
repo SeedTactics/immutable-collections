@@ -49,7 +49,7 @@ function constUndefined() {
  * Instead, modification operations such as {@link OrderedSet#add} return a new OrderedSet which contains the
  * result of the modification.  The original OrderedSet is unchanged and can continue to be accessed and used.
  * The OrderedSet implements this efficiently using structural sharing and does not require a full copy; indeed,
- * the `delete` method will copy at most `O(log n)` entries.
+ * the {@link OrderedSet#delete} method will copy at most `O(log n)` entries.
  */
 export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
   /** Static method to create a new empty OrderedSet
@@ -57,11 +57,11 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    * @category Creating Ordered Sets
    *
    * @remarks
-   * The key type must extend `OrderedMapKey`, which consists of strings, numbers, dates, booleans, or a custom
-   * user-defined object which implements the `ComparableObj` interface.
+   * The key type must extend {@link class_api!OrderedMapKey}, which consists of strings, numbers, dates, booleans, or a custom
+   * user-defined object which implements the {@link class_api!ComparableObj} interface.
    *
    * While you can start with an empty `OrderedSet` and then use {@link OrderedSet#add} to add entries, it
-   * is more efficient to create the OrderedSet in bulk using either the static {@link HashSet.from} or {@link HashSet.build}
+   * is more efficient to create the OrderedSet in bulk using either the static {@link OrderedSet.from} or {@link OrderedSet.build}
    * or using various methods on {@link LazySeq} to convert a `LazySeq` to an `OrderedSet`.
    */
   public static empty<T extends OrderedMapKey>(): OrderedSet<T> {
@@ -102,7 +102,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
 
   /** Efficiently create a new set from a collection of values and an item extraction function
    *
-   * @category Creating Hash Sets
+   * @category Creating Ordered Sets
    *
    * @remarks
    * `build` efficiently creates a new HashSet by applying the given function to each thing in the
@@ -169,7 +169,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    *
    * @remarks
    * This provides an iterator to iterate all the items in the OrderedSet. Items
-   * are iterated in ascending order. Both `keys` and `values` are equivalent for an `OrderedMap`.
+   * are iterated in ascending order. Both `keys` and `values` are equivalent for an OrderedSet.
    */
   keys(): IterableIterator<T> {
     return iterateAsc((t) => t, this.root);
@@ -181,18 +181,18 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    *
    * @remarks
    * This provides an iterator to iterate all the items in the OrderedSet. Items
-   * are iterated in ascending order. Both `keys` and `values` are equivalent for an `OrderedMap`.
+   * are iterated in ascending order. Both `keys` and `values` are equivalent for an OrderedSet.
    */
   values(): IterableIterator<T> {
     return iterateAsc((t) => t, this.root);
   }
 
-  /** Applys a function to each item in the HashSet
+  /** Applys a function to each item in the OrderedSet
    *
    * @category IReadOnlySet interface
    *
    * @remarks
-   * This applies the function `f` to each item in the hashmap.  The item is provided twice (so as to match the builtin
+   * This applies the function `f` to each item in the set.  The item is provided twice (so as to match the builtin
    * [Set.forEach](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/forEach) method).
    * The items are iterated in ascending order.
    */
@@ -207,10 +207,28 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
     );
   }
 
+  /** Reduce all the entries in the OrderedSet to a single value
+   *
+   * @category Iteration
+   *
+   * @remarks
+   * The letter-l in `foldl` stands for left.  Thinking of all the items as an ascending list, `foldl` starts
+   * combining items from the left side.  Thus, the smallest item is combined with the zero value,
+   * which is then combined with the next smallest item, and so on.
+   */
   foldl<R>(f: (acc: R, t: T) => R, zero: R): R {
     return foldl((acc, v) => f(acc, v), zero, this.root);
   }
 
+  /** Reduce all the entries in the OrderedSet to a single value
+   *
+   * @category Iteration
+   *
+   * @remarks
+   * The letter-r in `foldr` stands for right.  Thinking of all the items as an ascending list, `foldr` starts
+   * combining items from the right side.  Thus, the largest item is combined with the zero value,
+   * which is then combined with the second-to-largest item, and so on.
+   */
   foldr<R>(f: (t: T, acc: R) => R, zero: R): R {
     return foldr((t, _, acc) => f(t, acc), zero, this.root);
   }
@@ -301,7 +319,6 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    * @remarks
    * `filter` applies the function `f` to each value and key in the OrderedSet.  If `f` returns false, the
    * key is removed.
-   *
    * `filter` guarantees that if no values are removed, then the OrderedSet object instance is returned
    * unchanged.
    *
@@ -316,7 +333,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
     }
   }
 
-  /** Split an OrderedSet into the items below a key and the items above a key
+  /** Split an OrderedSet into the items below and above a given item
    *
    * @category Transformation
    *
@@ -455,8 +472,8 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    * `OrderedSet.union` is the static version of {@link OrderedSet#union} and allows unioning more than two sets
    * at once.  It produces a new OrderedSet which contains all the entries in all the OrderedSets.
    *
-   * `union` guarantees that if the resulting OrderedSet is equal to the first non-empty HashSet in the sequence,
-   * then the HashSet object instance is returned unchanged.
+   * `union` guarantees that if the resulting OrderedSet is equal to the first non-empty OrderedSet in the sequence,
+   * then the OrderedSet object instance is returned unchanged.
    */
   public static union<T extends OrderedMapKey>(
     ...sets: readonly OrderedSet<T>[]
@@ -484,7 +501,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    *
    * @remarks
    * `intersection` produces a new OrderedSet which contains all the items which appear in both OrderedSets.
-   * `intersection` guarantees that if the resulting OrderedSet is equal to `this`, then the HashSet object
+   * `intersection` guarantees that if the resulting OrderedSet is equal to `this`, then the OrderedSet object
    * instance is returned unchanged.
    *
    * Runs in time O(m log(n/m)) where m is the size of the smaller set and n is the size of the larger set.
@@ -506,7 +523,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    * `OrderedSet.intersection` is a static version of {@link OrderedSet#intersection}, and produces a new OrderedSet
    * which contains the items which appear in all specified OrderedSet.
    *
-   * `intersection` guarantees that if the resulting OrderedSet is equal to the first OrderedSet, then the HashSet object
+   * `intersection` guarantees that if the resulting OrderedSet is equal to the first OrderedSet, then the OrderedSet object
    * instance is returned unchanged.
    */
   public static intersection<T extends OrderedMapKey>(

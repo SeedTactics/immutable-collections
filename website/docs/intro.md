@@ -26,7 +26,7 @@ for [HashMap](api/HashMap.mdx), [OrderedMap](api/OrderedMap.mdx), and more. Thes
 such as [HashMap.delete](api/HashMap.mdx#delete). The class-based API is ergonomic with easy to discover methods, but the downside
 is current bundlers such as webpack, esbuild, swc, etc. do not tree-shake classes. Thus if you import
 one of the classes, all the methods and basically the entire library will get included in the resulting bundle. Now immutable-collections
-has no dependencies and is relatively small, but we have occasionally traded a slight increase in bundle size for
+has no dependencies and is relatively small but we have occasionally traded a slight increase in bundle size for
 faster performance, by implementing many specialized operations such as [HashMap.collect](api/HashMap.mdx#collect) and many others.
 
 The second API is a function API for the [hash array mapped trie](api/data_structures_hamt.mdx) and [balanced tree](api/data_structures_tree.mdx).
@@ -44,10 +44,9 @@ and return a new data structure containing all the changes. The bulk operations 
 be preferred, but operating on individual entries is still efficient; thus, code clarity
 and ease of understanding should be the most important factor in deciding to use individual vs bulk operations.
 
-The first kind of bulk operations build new data structures from [Iterables](mdn iterable). These
-are [HashMap.from](api/HashMap.mdx#from), [HashMap.build](api/HashMap.mdx#build), [OrderedMap.from](api/OrderedMap.mdx#from),
-and [OrderedMap.build](api/OrderedMap.mdx#build). The from and build operations create new immutable data structures from an Iterable such as arrays, javacript
-Maps, [LazySeqs](api/LazySeq.mdx), or hand built generators. The second kind of bulk operations allow adding/updating/deleting many keys and values
+The first kind of bulk operations build new data structures from [Iterables](mdn iterable), and include
+[HashMap.from](api/HashMap.mdx#from), [HashMap.build](api/HashMap.mdx#build), [OrderedMap.from](api/OrderedMap.mdx#from),
+and [OrderedMap.build](api/OrderedMap.mdx#build). The from and build operations create new immutable data structures from an Iterable such as Arrays, javacript Maps, [LazySeqs](api/LazySeq.mdx), or hand built generators. The second kind of bulk operations allow adding/updating/deleting many keys and values
 at once. The main operation is [HashMap.adjust](api/HashMap.mdx#adjust) and [OrderedMap.adjust](api/OrderedMap.mdx#adjust), but there are
 several more as well.
 

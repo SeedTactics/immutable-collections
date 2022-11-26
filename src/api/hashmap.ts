@@ -30,28 +30,27 @@ type NotUndefined = {} | null;
  * @remarks
  * The `HashMap<K, V>` class stores key-value pairs where the keys have type `K`
  * and the values type `V`.  Keys can be numbers, strings, booleans, dates, or
- * custom objects which implement the {@link class_api!HashableObj} interface.
+ * custom objects which implement the {@link class_api!HashableObj} and {@link class_api!ComparableObj} interfaces.
  * `HashMap` implements the typescript-builtin `ReadonlyMap` interface (which
  * consists of the read-only methods of [the JS builtin
- * Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map).
+ * Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)).
  *
  * The HashMap is immutable, which means that no changes or mutations are
  * allowed directly to the HashMap.  Instead, modification operations such as
  * {@link HashMap#delete} return a new HashMap which contains the result of the
  * modification.  The original HashMap is unchanged and can continue to be
  * accessed and used.  The HashMap implements this efficiently using structural
- * sharing and does not require a full copy; indeed, the `delete` method will
- * copy at most `O(log n)` entries.
+ * sharing and does not require a full copy.
  */
 export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   /** Static method to create a new empty HashMap
    *
    * @category Creating Hash Maps
    *
-   * @remarks The key type must extend `HashKey`, which consists of strings,
+   * @remarks The key type must extend {@link class_api!HashKey}, which consists of strings,
    * numbers, dates, booleans, or a custom user-defined object which implements
-   * the `HashableObj` interface.  The `HashableObj` interface allows you to
-   * create complex keys which are made up of multiple properties.  Values can
+   * the {@link class_api!HashableObj} and {@link class_api!ComparableObj} interfaces.
+   * These interfaces allows you to create complex keys which are made up of multiple properties.  Values can
    * have any type but can not contain `undefined`.  The value type can include
    * `null` if you wish to represent missing or empty values.
    *
@@ -63,7 +62,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * @example
    * ```ts
    * import { HashMap } from "@seedtactics/immutable-collections";
-   * const hEmpty = HashMap.empty<string, number | null>();
+   * const hEmpty = HashMap.empty<string, number>();
    * const h = hEmpty.set("one", 1).set("two", 2);
    * for (const [k, v] of h) {
    *   console.log("key " + k + ": " + v.toString());
@@ -138,7 +137,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    *
    * @remarks
    * `build` efficiently creates a HashMap from a sequence of items, a key extraction function, and a value extraction
-   * function.  The sequence of items can have any type `T`, and for each item the key is extracted.  If the key does not
+   * function.  The sequence of initial items can have any type `T`, and for each item the key is extracted.  If the key does not
    * yet exist, the `val` extraction function is called with `undefined` to retrieve the value associated to the key.
    * If the key already exists in the HashMap, the `val` extraction function is called with the `old` value to
    * merge the new item `t` into the existing value `old`.
@@ -320,7 +319,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    *
    * @remarks
    * This function is O(1) and very fast because the backing data structure is reused.
-   * Essentially, the HashMap and HashSet classes are just two different APIs against the
+   * Essentially, the HashMap and {@link HashSet} classes are just two different APIs against the
    * same underlying tree.  Since both HashSet and HashMap are immutable, they can both
    * share the same underlying tree without problems.
    */
@@ -334,9 +333,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    *
    * @remarks
    * If the key already exists and the value is `===` to the existing value, then the HashMap
-   * object instance is returned unchanged.  You can thus use shallow comparison of the HashMap
-   * object instance to reliably detect when the HashMap changes, for example memoized React components
-   * or `React.useMemo()`.
+   * object instance is returned unchanged.
    *
    * @example
    * ```ts
@@ -362,16 +359,14 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * @category Modification
    *
    * @remarks
-   * The modify function is a more efficient combination of `get` and `set`.  `modify` first
+   * The modify function is a more efficient combination of {@link HashMap#get} and {@link HashMap#set}.  `modify` first
    * looks for the key in the map.  If the key is found, the function `f` is applied to the
    * existing value and the result is used to set the new value.  If the key is not found, the
    * function `f` is applied to `undefined` and the result is used to set the new value.
    * This allows you to either insert ot modify the value at a key.
    *
    * If the key already exists and the returned value is `===` to the existing value, then the HashMap
-   * object instance is returned unchanged.  You can thus use shallow comparison of the HashMap
-   * object instance to reliably detect when the HashMap changes, for example memoized React components
-   * or `React.useMemo()`.
+   * object instance is returned unchanged.
    */
   modify(k: K, f: (existing: V | undefined) => V): HashMap<K, V> {
     const [newRoot, inserted] = insert(this.cfg, k, f, this.root);
@@ -388,8 +383,6 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    *
    * @remarks
    * If the key does not exist, then the HashMap object instance is returned unchanged.
-   * You can thus use shallow comparison of the HashMap object instance to reliably detect
-   * when the HashMap changes, for example memoized React components or `React.useMemo()`.
    */
   delete(k: K): HashMap<K, V> {
     const newRoot = remove(this.cfg, k, this.root);
@@ -405,17 +398,15 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * @category Modification
    *
    * @remarks
-   * `alter` is a generalization of `get`, `set`, `modify`, and `delete`.  It can be used to
-   * insert a new entry, modify an existing entry, or delete an existing entry.  `alter` first
-   * looks for the key in the map.  The function `f` is then applied to the existing value
-   * if the key was found and `undefined` if the key does not exist.  If the function `f`
-   * returns `undefined`, the entry is deleted and if `f` returns a value, the entry is updated
-   * to use the new value.
+   * `alter` is a generalization of {@link HashMap#get}, {@link HashMap#set}, {@link HashMap#modify},
+   * and {@link HashMap#delete}.  It can be used to insert a new entry, modify an existing entry, or
+   * delete an existing entry.  `alter` first looks for the key in the map.  The function `f` is then
+   * applied to the existing value if the key was found and `undefined` if the key does not exist.
+   * If the function `f` returns `undefined`, the entry is deleted and if `f` returns a value, the
+   * entry is updated to use the new value.
    *
    * If the key is not found and `f` returns undefined or the key exists and the function `f` returns
    * a value `===` to the existing value, then the HashMap object instance is returned unchanged.
-   * You can thus use shallow comparison of the HashMap object instance to reliably detect
-   * when the HashMap changes, for example memoized React components or `React.useMemo()`.
    */
   alter(k: K, f: (existing: V | undefined) => V | undefined): HashMap<K, V> {
     const [newRoot, sizeChange] = alter(this.cfg, k, f, this.root);
@@ -439,8 +430,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * if the keys change the entire data structure needs to be rebuilt anyway.)
    *
    * `mapValues` guarantees that if no values are changed, then the HashMap object instance is returned
-   * unchanged. You can thus use shallow comparison of the HashMap object instance to reliably detect when
-   * the HashMap changes, for example memoized React components or `React.useMemo()`.
+   * unchanged.
    */
   mapValues<V2 extends NotUndefined>(f: (v: V, k: K) => V2): HashMap<K, V2> {
     const newRoot = mapValues(f, this.root);
@@ -467,8 +457,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * rebuilt anyway.)
    *
    * `collectValues` guarantees that if no values are changed, then the HashMap object instance is returned
-   * unchanged. You can thus use shallow comparison of the HashMap object instance to reliably detect when
-   * the HashMap changes, for example memoized React components or `React.useMemo()`.
+   * unchanged.
    */
   collectValues<V2 extends NotUndefined>(
     f: (v: V, k: K) => V2 | null | undefined
@@ -494,10 +483,8 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * @remarks
    * `filter` applies the function `f` to each value and key in the HashMap.  If `f` returns false, the
    * key is removed.
-   *
    * `filter` guarantees that if no values are removed, then the HashMap object instance is returned
-   * unchanged. You can thus use shallow comparison of the HashMap object instance to reliably detect when
-   * the HashMap changes, for example memoized React components or `React.useMemo()`.
+   * unchanged.
    */
   filter(f: (v: V, k: K) => boolean): HashMap<K, V> {
     const [newRoot, newSize] = collectValues(
@@ -526,8 +513,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * value from `this` is ignored.
    *
    * `union` guarantees that if the resulting HashMap is equal to `this`, then the HashMap object
-   * instance is returned unchanged. You can thus use shallow comparison of the HashMap object instance
-   * to reliably detect when the HashMap changes, for example memoized React components or `React.useMemo()`.
+   * instance is returned unchanged.
    */
   union(other: HashMap<K, V>, merge?: (vThis: V, vOther: V, k: K) => V): HashMap<K, V> {
     const [newRoot, intersectionSize] = union(
@@ -555,8 +541,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * is equivalent to the order of maps in the sequence.
    *
    * `union` guarantees that if the resulting HashMap is equal to the first non-empty HashMap in the sequence,
-   * then the HashMap object instance is returned unchanged. You can thus use shallow comparison of the HashMap object instance
-   * to reliably detect when the HashMap changes, for example memoized React components or `React.useMemo()`.
+   * then the HashMap object instance is returned unchanged.
    */
   public static union<K extends HashKey, V extends NotUndefined>(
     merge: (v1: V, v2: V, k: K) => V,
@@ -607,8 +592,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * is used and the value from `this` is ignored.
    *
    * `intersection` guarantees that if the resulting HashMap is equal to `this`, then the HashMap object
-   * instance is returned unchanged. You can thus use shallow comparison of the HashMap object instance
-   * to reliably detect when the HashMap changes, for example memoized React components or `React.useMemo()`.
+   * instance is returned unchanged.
    */
   intersection(
     other: HashMap<K, V>,
@@ -637,8 +621,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * function is used to determine the resulting value.
    *
    * `intersection` guarantees that if the resulting HashMap is equal to the first non-empty HashMap, then the HashMap object
-   * instance is returned unchanged. You can thus use shallow comparison of the HashMap object instance
-   * to reliably detect when the HashMap changes, for example memoized React components or `React.useMemo()`.
+   * instance is returned unchanged.
    */
   public static intersection<K extends HashKey, V extends NotUndefined>(
     merge: (v1: V, v2: V, k: K) => V,
@@ -674,8 +657,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * can be any value `V2`.
    *
    * `difference` guarantees that if no entries are removed from `this`, then the HashMap object
-   * instance is returned unchanged. You can thus use shallow comparison of the HashMap object instance
-   * to reliably detect when the HashMap changes, for example memoized React components or `React.useMemo()`.
+   * instance is returned unchanged.
    */
   difference<V2>(other: HashMap<K, V2>): HashMap<K, V> {
     const [newRoot, numRemoved] = difference(this.cfg, this.root, other.root);
@@ -692,11 +674,8 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    *
    * @remarks
    * `withoutKeys` produces a new HashMap which contains all the entries in `this` where the key does
-   * **not** exist in the provided `keys` HashSet.
-   *
-   * `withoutKeys` guarantees that if no entries are removed from `this`, then the HashMap object
-   * instance is returned unchanged. You can thus use shallow comparison of the HashMap object instance
-   * to reliably detect when the HashMap changes, for example memoized React components or `React.useMemo()`.
+   * **not** exist in the provided `keys` HashSet. `withoutKeys` guarantees that if no entries are
+   * removed from `this`, then the HashMap object instance is returned unchanged.
    */
   withoutKeys(keys: HashSet<K>): HashMap<K, V> {
     const [newRoot, numRemoved] = difference(
@@ -727,7 +706,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * ```ts
    * const m = this;
    * for (const [k, v2] of keysToAdjust) {
-   *   const v = map.get(k);
+   *   const v = m.get(k);
    *   const newV = adjustVal(v, v2, k);
    *   if (newV === undefined) {
    *     m = m.delete(k);
@@ -738,9 +717,10 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * return m;
    * ```
    *
-   * Because adjust is so efficient, if the keys to adjust are only available in an array or some other data structure,
-   * it is still very fast to use {@link HashMap#from} or {@link HashMap#build} to create the `keysToAdjust` map and
-   * then pass it to `adjust`.
+   * If the keys to adjust are only available in an array or some other data structure,
+   * it is still very fast to use {@link HashMap.from} or {@link HashMap.build} to create the `keysToAdjust` map and
+   * then pass it to `adjust`.  `adjust` is very efficient because it can overlap the structure of the two trees and
+   * perform the merge in a single pass through both trees.
    */
   adjust<V2>(
     keysToAdjust: HashMap<K, V2>,

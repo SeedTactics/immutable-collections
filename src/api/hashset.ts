@@ -28,14 +28,14 @@ function constTrue() {
  *
  * @remarks
  * The `HashSet<T>` class stores numbers, strings, booleans, dates, or custom objects which implement the
- * {@link class_api!HashableObj} interface. HashSet implements the typescript-builtin `ReadonlySet` interface
- * (which consists of the read-only methods of [the JS builtin Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set)).
+ * {@link class_api!HashableObj} and {@link class_api!ComparableObj} interface. HashSet
+ * implements the typescript-builtin `ReadonlySet` interface (which consists of the read-only methods of
+ * [the JS builtin Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set)).
  *
  * The HashSet is immutable, which means that no changes or mutations are allowed directly to the HashSet.
  * Instead, modification operations such as {@link HashSet#delete} return a new HashSet which contains the
  * result of the modification.  The original HashSet is unchanged and can continue to be accessed and used.
- * The HashSet implements this efficiently using structural sharing and does not require a full copy; indeed,
- * the `delete` method will copy at most `O(log n)` entries.
+ * The HashSet implements this efficiently using structural sharing and does not require a full copy.
  */
 export class HashSet<T extends HashKey> implements ReadonlySet<T> {
   /** Static method to create a new empty HashSet
@@ -43,9 +43,9 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    * @category Creating Hash Sets
    *
    * @remarks
-   * The key type must extend `HashKey`, which consists of strings, numbers, dates, booleans, or a custom
-   * user-defined object which implements the `HashableObj` interface.  The `HashableObj` interface allows you
-   * to create complex keys which are made up of multiple properties.
+   * The item type must extend {@link class_api!HashKey}, which consists of strings, numbers, dates, booleans, or a custom
+   * user-defined object which implement the {@link class_api!HashableObj} and {@link class_api!ComparableObj} interfaces.
+   * These interfaces allows you to create complex keys which are made up of multiple properties.
    *
    * While you can start with an empty `HashSet` and then use {@link HashSet#add} to add entries, it
    * is more efficient to create the HashSet in bulk using either the static {@link HashSet.from} or {@link HashSet.build}
@@ -231,8 +231,6 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    *
    * @remarks
    * If the item already exists, then the HashSet object instance is returned unchanged.
-   * You can thus use shallow comparison of the HashSet object instance to reliably detect
-   * when the HashSet changes, for example memoized React components or `React.useMemo()`.
    */
   add(t: T): HashSet<T> {
     const [newRoot, inserted] = insert(this.cfg, t, constTrue, this.root);
@@ -249,8 +247,6 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    *
    * @remarks
    * If the item does not exist, then the HashSet object instance is returned unchanged.
-   * You can thus use shallow comparison of the HashSet object instance to reliably detect
-   * when the HashSet changes, for example memoized React components or `React.useMemo()`.
    */
   delete(t: T): HashSet<T> {
     const newRoot = remove(this.cfg, t, this.root);
@@ -268,8 +264,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    * @remarks
    * `union` produces a new HashSet which contains all the items in both HashSets.
    * `union` guarantees that if the resulting HashSet is equal to `this`, then the HashSet object
-   * instance is returned unchanged. You can thus use shallow comparison of the HashSet object instance
-   * to reliably detect when the HashSet changes, for example memoized React components or `React.useMemo()`.
+   * instance is returned unchanged.
    */
   union(other: HashSet<T>): HashSet<T> {
     const [newRoot, intersectionSize] = union(this.cfg, constTrue, this.root, other.root);
@@ -287,10 +282,8 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    * @remarks
    * `HashSet.union` is the static version of {@link HashSet#union} and allows unioning more than two HashSets
    * at once.  It produces a new HashSet which contains all the entries in all the HashSets.
-   *
    * `union` guarantees that if the resulting HashSet is equal to the first non-empty HashSet in the sequence,
-   * then the HashSet object instance is returned unchanged. You can thus use shallow comparison of the HashSet object instance
-   * to reliably detect when the HashSet changes, for example memoized React components or `React.useMemo()`.
+   * then the HashSet object instance is returned unchanged.
    */
   public static union<T extends HashKey>(...sets: readonly HashSet<T>[]): HashSet<T> {
     const nonEmpty = sets.filter((s) => s.size > 0);
@@ -334,8 +327,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    * @remarks
    * `intersection` produces a new HashSet which contains all the items which appear in both HashSets.
    * `intersection` guarantees that if the resulting HashSet is equal to `this`, then the HashSet object
-   * instance is returned unchanged. You can thus use shallow comparison of the HashSet object instance
-   * to reliably detect when the HashSet changes, for example memoized React components or `React.useMemo()`.
+   * instance is returned unchanged.
    */
   intersection(other: HashSet<T>): HashSet<T> {
     const [newRoot, intersectionSize] = intersection(
@@ -358,10 +350,8 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    * @remarks
    * `HashSet.intersection` is a static version of {@link HashSet#intersection}, and produces a new HashSet
    * which contains the items which appear in all specified HashSets.
-   *
    * `intersection` guarantees that if the resulting HashSet is equal to the first HashSet, then the HashSet object
-   * instance is returned unchanged. You can thus use shallow comparison of the HashSet object instance
-   * to reliably detect when the HashSet changes, for example memoized React components or `React.useMemo()`.
+   * instance is returned unchanged.
    */
   public static intersection<T extends HashKey>(
     ...sets: readonly HashSet<T>[]
@@ -385,7 +375,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
     }
   }
 
-  /** Returns a new HashSet which contains items which appear this but NOT in the provided HashSet
+  /** Returns a new HashSet which contains items which appear in this HashMap but NOT in the provided HashSet
    *
    * @category Set Operations
    *
@@ -393,8 +383,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    * `difference` produces a new HashSet which contains all the items which appear in `this` HashSet,
    * except all the items from the `other` HashSet are removed.  `difference` can be thought of as subtracting: `this - other`.
    * `difference` guarantees that if the resulting HashSet is equal to `this`, then the HashSet object
-   * instance is returned unchanged. You can thus use shallow comparison of the HashSet object instance
-   * to reliably detect when the HashSet changes, for example memoized React components or `React.useMemo()`.
+   * instance is returned unchanged.
    */
   difference(other: HashSet<T>): HashSet<T> {
     const [newRoot, numRemoved] = difference(this.cfg, this.root, other.root);
@@ -411,11 +400,8 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    *
    * @remarks
    * `filter` applies the function `f` to each item in the HashMap.  If `f` returns false, the
-   * item is removed.
-   *
-   * `filter` guarantees that if no values are removed, then the HashSet object instance is returned
-   * unchanged. You can thus use shallow comparison of the HashSet object instance to reliably detect when
-   * the HashSet changes, for example memoized React components or `React.useMemo()`.
+   * item is removed. `filter` guarantees that if no values are removed, then the HashSet object instance is returned
+   * unchanged.
    */
   filter(f: (k: T) => boolean): HashSet<T> {
     const [newRoot, newSize] = collectValues(
