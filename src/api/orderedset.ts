@@ -118,7 +118,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
     return new OrderedSet(cfg, build(cfg, things, item, constTrue));
   }
 
-  /** size is a readonly property containing the number of entries in the set.
+  /** size is a readonly property containing the number of items in the set.
    *
    * @category IReadOnlySet interface
    */
