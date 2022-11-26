@@ -1,4 +1,9 @@
-import { DeclarationReflection, PageEvent, SignatureReflection } from "typedoc";
+import {
+  DeclarationReflection,
+  PageEvent,
+  ReflectionKind,
+  SignatureReflection,
+} from "typedoc";
 import * as ts from "typescript";
 import { renderComment } from "./blocks";
 import { renderExport } from "./render-export";
@@ -57,7 +62,10 @@ function formatSignature(sig: SigRefAndOriginalSource, includeName = true): stri
   return parts.join("");
 }
 
-export function renderFunction(page: PageEvent<unknown>, decl: DeclarationReflection): string {
+export function renderFunction(
+  page: PageEvent<unknown>,
+  decl: DeclarationReflection
+): string {
   return (decl.signatures ?? [])
     .flatMap((sig) => [
       renderExport(decl, `function ${formatSignature(sig)};`),
@@ -70,7 +78,10 @@ export function renderFunction(page: PageEvent<unknown>, decl: DeclarationReflec
 // use italic unicode characters to allow italic inside the code block
 const italicObj = "𝑜𝑏𝑗";
 
-export function renderMethod(page: PageEvent<unknown>, decl: DeclarationReflection): string {
+export function renderMethod(
+  page: PageEvent<unknown>,
+  decl: DeclarationReflection
+): string {
   const staticClassName = decl.flags.isStatic ? decl.parent?.name : undefined;
   return (decl.signatures ?? [])
     .flatMap((sig: SigRefAndOriginalSource) => [
@@ -81,18 +92,33 @@ export function renderMethod(page: PageEvent<unknown>, decl: DeclarationReflecti
     .join("\n");
 }
 
-export function renderProperty(page: PageEvent<unknown>, decl: DeclarationReflection): string {
-  return [
-    renderExport(decl, `${italicObj}.${decl.name}: ${decl.type?.toString() ?? ""};`),
-    renderComment(page, decl.comment),
-    "",
-  ].join("\n");
+export function renderProperty(
+  page: PageEvent<unknown>,
+  decl: DeclarationReflection
+): string {
+  if (decl.kind === ReflectionKind.Accessor && decl.getSignature) {
+    const getSig = decl.getSignature;
+    return [
+      renderExport(decl, `${italicObj}.${decl.name}: ${getSig.type?.toString() ?? ""};`),
+      renderComment(page, getSig.comment),
+      "",
+    ].join("\n");
+  } else {
+    return [
+      renderExport(decl, `${italicObj}.${decl.name}: ${decl.type?.toString() ?? ""};`),
+      renderComment(page, decl.comment),
+      "",
+    ].join("\n");
+  }
 }
 
-export function renderClassSummary(page: PageEvent<unknown>, decl: DeclarationReflection): string {
+export function renderClassSummary(
+  page: PageEvent<unknown>,
+  decl: DeclarationReflection
+): string {
   return [
     renderExport(decl, `class ${decl.name};`),
-    renderComment(page, decl.comment),
+    renderComment(page, decl.comment, true),
     "",
     `[See ${decl.name} Class Details](./${decl.getAlias()})`,
     "",
@@ -100,10 +126,16 @@ export function renderClassSummary(page: PageEvent<unknown>, decl: DeclarationRe
   ].join("\n");
 }
 
-export function renderConstructor(page: PageEvent<unknown>, decl: DeclarationReflection): string {
+export function renderConstructor(
+  page: PageEvent<unknown>,
+  decl: DeclarationReflection
+): string {
   return (decl.signatures ?? [])
     .flatMap((sig) => [
-      renderExport(decl, `${decl.parent?.name ?? ""} constructor${formatSignature(sig, false)};`),
+      renderExport(
+        decl,
+        `${decl.parent?.name ?? ""} constructor${formatSignature(sig, false)};`
+      ),
       renderComment(page, sig.comment),
       "",
     ])

@@ -1,12 +1,23 @@
 import { Comment, CommentDisplayPart, CommentTag, PageEvent } from "typedoc";
 
-function displayPartsToMarkdown(page: PageEvent<unknown>, parts: ReadonlyArray<CommentDisplayPart>) {
+function displayPartsToMarkdown(
+  page: PageEvent<unknown>,
+  parts: ReadonlyArray<CommentDisplayPart>,
+  onlyFirstParagraph = false
+) {
   const result: string[] = [];
 
   for (const part of parts) {
     switch (part.kind) {
       case "text":
       case "code":
+        if (onlyFirstParagraph) {
+          const paragraphBreak = part.text.indexOf("\n\n");
+          if (paragraphBreak >= 0) {
+            result.push(part.text.substring(0, paragraphBreak + 2));
+            return result.join("");
+          }
+        }
         result.push(part.text);
         break;
       case "inline-tag":
@@ -39,19 +50,27 @@ function displayPartsToMarkdown(page: PageEvent<unknown>, parts: ReadonlyArray<C
   return result.join("");
 }
 
-export function renderComment(page: PageEvent<unknown>, comment: Comment | undefined): string {
+export function renderComment(
+  page: PageEvent<unknown>,
+  comment: Comment | undefined,
+  onlyFirstParagraph = false
+): string {
   if (!comment) return "";
   let str = `<Summary>\n\n${displayPartsToMarkdown(page, comment.summary)}</Summary>\n\n`;
-  str += renderBlocks(page, comment.blockTags);
+  str += renderBlocks(page, comment.blockTags, onlyFirstParagraph);
   return str;
 }
 
-export function renderBlocks(page: PageEvent<unknown>, blocks: ReadonlyArray<CommentTag>): string {
+export function renderBlocks(
+  page: PageEvent<unknown>,
+  blocks: ReadonlyArray<CommentTag>,
+  onlyFirstParagraph = false
+): string {
   let str = "";
   let hasExample = false;
   for (const block of blocks) {
     if (block.tag === "@remarks" && block.content) {
-      str += displayPartsToMarkdown(page, block.content);
+      str += displayPartsToMarkdown(page, block.content, onlyFirstParagraph);
     }
     if (block.tag === "@example" && block.content) {
       hasExample = true;

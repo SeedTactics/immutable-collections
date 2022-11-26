@@ -16,9 +16,10 @@ export function renderTypeAlias(page: PageEvent<unknown>, decl: DeclarationRefle
   const children = d.getChildren();
   for (let i = 1; i < children.length; i++) {
     if (children[i].kind === ts.SyntaxKind.SyntaxList) continue;
-    txt += children[i].getFullText();
-    if (i == 1) {
-      txt = txt.trimStart();
+    if (txt === "") {
+      txt = children[i].getFullText().trimStart();
+    } else {
+      txt += children[i].getFullText();
     }
   }
 
