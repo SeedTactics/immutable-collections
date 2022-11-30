@@ -6,8 +6,8 @@
  * If you wish to use a custom object as a key in a HashMap or OrderedMap, you must implement the `compare` function.
  * The `compare` function should return a negative number if `this < other`, return zero if `this` equals `other`, and
  * return a positive number if `this > other`.  A common technique is to use subtraction to compare numbers
- * and [String.localeCompare](mdn link) to compare srings.  Comparing multiple properties can either use
- * a sequence of `if` statements or use `||` to combine.
+ * and [String.localeCompare](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/localeCompare)
+ * to compare srings.  Comparing multiple properties can either use a sequence of `if` statements or use `||` to combine.
  *
  * @example
  * ```ts
@@ -90,7 +90,8 @@ export function evalComparable<T, F extends ToComparable<T>>(
  * compares multiple properties in order.  Each property is specified by an
  * extraction function which extracts the property from the type `T`.  The comparison
  * function will compare each property in order, returning as soon as a single property is
- * not equal.  Strings are compared using [localeCompare](mdn link).
+ * not equal.  Strings are compared using
+ * [localeCompare](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/localeCompare).
  *
  * This function can optionally be used to implement {@link ComparableObj}, but typically
  * a direct implementation is shorter.  `mkCompareByProperties` is instead used primarily

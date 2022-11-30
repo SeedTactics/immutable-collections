@@ -1,3 +1,5 @@
+/* eslint-disable no-undef */
+/* eslint-disable @typescript-eslint/no-var-requires */
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
@@ -52,7 +54,13 @@ const config = {
             type: "doc",
             docId: "intro",
             position: "left",
-            label: "Getting Started",
+            label: "Introduction",
+          },
+          {
+            type: "doc",
+            docId: "api/class_api",
+            position: "left",
+            label: "API",
           },
           {
             href: "https://github.com/SeedTactics/immutable-collections",
@@ -78,7 +86,19 @@ const config = {
             items: [
               {
                 label: "Class API",
-                to: "/docs/api/classes",
+                to: "/docs/api/class_api",
+              },
+              {
+                label: "HashMap",
+                to: "/docs/api/HashMap",
+              },
+              {
+                label: "OrderedMap",
+                to: "/docs/api/OrderedMap",
+              },
+              {
+                label: "LazySeq",
+                to: "/docs/api/LazySeq",
               },
             ],
           },
@@ -105,4 +125,5 @@ const config = {
     }),
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 module.exports = config;
