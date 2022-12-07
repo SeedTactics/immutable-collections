@@ -15,7 +15,9 @@ export function renderTypeAlias(page: PageEvent<unknown>, decl: DeclarationRefle
   let txt = "";
   const children = d.getChildren();
   for (let i = 1; i < children.length; i++) {
-    if (children[i].kind === ts.SyntaxKind.SyntaxList) continue;
+    if (children[i].kind === ts.SyntaxKind.SyntaxList && txt === "") {
+      continue;
+    }
     if (txt === "") {
       txt = children[i].getFullText().trimStart();
     } else {
