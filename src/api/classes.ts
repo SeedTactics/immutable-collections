@@ -4,7 +4,7 @@
  * Class-based API for immutable-collections
  *
  * @remarks
- * This module is the main import of immutable-collections, and implements the class-based API.
+ * This module is the main import of immutable-collections and implements the class-based API.
  * This API consists of the HashMap, HashSet, OrderedMap, OrderedSet, and LazySeq classes (along
  * with some utility functions).
  *

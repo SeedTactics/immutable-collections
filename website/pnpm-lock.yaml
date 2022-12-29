@@ -11,7 +11,7 @@ specifiers:
   prism-react-renderer: ^1.3.5
   react: ^18.2.0
   react-dom: ^18.2.0
-  typescript: ^4.9.4
+  typescript: ^4.9.3
 
 dependencies:
   '@docusaurus/core': 2.2.0_o4scbtliisanygemawej7x2d6i
