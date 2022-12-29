@@ -32,11 +32,47 @@ type TupleOfCmpProps<T, FS extends ToComparable<T>[]> = FS extends [ToComparable
       [k in keyof FS]: ReturnOfComparable<T, FS[k]>;
     };
 
+/**
+ * A class-wrapper around iterables
+ *
+ * @remarks
+ * The `LazySeq<T>` class stores an [iterable](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterable_protocol)
+ * of type `T` and provides a number of methods to transform the iterable.
+ * The general format for data manipulation is to start with some data in
+ * a data structure such as an array, object, {@link HashMap}, etc. Create a new
+ * LazySeq chain starting from the initial data, call various transformation
+ * methods to map, group, filter, aggregate the data, and finally terminate the
+ * chain by converting back to a data structure. Because most of the transformation
+ * methods are lazy, the new terminating data structure can be built directly from the
+ * transformed data in one pass.
+ */
 export class LazySeq<T> {
+  /** Creates a new LazySeq from any Iterable
+   *
+   * @category Static Creation Methods
+   */
   static of<T>(iter: Iterable<T>): LazySeq<T> {
     return new LazySeq(iter);
   }
 
+  /** Creates a new LazySeq from any iterator
+   *
+   * @category Static Creation Methods
+   *
+   * @remarks
+   * Like the [iterator protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterator_protocol),
+   * the iterator function is called each time the LazySeq is iterated.  Typically, you would use zero-argument
+   * [generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*) to create the iterator.
+   *
+   * @example
+   * ```typescript
+   * const oddNums = LazySeq.ofIterator(function* () {
+   *   for (let i = 1; i < 10; i += 2) {
+   *     yield i;
+   *   }
+   * });
+   * ```
+   */
   static ofIterator<T>(f: () => Iterator<T>): LazySeq<T> {
     return new LazySeq<T>({
       [Symbol.iterator]() {
@@ -45,6 +81,13 @@ export class LazySeq<T> {
     });
   }
 
+  /** Creates a new LazySeq from the keys and values of an object
+   *
+   * @category Static Creation Methods
+   *
+   * @remarks
+   * Only the [own properties](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/hasOwnProperty) of the object are included.
+   */
   static ofObject<V>(obj: { [k: string]: V }): LazySeq<readonly [string, V]> {
     return LazySeq.ofIterator(function* () {
       for (const k in obj) {
@@ -55,6 +98,14 @@ export class LazySeq<T> {
     });
   }
 
+  /** Creates a new LazySeq of numbers with a given start, end, and step
+   *
+   * @category Static Creation Methods
+   *
+   * @remarks
+   * The range is inclusive of the start and exclusive of the end.  The step defaults to 1 and can be negative.
+   * Note there is no infinite loop prevention, so make sure the step is not zero.
+   */
   static ofRange(start: number, end: number, step?: number): LazySeq<number> {
     const s = step || 1;
     if (s > 0) {
@@ -72,10 +123,30 @@ export class LazySeq<T> {
     }
   }
 
+  /** Iterates the entries in the LazySeq
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * This is the default iteration when using `for .. of` directly on the `LazySeq`.
+   */
   [Symbol.iterator](): Iterator<T> {
     return this.iter[Symbol.iterator]();
   }
 
+  /** Strictly combines entries which map to the same key
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * `aggregate` strictly transforms each entry in the LazySeq using the provided
+   * `key` and `val` functions.  Entries which map to the same key are then combined
+   * with the `combine` function.  Internally, this uses a javascript Map so the keys
+   * must be strings or numbers.
+   *
+   * For more complex keys, use instead {@link LazySeq#toHashMap}, {@link LazySeq#buildHashMap}, {@link LazySeq#toOrderedMap}, or
+   * {@link LazySeq#buildOrderedMap}.
+   */
   aggregate<K, S>(
     key: (x: T) => K & JsMapKey,
     val: (x: T) => S,
@@ -94,24 +165,10 @@ export class LazySeq<T> {
     return LazySeq.of(m);
   }
 
-  allMatch(f: (x: T) => boolean): boolean {
-    for (const x of this.iter) {
-      if (!f(x)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  anyMatch(f: (x: T) => boolean): boolean {
-    for (const x of this.iter) {
-      if (f(x)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
+  /** Lazily appends the given value to the end of the LazySeq
+   *
+   * @category Transformation
+   */
   append(x: T): LazySeq<T> {
     const iter = this.iter;
     return LazySeq.ofIterator(function* () {
@@ -120,6 +177,13 @@ export class LazySeq<T> {
     });
   }
 
+  /** Lazily splits the LazySeq into chunks of the given size
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * Each chunk except the final chunk will have exactly `size` entries.
+   */
   chunk(size: number): LazySeq<ReadonlyArray<T>> {
     const iter = this.iter;
     return LazySeq.ofIterator(function* () {
@@ -137,6 +201,23 @@ export class LazySeq<T> {
     });
   }
 
+  /** Lazily adds the specified iterable to the end of the LazySeq
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * In other words, when iterated the resulting LazySeq will first yield the
+   * entries in the input LazySeq and then the entries in the iterable passed into `concat`.
+   *
+   * @example
+   * ```typescript
+   * const nums = LazySeq.of([1, 2, 3]).concat([4, 5, 6]);
+   * for (const x of nums) {
+   *  console.log(x);
+   * });
+   * // the above prints 1, 2, 3, 4, 5, 6
+   * ```
+   */
   concat(i: Iterable<T>): LazySeq<T> {
     const iter = this.iter;
     return LazySeq.ofIterator(function* () {
@@ -145,7 +226,16 @@ export class LazySeq<T> {
     });
   }
 
-  distinct(this: LazySeq<T & (string | number | null)>): LazySeq<T> {
+  /** Strictly calculates only the distinct entries in the LazySeq
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * Internally, this uses a javascript Set so the entries must be strings or numbers.
+   * For more complex entries, use instead {@link LazySeq#distinctBy}, {@link LazySeq#toHashSet}
+   * or {@link LazySeq#toOrderedSet}.
+   */
+  distinct(this: LazySeq<T & JsMapKey>): LazySeq<T> {
     const iter = this.iter;
     return LazySeq.ofIterator(function* () {
       const s = new Set<T>();
@@ -158,6 +248,20 @@ export class LazySeq<T> {
     });
   }
 
+  /** Strictly calculates only the entries with distinct properties in the LazySeq
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * This method is given one or more property-extraction functions.  `distinctBy` then
+   * calculates the distinct entries in the LazySeq based on the tuple of those properties
+   * using a {@link HashMap} internally, so properties must be {@link class_api!ToHashable}.
+   *
+   * Compared to {@link LazySeq#toHashMap}, `distinctBy` internally handles creating a custom key
+   * tuple wheras you would need a custom key class implementing {@link class_api!HashableObj} for
+   * {@link LazySeq#toHashMap}. Also, use {@link LazySeq#distinctAndSortBy} if you want
+   * to sort the entries by the properties.
+   */
   distinctBy(prop: ToHashable<T>, ...props: Array<ToHashable<T>>): LazySeq<T> {
     props.unshift(prop);
     const iter = this.iter;
@@ -181,6 +285,19 @@ export class LazySeq<T> {
     });
   }
 
+  /** Strictly calculates only the entries with distinct properties in the LazySeq and yields them in sorted order
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * This method is given one or more property-extraction functions.  `distinctAndSortBy` then
+   * inserts them internally into a {@link OrderedMap} and yields them in ascending order.
+   * Thus, all properties must implement {@link class_api!ToComparable}.
+   *
+   * Compared to {@link LazySeq#toOrderedMap}, `distinctAndSortBy` internally handles creating a custom key
+   * tuple wheras you would need a custom key class implementing {@link class_api!ComparableObj} for
+   * {@link LazySeq#toOrderedMap}.
+   */
   distinctAndSortBy(prop: ToComparable<T>, ...props: Array<ToComparable<T>>): LazySeq<T> {
     props.unshift(prop);
     const cfg = {
@@ -196,6 +313,14 @@ export class LazySeq<T> {
     return LazySeq.ofIterator(() => tree.iterateAsc((k) => k, s));
   }
 
+  /** Lazily skips over a given number of entries in the LazySeq
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * When the resulting LazySeq is iterated, the first `n` entries will be skipped.  If `n` is
+   * larger than the total number of entries, the resulting LazySeq will be empty.
+   */
   drop(n: number): LazySeq<T> {
     const iter = this.iter;
     return LazySeq.ofIterator(function* () {
@@ -210,6 +335,16 @@ export class LazySeq<T> {
     });
   }
 
+  /** Lazily skips over entries until the specified predicate is false
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * When the resulting LazySeq is iterated, each entry is passed to the predicate function.
+   * If an entry returns true, it is skipped.  If an entry returns false, it is yielded and
+   * from then on the remainder of the entries are yielded unchanged.
+   * Thus, only the initial prefix of entries for which the predicate returns true are skipped.
+   */
   dropWhile(f: (x: T) => boolean): LazySeq<T> {
     const iter = this.iter;
     return LazySeq.ofIterator(function* () {
@@ -227,12 +362,30 @@ export class LazySeq<T> {
     });
   }
 
-  isEmpty(): boolean {
-    const first = this.iter[Symbol.iterator]().next();
-    return first.done === true;
-  }
-
+  /** Lazily filters the entries in the LazySeq to be only those returning true from a predicate function
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * This type signature using a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates)
+   * to allow the correct type after filtering to be inferred.
+   *
+   * @example
+   * ```typescript
+   * function isFish(pet: Fish | Bird): pet is Fish {
+   *   return (pet as Fish).swim !== undefined;
+   *  }
+   *
+   * const animals: LazySeq<Fish | Bird> = LazySeq.of([sunfish, penguin, goldfish, albatross]);
+   * const fish = animals.filter(isFish); // the type will be correctly inferred to be LazySeq<Fish>
+   * ```
+   */
   filter<S extends T>(f: (x: T) => x is S): LazySeq<S>;
+
+  /** Lazily filters the entries in the LazySeq to be only those returning true from a predicate function
+   *
+   * @category Transformation
+   */
   filter(f: (x: T) => boolean): LazySeq<T>;
   filter(f: (x: T) => boolean): LazySeq<T> {
     const iter = this.iter;
@@ -243,15 +396,6 @@ export class LazySeq<T> {
         }
       }
     });
-  }
-
-  find(f: (v: T) => boolean): T | undefined {
-    for (const x of this.iter) {
-      if (f(x)) {
-        return x;
-      }
-    }
-    return undefined;
   }
 
   flatMap<S>(f: (x: T) => Iterable<S>): LazySeq<S> {
@@ -511,6 +655,38 @@ export class LazySeq<T> {
         yield [n1.value, n2.value] as [T, S];
       }
     });
+  }
+
+  isEmpty(): boolean {
+    const first = this.iter[Symbol.iterator]().next();
+    return first.done === true;
+  }
+
+  allMatch(f: (x: T) => boolean): boolean {
+    for (const x of this.iter) {
+      if (!f(x)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  anyMatch(f: (x: T) => boolean): boolean {
+    for (const x of this.iter) {
+      if (f(x)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  find(f: (v: T) => boolean): T | undefined {
+    for (const x of this.iter) {
+      if (f(x)) {
+        return x;
+      }
+    }
+    return undefined;
   }
 
   toMutableArray(): Array<T> {
