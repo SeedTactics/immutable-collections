@@ -398,6 +398,10 @@ export class LazySeq<T> {
     });
   }
 
+  /** Lazily map each entry to multiple values and flatten all the resulting values into a single sequence
+   *
+   * @category Transformation
+   */
   flatMap<S>(f: (x: T) => Iterable<S>): LazySeq<S> {
     const iter = this.iter;
     return LazySeq.ofIterator(function* () {
@@ -407,14 +411,34 @@ export class LazySeq<T> {
     });
   }
 
-  foldLeft<S>(zero: S, f: (soFar: S, cur: T) => S): S {
-    let soFar = zero;
-    for (const x of this.iter) {
-      soFar = f(soFar, x);
-    }
-    return soFar;
-  }
-
+  /** Strictly group the values by one or more properties and yield the resulting groups
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * `groupBy` takes one or more property-extraction functions and groups the values by the
+   * tuple of these properties.  For each tuple of properties, all values which have the same
+   * tuple are combined into an array.  Internally, this uses a {@link HashMap} so
+   * the resulting groups appear in any order and thus properties must be hashable.
+   * Use {@link LazySeq#orderedGroupBy} if the properties can only be compared but not hashed.
+   *
+   * This function is very similar to {@link LazySeq#toLookup}, but the main advantage of `groupBy`
+   * is that you do not need to create a custom key class for a tuple of multiple properties.
+   *
+   * @example
+   * ```typescript
+   * const seq = LazySeq.of([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+   * const groups = seq.groupBy(x => x % 2, x => x % 3);
+   * // groups will consist of the following
+   * // the first element of each group is the tuple of [x % 2, x % 3] and the second is the array of values
+   * //   [ [0, 0], [6, 12] ]
+   * //   [ [0, 1], [4, 10] ]
+   * //   [ [0, 2], [2, 8] ]
+   * //   [ [1, 0], [3, 9] ]
+   * //   [ [1, 1], [1, 7] ]
+   * //   [ [1, 2], [5, 11] ]
+   * ```
+   */
   groupBy<PropFn extends ToHashable<T>, PropFns extends ToHashable<T>[]>(
     propFn: PropFn,
     ...fs: PropFns
@@ -452,6 +476,19 @@ export class LazySeq<T> {
     );
   }
 
+  /** Strictly group the values by one or more properties and yield the resulting groups
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * `orderedGroupBy` takes one or more property-extraction functions and groups the values by the
+   * tuple of these properties.  For each tuple of properties, all values which have the same
+   * tuple are combined into an array.  Internally, this uses an {@link OrderedMap} so
+   * the resulting groups will appear in ascending order of key.
+   *
+   * This function is very similar to {@link LazySeq#toOrderedLookup}, but the main advantage of `orderedGroupBy`
+   * is that you do not need to create a custom key class for a tuple of multiple properties.
+   */
   orderedGroupBy<PropFn extends ToComparable<T>, PropFns extends ToComparable<T>[]>(
     propfn: PropFn,
     ...fns: PropFns
@@ -497,24 +534,14 @@ export class LazySeq<T> {
     );
   }
 
-  head(): T | undefined {
-    const first = this.iter[Symbol.iterator]().next();
-    if (first.done) {
-      return undefined;
-    } else {
-      return first.value;
-    }
-  }
-
-  length(): number {
-    let cnt = 0;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for (const _ of this.iter) {
-      cnt += 1;
-    }
-    return cnt;
-  }
-
+  /** Lazily apply a function to each entry in a LazySeq
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * Each element of the LazySeq is applied to the provided function `f`, along with
+   * the zero-based index of the element.
+   */
   map<S>(f: (x: T, idx: number) => S): LazySeq<S> {
     const iter = this.iter;
     return LazySeq.ofIterator(function* () {
@@ -526,6 +553,14 @@ export class LazySeq<T> {
     });
   }
 
+  /** Lazily apply a function to each entry in a LazySeq and only include those which are not null or undefined
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * Each element of the LazySeq is applied to the provided function `f`.  If the result is not null or
+   * undefined, it is included in the resulting LazySeq.
+   */
   collect<S>(f: (x: T) => S | null | undefined): LazySeq<S> {
     const iter = this.iter;
     return LazySeq.ofIterator(function* () {
@@ -536,6 +571,261 @@ export class LazySeq<T> {
         }
       }
     });
+  }
+
+  /** Lazily prepend the given value to the beginning of the LazySeq
+   *
+   * @category Transformation
+   */
+  prepend(x: T): LazySeq<T> {
+    const iter = this.iter;
+    return LazySeq.ofIterator(function* () {
+      yield x;
+      yield* iter;
+    });
+  }
+
+  /** Lazily adds the specified iterable to the beginning of the LazySeq
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * In other words, when iterated the resulting LazySeq will first yield the
+   * entries in the iterable passed to `prependAll` and then after that yield the
+   * entries in the LazySeq.
+   */
+  prependAll(i: Iterable<T>): LazySeq<T> {
+    const iter = this.iter;
+    return LazySeq.ofIterator(function* () {
+      yield* i;
+      yield* iter;
+    });
+  }
+
+  /** Strictly sort the values in the LazySeq using the provided comparison function
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * This produces a new sorted LazySeq and thus is intended to be used in the middle of a chain of
+   * transformations.  If you want to terminate the LazySeq into a sorted data structure, use
+   * {@link LazySeq#toSortedArray} or {@link LazySeq#toOrderedMap}.
+   */
+  sortWith(compare: (v1: T, v2: T) => number): LazySeq<T> {
+    return LazySeq.of(Array.from(this.iter).sort(compare));
+  }
+
+  /** Strictly sort the values in the LazySeq by the provided properties
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * `sortBy` takes one or more property-extraction functions.  The values are applied to each property-extraction
+   * function and then sorted by the tuple of resulting properties.
+   * This produces a new sorted LazySeq and thus is intended to be used in the middle of a chain of
+   * transformations.  If you want to terminate the LazySeq into a sorted data structure, use
+   * {@link LazySeq#toSortedArray} or {@link LazySeq#toOrderedMap}.
+   */
+  sortBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): LazySeq<T> {
+    return LazySeq.of(Array.from(this.iter).sort(mkCompareByProperties(prop, ...props)));
+  }
+
+  /** Lazily create a LazySeq which iterates all but the first entry
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * If the LazySeq is empty, the resulting LazySeq will also be empty.  If the LazySeq is not empty,
+   * all but the first entry will be included in the resulting LazySeq.
+   *
+   * @example
+   * ```typescript
+   * const s = LazySeq.of([1, 2, 3, 4, 5]);
+   * for (const x of s.tail()) {
+   *   console.log(x);
+   * }
+   * // prints 2, 3, 4, 5
+   * ```
+   */
+  tail(): LazySeq<T> {
+    const iter = this.iter;
+    return LazySeq.ofIterator(function* () {
+      let seenFirst = false;
+      for (const x of iter) {
+        if (seenFirst) {
+          yield x;
+        } else {
+          seenFirst = true;
+        }
+      }
+    });
+  }
+
+  /** Lazily take the initial specified number of entries in the LazySeq and ignore the rest
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * When the resulting LazySeq is iterated, the first `n` entries will be yielded.  If `n` is
+   * larger than the total number of entries, the entire LazySeq will be yielded.  Any entries
+   * beyond the first `n` will be ignored.
+   */
+  take(n: number): LazySeq<T> {
+    const iter = this.iter;
+    return LazySeq.ofIterator(function* () {
+      let cnt = 0;
+      for (const x of iter) {
+        if (cnt >= n) {
+          return;
+        }
+        yield x;
+        cnt += 1;
+      }
+    });
+  }
+
+  /** Lazily takes entries while the specified predicate is true
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * When the resulting LazySeq is iterated, each entry is passed to the predicate function.
+   * If an entry returns true, it is yielded.  As soon as an entry returns false, it
+   * is not yielded and no more entries are processed.
+   */
+  takeWhile(f: (x: T) => boolean): LazySeq<T> {
+    const iter = this.iter;
+    return LazySeq.ofIterator(function* () {
+      for (const x of iter) {
+        if (f(x)) {
+          yield x;
+        } else {
+          return;
+        }
+      }
+    });
+  }
+
+  /** Lazily combine the LazySeq with an iterable entry by entry into tuples of size 2
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * Both the LazySeq and the iterable are jointly iterated element-by-element.  The elements
+   * are combined into a tuple of size 2.  As soon as one of the iterators is exhausted, the
+   * iteration ends and any remaining elements in the other iterator are ignored.
+   *
+   * @example
+   * ```typescript
+   * const s1 = LazySeq.of([1, 2, 3]);
+   * const s2 = LazySeq.of(['a', 'b', 'c']);
+   * const s3 = s1.zip(s2);
+   * for (const [x, y] of s3) {
+   *   console.log(x, y);
+   * }
+   * // prints 3 lines:
+   * // 1 a
+   * // 2 b
+   * // 3 c
+   * ```
+   */
+  zip<S>(other: Iterable<S>): LazySeq<readonly [T, S]> {
+    const iter = this.iter;
+    return LazySeq.ofIterator(function* () {
+      const i1 = iter[Symbol.iterator]();
+      const i2 = other[Symbol.iterator]();
+      while (true) {
+        const n1 = i1.next();
+        const n2 = i2.next();
+        if (n1.done || n2.done) {
+          return;
+        }
+        yield [n1.value, n2.value] as [T, S];
+      }
+    });
+  }
+
+  /** Check if all entries in the LazySeq return true from the provided function
+   *
+   * @category Query
+   *
+   * @remarks
+   * If the LazySeq is empty, this function returns true.
+   */
+  allMatch(f: (x: T) => boolean): boolean {
+    for (const x of this.iter) {
+      if (!f(x)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** Check if any entry in the LazySeq return true from the provided function
+   *
+   * @category Query
+   *
+   * @remarks
+   * If the LazySeq is empty, this function returns false.
+   */
+  anyMatch(f: (x: T) => boolean): boolean {
+    for (const x of this.iter) {
+      if (f(x)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** Returns true if the LazySeq is empty
+   *
+   * @category Query
+   */
+  isEmpty(): boolean {
+    const first = this.iter[Symbol.iterator]().next();
+    return first.done === true;
+  }
+
+  /** Search for an entry which returns true when provided to `f`.
+   *
+   * @category Query
+   *
+   * @remarks
+   * If found, the element is returned.  Otherwise, `undefined` is returned.
+   */
+  find(f: (v: T) => boolean): T | undefined {
+    for (const x of this.iter) {
+      if (f(x)) {
+        return x;
+      }
+    }
+    return undefined;
+  }
+
+  /** Returns the first entry of the LazySeq or undefined if the LazySeq is empty.
+   *
+   * @category Query
+   */
+  head(): T | undefined {
+    const first = this.iter[Symbol.iterator]().next();
+    if (first.done) {
+      return undefined;
+    } else {
+      return first.value;
+    }
+  }
+
+  /** Returns the length of the LazySeq
+   *
+   * @category Query
+   */
+  length(): number {
+    let cnt = 0;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const _ of this.iter) {
+      cnt += 1;
+    }
+    return cnt;
   }
 
   maxBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): T | undefined {
@@ -568,30 +858,6 @@ export class LazySeq<T> {
     return ret;
   }
 
-  prepend(x: T): LazySeq<T> {
-    const iter = this.iter;
-    return LazySeq.ofIterator(function* () {
-      yield x;
-      yield* iter;
-    });
-  }
-
-  prependAll(i: Iterable<T>): LazySeq<T> {
-    const iter = this.iter;
-    return LazySeq.ofIterator(function* () {
-      yield* i;
-      yield* iter;
-    });
-  }
-
-  sortWith(compare: (v1: T, v2: T) => number): LazySeq<T> {
-    return LazySeq.of(Array.from(this.iter).sort(compare));
-  }
-
-  sortBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): LazySeq<T> {
-    return LazySeq.of(Array.from(this.iter).sort(mkCompareByProperties(prop, ...props)));
-  }
-
   sumBy(getNumber: (v: T) => number): number {
     let sum = 0;
     for (const x of this.iter) {
@@ -600,93 +866,12 @@ export class LazySeq<T> {
     return sum;
   }
 
-  tail(): LazySeq<T> {
-    const iter = this.iter;
-    return LazySeq.ofIterator(function* () {
-      let seenFirst = false;
-      for (const x of iter) {
-        if (seenFirst) {
-          yield x;
-        } else {
-          seenFirst = true;
-        }
-      }
-    });
-  }
-
-  take(n: number): LazySeq<T> {
-    const iter = this.iter;
-    return LazySeq.ofIterator(function* () {
-      let cnt = 0;
-      for (const x of iter) {
-        if (cnt >= n) {
-          return;
-        }
-        yield x;
-        cnt += 1;
-      }
-    });
-  }
-
-  takeWhile(f: (x: T) => boolean): LazySeq<T> {
-    const iter = this.iter;
-    return LazySeq.ofIterator(function* () {
-      for (const x of iter) {
-        if (f(x)) {
-          yield x;
-        } else {
-          return;
-        }
-      }
-    });
-  }
-
-  zip<S>(other: Iterable<S>): LazySeq<readonly [T, S]> {
-    const iter = this.iter;
-    return LazySeq.ofIterator(function* () {
-      const i1 = iter[Symbol.iterator]();
-      const i2 = other[Symbol.iterator]();
-      while (true) {
-        const n1 = i1.next();
-        const n2 = i2.next();
-        if (n1.done || n2.done) {
-          return;
-        }
-        yield [n1.value, n2.value] as [T, S];
-      }
-    });
-  }
-
-  isEmpty(): boolean {
-    const first = this.iter[Symbol.iterator]().next();
-    return first.done === true;
-  }
-
-  allMatch(f: (x: T) => boolean): boolean {
+  foldLeft<S>(zero: S, f: (soFar: S, cur: T) => S): S {
+    let soFar = zero;
     for (const x of this.iter) {
-      if (!f(x)) {
-        return false;
-      }
+      soFar = f(soFar, x);
     }
-    return true;
-  }
-
-  anyMatch(f: (x: T) => boolean): boolean {
-    for (const x of this.iter) {
-      if (f(x)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  find(f: (v: T) => boolean): T | undefined {
-    for (const x of this.iter) {
-      if (f(x)) {
-        return x;
-      }
-    }
-    return undefined;
+    return soFar;
   }
 
   toMutableArray(): Array<T> {
