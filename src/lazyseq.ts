@@ -1211,7 +1211,8 @@ export class LazySeq<T> {
         if (old === undefined) {
           return [t as unknown as S];
         } else {
-          return [...old, t as unknown as S];
+          old.push(t as unknown as S);
+          return old;
         }
       };
     } else {
@@ -1219,7 +1220,8 @@ export class LazySeq<T> {
         if (old === undefined) {
           return [val(t)];
         } else {
-          return [...old, val(t)];
+          old.push(val(t));
+          return old;
         }
       };
     }
@@ -1243,7 +1245,8 @@ export class LazySeq<T> {
         if (old === undefined) {
           return [t as unknown as S];
         } else {
-          return [...old, t as unknown as S];
+          old.push(t as unknown as S);
+          return old;
         }
       };
     } else {
@@ -1251,7 +1254,8 @@ export class LazySeq<T> {
         if (old === undefined) {
           return [val(t)];
         } else {
-          return [...old, val(t)];
+          old.push(val(t));
+          return old;
         }
       };
     }
