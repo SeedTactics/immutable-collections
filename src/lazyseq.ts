@@ -257,10 +257,11 @@ export class LazySeq<T> {
    * calculates the distinct entries in the LazySeq based on the tuple of those properties
    * using a {@link HashMap} internally, so properties must be {@link class_api!ToHashable}.
    *
-   * Compared to {@link LazySeq#toHashMap}, `distinctBy` internally handles creating a custom key
-   * tuple wheras you would need a custom key class implementing {@link class_api!HashableObj} for
-   * {@link LazySeq#toHashMap}. Also, use {@link LazySeq#distinctAndSortBy} if you want
-   * to sort the entries by the properties.
+   * `distinctBy` and {@link LazySeq#toHashMap} are very similar; the main difference is that when
+   * you have multiple properties you want to use, `distinctBy` internally handles creating a
+   * custom key tuple.
+   *
+   * See also {@link LazySeq#distinctAndSortBy} if you want to sort the entries by the properties.
    */
   distinctBy(prop: ToHashable<T>, ...props: Array<ToHashable<T>>): LazySeq<T> {
     props.unshift(prop);
@@ -294,9 +295,9 @@ export class LazySeq<T> {
    * inserts them internally into a {@link OrderedMap} and yields them in ascending order.
    * Thus, all properties must implement {@link class_api!ToComparable}.
    *
-   * Compared to {@link LazySeq#toOrderedMap}, `distinctAndSortBy` internally handles creating a custom key
-   * tuple wheras you would need a custom key class implementing {@link class_api!ComparableObj} for
-   * {@link LazySeq#toOrderedMap}.
+   * `distinctAndSortBy` and {@link LazySeq#toOrderedMap} are very similar; the main difference is that when
+   * you have multiple properties you want to use, `distinctAndSortBy` internally handles creating a
+   * custom key tuple.
    */
   distinctAndSortBy(prop: ToComparable<T>, ...props: Array<ToComparable<T>>): LazySeq<T> {
     props.unshift(prop);
@@ -425,6 +426,9 @@ export class LazySeq<T> {
    * This function is very similar to {@link LazySeq#toLookup}, but the main advantage of `groupBy`
    * is that you do not need to create a custom key class for a tuple of multiple properties.
    *
+   * The `TupleOfHashProps` type is a helper type which extracts the type of each property and creates
+   * a tuple of those types.
+   *
    * @example
    * ```typescript
    * const seq = LazySeq.of([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
@@ -488,6 +492,9 @@ export class LazySeq<T> {
    *
    * This function is very similar to {@link LazySeq#toOrderedLookup}, but the main advantage of `orderedGroupBy`
    * is that you do not need to create a custom key class for a tuple of multiple properties.
+   *
+   * The `TupleOfCmpProps` type is a helper type which extracts the type of each property and creates
+   * a tuple of those types.
    */
   orderedGroupBy<PropFn extends ToComparable<T>, PropFns extends ToComparable<T>[]>(
     propfn: PropFn,
@@ -984,7 +991,7 @@ export class LazySeq<T> {
    * found, the provided merge function is used to determine the value; see the docs for
    * {@link OrderedMap.from} for details.
    * If you don't wish to overwrite values, {@link LazySeq#toOrderedLookup} and
-   * {@link LazySeq#toOrderedLookupMap} keep all the duplicate values.
+   * {@link LazySeq#toOrderedLookup} keep all the duplicate values.
    */
   toOrderedMap<K, S extends NotUndefined>(
     f: (x: T) => readonly [K & OrderedMapKey, S],
@@ -1002,7 +1009,7 @@ export class LazySeq<T> {
    * key extraction function.  When a duplicate key is found, the value is overwritten with the later value.
    * See the docs for {@link OrderedMap.build} for details.
    * If you don't wish to overwrite values, {@link LazySeq#toOrderedLookup} and
-   * {@link LazySeq#toOrderedLookupMap} keep all the duplicate values.
+   * {@link LazySeq#toLookupOrderedMap} keep all the duplicate values.
    */
   buildOrderedMap<K>(key: (x: T) => K & OrderedMapKey): OrderedMap<K & OrderedMapKey, T>;
 
@@ -1015,7 +1022,7 @@ export class LazySeq<T> {
    * key extraction function and a value extraction function.  See the docs for
    * {@link OrderedMap.build} for details.
    * If you don't wish to merge values, {@link LazySeq#toOrderedLookup} and
-   * {@link LazySeq#toOrderedLookupMap} keep all the duplicate values.
+   * {@link LazySeq#toLookupOrderedMap} keep all the duplicate values.
    */
   buildOrderedMap<K, S extends NotUndefined>(
     key: (x: T) => K & OrderedMapKey,
