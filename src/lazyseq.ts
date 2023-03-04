@@ -1203,11 +1203,42 @@ export class LazySeq<T> {
     return soFar;
   }
 
+  /** Apply a function to the LazySeq
+   *
+   * @category Conversion
+   *
+   * @remarks
+   * Applies the provided function `f` to `this` and returns the result.  This is a convenience function
+   * which allows you to continue to chain operations without having to create a new
+   * temporary variable.
+   */
+  transform<U>(f: (s: LazySeq<T>) => U): U {
+    return f(this);
+  }
+
+  /** Group entries in the LazySeq by a key, returning a HashMap with an array of values
+   *
+   * @category Grouping
+   *
+   * @remarks
+   * The key function is used to extract a key for each entry and then entries are grouped by a key.  All the values that
+   * have the same key are collected into an array and returned in a {@link HashMap}.
+   */
   toLookup<K>(key: (x: T) => K & HashKey): HashMap<K & HashKey, ReadonlyArray<T>>;
+
+  /** Group entries in the LazySeq by a key, returning a HashMap with an array of values
+   *
+   * @category Grouping
+   *
+   * @remarks
+   * Each element in the LazySeq is converted to a key and a value using the provided functions.
+   * The keys are used to group the values into an array and the result is returned in a {@link HashMap}.
+   */
   toLookup<K, S>(
     key: (x: T) => K & HashKey,
     val: (x: T) => S
   ): HashMap<K & HashKey, ReadonlyArray<S>>;
+
   toLookup<K, S>(
     key: (x: T) => K & HashKey,
     val?: (x: T) => S
@@ -1235,9 +1266,26 @@ export class LazySeq<T> {
     return HashMap.build(this.iter, key, merge);
   }
 
+  /** Group entries in the LazySeq by a key, returning an OrderedMap with an array of values
+   *
+   * @category Grouping
+   *
+   * @remarks
+   * The key function is used to extract a key for each entry and then entries are grouped by a key.  All the values that
+   * have the same key are collected into an array and returned in an {@link OrderedMap}.
+   */
   toOrderedLookup<K>(
     key: (x: T) => K & OrderedMapKey
   ): OrderedMap<K & OrderedMapKey, ReadonlyArray<T>>;
+
+  /** Group entries in the LazySeq by a key, returning an OrderedMap with an array of values
+   *
+   * @category Grouping
+   *
+   * @remarks
+   * Each element in the LazySeq is converted to a key and a value using the provided functions.
+   * The keys are used to group the values into an array and the result is returned in an {@link OrderedMap}.
+   */
   toOrderedLookup<K, S>(
     key: (x: T) => K & OrderedMapKey,
     val: (x: T) => S
@@ -1269,10 +1317,32 @@ export class LazySeq<T> {
     return OrderedMap.build(this.iter, key, merge);
   }
 
+  /** Group entries in the LazySeq by two keys, returning a HashMap of HashMaps
+   *
+   * @category Grouping
+   *
+   * @remarks
+   * All entries in the LazySeq are first grouped by `key1`.  For each `key1`, all the values that share the same `key1`
+   * are then grouped by `key2`.  Entries with the same `key1` and `key2` overwrite previous entries with the same keys
+   * (see the more general `toLookupMap` for a version with a merge function).  The result is a {@link HashMap} of
+   * {@link HashMap}s.
+   */
   toLookupMap<K1, K2>(
     key1: (x: T) => K1 & HashKey,
     key2: (x: T) => K2 & HashKey
   ): HashMap<K1 & HashKey, HashMap<K2 & HashKey, T>>;
+
+  /** Group entries in the LazySeq by two keys, returning a HashMap of HashMaps
+   *
+   * @category Grouping
+   *
+   * @remarks
+   * All entries in the LazySeq are passed to the provided functions to extract a `key1`, `key2`, and value.
+   * They are then first grouped by `key1`.  For each `key1`, all the values that share the same `key1`
+   * are then grouped by `key2`.  Entries with the same `key1` and `key2` are either merged using the `mergeVals` function
+   * if it is provided, otherwise values later in the LazySeq overwrite previous values with the same keys.
+   * The result is a {@link HashMap} of {@link HashMap}s.
+   */
   toLookupMap<K1, K2, S extends NotUndefined>(
     key1: (x: T) => K1 & HashKey,
     key2: (x: T) => K2 & HashKey,
@@ -1303,16 +1373,39 @@ export class LazySeq<T> {
     return HashMap.build(this.iter, key1, merge);
   }
 
+  /** Group entries in the LazySeq by two keys, returning an OrderedMap of OrderedMaps
+   *
+   * @category Grouping
+   *
+   * @remarks
+   * All entries in the LazySeq are first grouped by `key1`.  For each `key1`, all the values that share the same `key1`
+   * are then grouped by `key2`.  Entries with the same `key1` and `key2` overwrite previous entries with the same keys
+   * (see the more general `toLookupOrderedMap` for a version with a merge function).  The result is an {@link OrderedMap} of
+   * {@link OrderedMap}s.
+   */
   toLookupOrderedMap<K1, K2>(
     key1: (x: T) => K1 & OrderedMapKey,
     key2: (x: T) => K2 & OrderedMapKey
   ): OrderedMap<K1 & OrderedMapKey, OrderedMap<K2 & OrderedMapKey, T>>;
+
+  /** Group entries in the LazySeq by two keys, returning an OrderedMap of OrderedMaps
+   *
+   * @category Grouping
+   *
+   * @remarks
+   * All entries in the LazySeq are passed to the provided functions to extract a `key1`, `key2`, and value.
+   * They are then first grouped by `key1`.  For each `key1`, all the values that share the same `key1`
+   * are then grouped by `key2`.  Entries with the same `key1` and `key2` are either merged using the `mergeVals` function
+   * if it is provided, otherwise values later in the LazySeq overwrite previous values with the same keys.
+   * The result is a {@link OrderedMap} of {@link OrderedMap}s.
+   */
   toLookupOrderedMap<K1, K2, S>(
     key1: (x: T) => K1 & OrderedMapKey,
     key2: (x: T) => K2 & OrderedMapKey,
     val: (x: T) => S,
     mergeVals?: (v1: S, v2: S) => S
   ): OrderedMap<K1 & OrderedMapKey, OrderedMap<K2 & OrderedMapKey, S>>;
+
   toLookupOrderedMap<K1, K2, S extends NotUndefined>(
     key1: (x: T) => K1 & OrderedMapKey,
     key2: (x: T) => K2 & OrderedMapKey,
@@ -1336,7 +1429,25 @@ export class LazySeq<T> {
     return OrderedMap.build(this.iter, key1, merge);
   }
 
+  /** Group entries in the LazySeq by a key, returning a Javascript Map with an array of values
+   *
+   * @category Grouping
+   *
+   * @remarks
+   * The key function is used to extract a key for each entry and then entries are grouped by a key.  All the values that
+   * have the same key are collected into an array and returned in an [JS Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map).
+   */
   toRLookup<K>(key: (x: T) => K): ReadonlyMap<K, ReadonlyArray<T>>;
+
+  /** Group entries in the LazySeq by a key, returning a Javascript Map with an array of values
+   *
+   * @category Grouping
+   *
+   * @remarks
+   * Each element in the LazySeq is converted to a key and a value using the provided functions.
+   * The keys are used to group the values into an array and the result is returned in an
+   * [JS Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map).
+   */
   toRLookup<K, S>(key: (x: T) => K, val: (x: T) => S): ReadonlyMap<K, ReadonlyArray<S>>;
   toRLookup<K, S>(
     key: (x: T) => K,
@@ -1354,10 +1465,6 @@ export class LazySeq<T> {
       }
     }
     return m;
-  }
-
-  transform<U>(f: (s: LazySeq<T>) => U): U {
-    return f(this);
   }
 
   private constructor(private iter: Iterable<T>) {}
