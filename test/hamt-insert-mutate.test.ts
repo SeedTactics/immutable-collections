@@ -3,10 +3,17 @@
 import { expect } from "chai";
 import { CollidingKey as Key } from "./collision-key.js";
 import { mkHashConfig } from "../src/data-structures/hashing.js";
-import { InternalNode, MutableHamtNode, mutateInsert } from "../src/data-structures/hamt.js";
+import {
+  InternalNode,
+  MutableHamtNode,
+  mutateInsert,
+} from "../src/data-structures/hamt.js";
 import { LazySeq } from "../src/lazyseq.js";
 
-function setNewVal(str: string, val: number): (old: number | undefined, t: string) => number {
+function setNewVal(
+  str: string,
+  val: number
+): (old: number | undefined, t: string) => number {
   return (old, t) => {
     expect(t).to.equal(str);
     expect(old).to.be.undefined;
@@ -79,9 +86,15 @@ describe("hamt mutate insert", () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
     expect((node2 as any).children[0]).to.equal((node3 as any).children[0]);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-    expect((node2 as any).children[0].children).to.equal((node3 as any).children[0].children);
+    expect((node2 as any).children[0].children).to.equal(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+      (node3 as any).children[0].children
+    );
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-    expect((node2 as any).children[0].children[0]).to.equal((node3 as any).children[0].children[0]);
+    expect((node2 as any).children[0].children[0]).to.equal(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+      (node3 as any).children[0].children[0]
+    );
 
     expect(node2).to.deep.equal({
       bitmap: 1 << 0b11011,
@@ -108,12 +121,20 @@ describe("hamt mutate insert", () => {
     const node0 = mutateInsert(cfg, new Key(0, 0), "AA", setNewVal("AA", 0), null);
     const node1 = mutateInsert(cfg, new Key(1, 1), "BB", setNewVal("BB", 100), node0);
 
-    const tree = LazySeq.ofRange(2, 32).foldLeft(node1, (node, i) =>
-      mutateInsert(cfg, new Key(i, i), "aa" + i.toString(), setNewVal("aa" + i.toString(), i * 100), node)
+    const tree = LazySeq.ofRange(2, 32).fold(node1, (node, i) =>
+      mutateInsert(
+        cfg,
+        new Key(i, i),
+        "aa" + i.toString(),
+        setNewVal("aa" + i.toString(), i * 100),
+        node
+      )
     );
 
     // check array was re-used
-    expect((node1 as InternalNode<Key, number>).children).to.equal((tree as InternalNode<Key, number>).children);
+    expect((node1 as InternalNode<Key, number>).children).to.equal(
+      (tree as InternalNode<Key, number>).children
+    );
 
     expect(tree).to.deep.equal({
       bitmap: ~0,
@@ -126,11 +147,19 @@ describe("hamt mutate insert", () => {
         .toRArray(),
     });
 
-    const after = mutateInsert(cfg, new Key(32, 32), "after", setNewVal("after", 32 * 100), tree);
+    const after = mutateInsert(
+      cfg,
+      new Key(32, 32),
+      "after",
+      setNewVal("after", 32 * 100),
+      tree
+    );
 
     // check node and array was re-used
     expect(tree).to.equal(after);
-    expect((after as InternalNode<Key, number>).children).to.equal((tree as InternalNode<Key, number>).children);
+    expect((after as InternalNode<Key, number>).children).to.equal(
+      (tree as InternalNode<Key, number>).children
+    );
 
     // note, checking tree deep equals the result of inserting 32 since it should have been mutated
     expect(tree).to.deep.equal({
@@ -225,7 +254,10 @@ describe("hamt mutate insert", () => {
     // check that lookup and insert on invalid trees don't go into an infinite loop
 
     const cfg = mkHashConfig<number>();
-    const badNode = { bitmap: 1 << 5, children: [null] } as unknown as MutableHamtNode<number, string>;
+    const badNode = { bitmap: 1 << 5, children: [null] } as unknown as MutableHamtNode<
+      number,
+      string
+    >;
 
     expect(() => mutateInsert(cfg, 5, "abc", () => "hello", badNode)).to.throw(
       "Internal immutable-collections violation: hamt mutate insert reached null"

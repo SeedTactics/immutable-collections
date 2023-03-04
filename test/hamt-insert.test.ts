@@ -121,7 +121,10 @@ describe("HAMT insert and lookup", () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
     expect(node1).to.equal((node3 as any).children[0].children[0].children[1]);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-    expect((node2 as any).children[0].children[0]).to.equal((node3 as any).children[0].children[0]);
+    expect((node2 as any).children[0].children[0]).to.equal(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+      (node3 as any).children[0].children[0]
+    );
 
     expect(lookup(cfg, k1, node2)).to.equal(100);
     expect(lookup(cfg, k2, node2)).to.equal(200);
@@ -131,11 +134,14 @@ describe("HAMT insert and lookup", () => {
 
   it("creates a full node", () => {
     const cfg = mkHashConfig<Key>();
-    const tree = LazySeq.ofRange(0, 32).foldLeft(null as HamtNode<Key, number> | null, (node, i) => {
-      const [n, inserted] = insert(cfg, new Key(i, i), setNewVal(i * 100), node);
-      expect(inserted).to.be.true;
-      return n;
-    });
+    const tree = LazySeq.ofRange(0, 32).fold(
+      null as HamtNode<Key, number> | null,
+      (node, i) => {
+        const [n, inserted] = insert(cfg, new Key(i, i), setNewVal(i * 100), node);
+        expect(inserted).to.be.true;
+        return n;
+      }
+    );
 
     expect(tree).to.deep.equal({
       bitmap: ~0,
@@ -278,7 +284,10 @@ describe("HAMT insert and lookup", () => {
     // check that lookup and insert on invalid trees don't go into an infinite loop
 
     const cfg = mkHashConfig<number>();
-    const badNode = { bitmap: 1 << 5, children: [null] } as unknown as HamtNode<number, string>;
+    const badNode = { bitmap: 1 << 5, children: [null] } as unknown as HamtNode<
+      number,
+      string
+    >;
 
     expect(() => lookup(cfg, 5, badNode)).to.throw(
       "Internal immutable-collections violation: node undefined during lookup"

@@ -9,7 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Lots of documentation improvements.
+- A few performance improvements.
 - Add LazySeq.toOrderedSet to convert a sequence to an ordered set.
+
+### Changed
+
+- **Breaking** Rename `LazySeq.foldLeft` to just `LazySeq.fold`.
 
 ## 0.9.3 - 2022-08-03
 

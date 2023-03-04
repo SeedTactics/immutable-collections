@@ -1195,7 +1195,7 @@ export class LazySeq<T> {
    * combines elements in order from the LazySeq, with the first element being combined with the zero value, and
    * then the result of that combination is combined with the second element, and so on.
    */
-  foldLeft<S>(zero: S, f: (soFar: S, cur: T) => S): S {
+  fold<S>(zero: S, f: (soFar: S, cur: T) => S): S {
     let soFar = zero;
     for (const x of this.iter) {
       soFar = f(soFar, x);

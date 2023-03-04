@@ -272,12 +272,14 @@ describe("LazySeq", () => {
     const seq2 = seq.flatMap((i) => LazySeq.ofRange(i, i + 3));
 
     expect(seq.toRArray()).to.deep.equal([10, 20, 30, 40]);
-    expect(seq2.toRArray()).to.deep.equal([10, 11, 12, 20, 21, 22, 30, 31, 32, 40, 41, 42]);
+    expect(seq2.toRArray()).to.deep.equal([
+      10, 11, 12, 20, 21, 22, 30, 31, 32, 40, 41, 42,
+    ]);
   });
 
   it("folds a sequence", () => {
     const seq = LazySeq.ofRange(1, 10);
-    const val = seq.foldLeft(0, (acc, i) => acc + i);
+    const val = seq.fold(0, (acc, i) => acc + i);
 
     expect(seq.toRArray()).to.deep.equal([1, 2, 3, 4, 5, 6, 7, 8, 9]);
     expect(val).to.equal(45);
@@ -285,7 +287,9 @@ describe("LazySeq", () => {
 
   it("groups a sequence", () => {
     const seq = LazySeq.ofRange(10, 0, -1);
-    const seq2: LazySeq<[number, ReadonlyArray<number>]> = seq.groupBy((i) => Math.floor(i / 2));
+    const seq2: LazySeq<[number, ReadonlyArray<number>]> = seq.groupBy((i) =>
+      Math.floor(i / 2)
+    );
 
     expect(seq.toRArray()).to.deep.equal([10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
     expect(seq2.toRArray()).to.deep.equal([
@@ -320,11 +324,12 @@ describe("LazySeq", () => {
       { foo: 3, bar: "f", baz: 110 },
     ]);
 
-    const grouped: LazySeq<[[number, string], ReadonlyArray<{ foo: number; bar: string; baz: number }>]> =
-      seq.groupBy(
-        (x) => x.foo,
-        (x) => x.bar
-      );
+    const grouped: LazySeq<
+      [[number, string], ReadonlyArray<{ foo: number; bar: string; baz: number }>]
+    > = seq.groupBy(
+      (x) => x.foo,
+      (x) => x.bar
+    );
 
     expect(
       grouped.toSortedArray(
@@ -360,7 +365,9 @@ describe("LazySeq", () => {
 
   it("groups and sorts a sequence", () => {
     const seq = LazySeq.ofRange(10, 0, -1);
-    const seq2: LazySeq<[number, ReadonlyArray<number>]> = seq.orderedGroupBy((i) => Math.floor(i / 2));
+    const seq2: LazySeq<[number, ReadonlyArray<number>]> = seq.orderedGroupBy((i) =>
+      Math.floor(i / 2)
+    );
 
     expect(seq.toRArray()).to.deep.equal([10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
     expect(seq2.toRArray()).to.deep.equal([
@@ -395,8 +402,9 @@ describe("LazySeq", () => {
       { foo: 3, bar: "f", baz: 110 },
     ]);
 
-    const grouped: LazySeq<[[number, string], ReadonlyArray<{ foo: number; bar: string; baz: number }>]> =
-      seq.orderedGroupBy({ asc: (x) => x.foo }, { desc: (x) => x.bar });
+    const grouped: LazySeq<
+      [[number, string], ReadonlyArray<{ foo: number; bar: string; baz: number }>]
+    > = seq.orderedGroupBy({ asc: (x) => x.foo }, { desc: (x) => x.bar });
 
     expect(grouped.toRArray()).to.deep.equal([
       [[1, "b"], [{ foo: 1, bar: "b", baz: 70 }]],
@@ -659,7 +667,9 @@ describe("LazySeq", () => {
     const zip = seq.zip(seq2);
 
     expect(seq.toRArray()).to.deep.equal([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-    expect(seq2.toRArray()).to.deep.equal([100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110]);
+    expect(seq2.toRArray()).to.deep.equal([
+      100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+    ]);
     expect(zip.toRArray()).to.deep.equal([
       [1, 100],
       [2, 101],

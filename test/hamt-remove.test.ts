@@ -36,11 +36,19 @@ describe("HAMT Remove", () => {
 
   it("removes from a full node", () => {
     const cfg = mkHashConfig<CollidingKey>();
-    const tree = LazySeq.ofRange(0, 32).foldLeft(null as HamtNode<CollidingKey, number> | null, (node, i) => {
-      const [n, inserted] = insert(cfg, new CollidingKey(i, i), setNewVal(i * 100), node);
-      expect(inserted).to.be.true;
-      return n;
-    });
+    const tree = LazySeq.ofRange(0, 32).fold(
+      null as HamtNode<CollidingKey, number> | null,
+      (node, i) => {
+        const [n, inserted] = insert(
+          cfg,
+          new CollidingKey(i, i),
+          setNewVal(i * 100),
+          node
+        );
+        expect(inserted).to.be.true;
+        return n;
+      }
+    );
 
     const newTree = remove(cfg, new CollidingKey(3, 3), tree);
     expect(newTree).to.deep.equal({
@@ -67,11 +75,19 @@ describe("HAMT Remove", () => {
 
   it("removes from a bitmap node", () => {
     const cfg = mkHashConfig<CollidingKey>();
-    const tree = LazySeq.ofRange(0, 20).foldLeft(null as HamtNode<CollidingKey, number> | null, (node, i) => {
-      const [n, inserted] = insert(cfg, new CollidingKey(i, i), setNewVal(i * 100), node);
-      expect(inserted).to.be.true;
-      return n;
-    });
+    const tree = LazySeq.ofRange(0, 20).fold(
+      null as HamtNode<CollidingKey, number> | null,
+      (node, i) => {
+        const [n, inserted] = insert(
+          cfg,
+          new CollidingKey(i, i),
+          setNewVal(i * 100),
+          node
+        );
+        expect(inserted).to.be.true;
+        return n;
+      }
+    );
 
     const newTree = remove(cfg, new CollidingKey(3, 3), tree);
     expect(newTree).to.deep.equal({
@@ -98,7 +114,7 @@ describe("HAMT Remove", () => {
     // remove all the way down to a single leaf with key 6
     const leaf = LazySeq.ofRange(0, 6)
       .concat(LazySeq.ofRange(7, 20))
-      .foldLeft(tree, (t, i) => remove(cfg, new CollidingKey(i, i), t));
+      .fold(tree, (t, i) => remove(cfg, new CollidingKey(i, i), t));
 
     expect(leaf).to.deep.equal({ hash: 6, key: new CollidingKey(6, 6), val: 6 * 100 });
 
@@ -179,7 +195,10 @@ describe("HAMT Remove", () => {
     // check that lookup and insert on invalid trees don't go into an infinite loop
 
     const cfg = mkHashConfig<number>();
-    const badNode = { bitmap: 1 << 5, children: [null] } as unknown as HamtNode<number, string>;
+    const badNode = { bitmap: 1 << 5, children: [null] } as unknown as HamtNode<
+      number,
+      string
+    >;
 
     expect(() => remove(cfg, 5, badNode)).to.throw(
       "Internal immutable-collections violation: hamt remove reached null"
