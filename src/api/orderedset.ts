@@ -358,6 +358,19 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
     };
   }
 
+  /** Apply a function to the OrderedSet
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * Applies the provided function `f` to `this` and returns the result.  This is a convenience function
+   * which allows you to continue to chain operations without having to create a new
+   * temporary variable.
+   */
+  transform<U>(f: (s: OrderedSet<T>) => U): U {
+    return f(this);
+  }
+
   /** Find the minimum item in the set
    *
    * @category Min/Max Items

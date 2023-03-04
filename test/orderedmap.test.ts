@@ -15,7 +15,9 @@ interface OrderedMapAndJsMap<K extends OrderedMapKey, V> {
   readonly jsMap: Map<string, [K, V]>;
 }
 
-function sortEntries<K extends OrderedMapKey, V>(e: Iterable<readonly [K, V]>): Array<readonly [K, V]> {
+function sortEntries<K extends OrderedMapKey, V>(
+  e: Iterable<readonly [K, V]>
+): Array<readonly [K, V]> {
   const cfg = mkComparisonConfig<K>();
   const entries = Array.from(e);
   return entries.sort(([k1], [k2]) => cfg.compare(k1, k2));
@@ -44,10 +46,16 @@ export function mkNumKeyGenerator(size: number, offset?: number): () => number {
     return () => {
       if (Math.random() < 0.8) {
         // small number
-        return Math.floor((Math.random() * size) / 2) + (offset === undefined ? 0 : offset);
+        return (
+          Math.floor((Math.random() * size) / 2) + (offset === undefined ? 0 : offset)
+        );
       } else {
         // large number
-        return Math.floor((Math.random() * size) / 2) + size / 2 + (offset === undefined ? 0 : offset);
+        return (
+          Math.floor((Math.random() * size) / 2) +
+          size / 2 +
+          (offset === undefined ? 0 : offset)
+        );
       }
     };
   } else {
@@ -55,10 +63,16 @@ export function mkNumKeyGenerator(size: number, offset?: number): () => number {
     return () => {
       if (Math.random() < 0.2) {
         // small number
-        return Math.floor((Math.random() * size) / 2) + (offset === undefined ? 0 : offset);
+        return (
+          Math.floor((Math.random() * size) / 2) + (offset === undefined ? 0 : offset)
+        );
       } else {
         // large number
-        return Math.floor((Math.random() * size) / 2) + size / 2 + (offset === undefined ? 0 : offset);
+        return (
+          Math.floor((Math.random() * size) / 2) +
+          size / 2 +
+          (offset === undefined ? 0 : offset)
+        );
       }
     };
   }
@@ -90,7 +104,10 @@ export function createMap<K extends OrderedMapKey>(
   return { ordMap, jsMap };
 }
 
-function expectEqual<K extends OrderedMapKey, V>(ordMap: OrderedMap<K, V>, jsMap: Map<string, [K, V]>): void {
+function expectEqual<K extends OrderedMapKey, V>(
+  ordMap: OrderedMap<K, V>,
+  jsMap: Map<string, [K, V]>
+): void {
   const entries = sortEntries(jsMap.values());
   const revEntries = [...entries].reverse();
   expect(ordMap.size).to.equal(jsMap.size);
@@ -362,7 +379,9 @@ describe("Ordered Map", () => {
       }
     }
     const imMap = OrderedMap.from(entries);
-    const jsMap = new Map<string, [number, string]>(entries.map(([k, v]) => [k.toString(), [k, v]]));
+    const jsMap = new Map<string, [number, string]>(
+      entries.map(([k, v]) => [k.toString(), [k, v]])
+    );
 
     checkMapBalanceAndSize(imMap);
     expectEqual(imMap, jsMap);
@@ -376,7 +395,9 @@ describe("Ordered Map", () => {
       entries[i] = [i, v];
     }
     const imMap = OrderedMap.from(entries);
-    const jsMap = new Map<string, [number, string]>(entries.map(([k, v]) => [k.toString(), [k, v]]));
+    const jsMap = new Map<string, [number, string]>(
+      entries.map(([k, v]) => [k.toString(), [k, v]])
+    );
 
     checkMapBalanceAndSize(imMap);
     expectEqual(imMap, jsMap);
@@ -390,7 +411,9 @@ describe("Ordered Map", () => {
       entries[i] = [i, v];
     }
     const imMap = OrderedMap.from(entries);
-    const jsMap = new Map<string, [number, string]>(entries.map(([k, v]) => [k.toString(), [k, v]]));
+    const jsMap = new Map<string, [number, string]>(
+      entries.map(([k, v]) => [k.toString(), [k, v]])
+    );
 
     checkMapBalanceAndSize(imMap);
     expectEqual(imMap, jsMap);
@@ -681,6 +704,17 @@ describe("Ordered Map", () => {
     expectEqual(f, expectedFalse);
   });
 
+  it("transforms a map", () => {
+    const m = createMap(500, () => randomCollisionKey()).ordMap;
+    const n = faker.datatype.number();
+    expect(
+      m.transform((t) => {
+        expect(t).to.equal(m);
+        return n;
+      })
+    ).to.equal(n);
+  });
+
   it("returns undefined for min/max of empty tree", () => {
     const m = OrderedMap.empty<number, string>();
     expect(m.minView()).to.be.undefined;
@@ -905,10 +939,18 @@ describe("Ordered Map", () => {
   it("returns empty if one side is empty from an intersection", () => {
     const { ordMap } = createMap(50, mkNumKeyGenerator(1000));
 
-    let empty = OrderedMap.intersection((a, b) => a + b, ordMap, OrderedMap.empty<number, string>());
+    let empty = OrderedMap.intersection(
+      (a, b) => a + b,
+      ordMap,
+      OrderedMap.empty<number, string>()
+    );
     expectEqual(empty, new Map());
 
-    empty = OrderedMap.intersection((a, b) => a + b, OrderedMap.empty<number, string>(), ordMap);
+    empty = OrderedMap.intersection(
+      (a, b) => a + b,
+      OrderedMap.empty<number, string>(),
+      ordMap
+    );
     expectEqual(empty, new Map());
   });
 
@@ -945,7 +987,10 @@ describe("Ordered Map", () => {
       } else {
         imMap1 = imMap1.set(x.both, x.val1);
         imMap2 = imMap2.set(x.both, x.val2);
-        jsIntersection.set(x.both.toString(), [x.both, combineNullableStr(x.val1, x.val2)]);
+        jsIntersection.set(x.both.toString(), [
+          x.both,
+          combineNullableStr(x.val1, x.val2),
+        ]);
       }
     }
 

@@ -20,7 +20,10 @@ function sortKeys<K extends OrderedMapKey>(e: Iterable<K>): Array<K> {
   return keys.sort(mkComparisonConfig().compare);
 }
 
-function createSet<K extends OrderedMapKey>(size: number, key: () => K): OrderedSetAndJsSet<K> {
+function createSet<K extends OrderedMapKey>(
+  size: number,
+  key: () => K
+): OrderedSetAndJsSet<K> {
   let imSet = OrderedSet.empty<K>();
   const jsMap = new Map<string, K>();
 
@@ -36,7 +39,10 @@ function createSet<K extends OrderedMapKey>(size: number, key: () => K): Ordered
   return { imSet, jsMap };
 }
 
-function expectEqual<K extends OrderedMapKey>(imSet: OrderedSet<K>, jsMap: Map<string, K>): void {
+function expectEqual<K extends OrderedMapKey>(
+  imSet: OrderedSet<K>,
+  jsMap: Map<string, K>
+): void {
   const keys = sortKeys(jsMap.values());
   expect(imSet.size).to.equal(jsMap.size);
 
@@ -140,7 +146,9 @@ describe("OrderedSet", () => {
     }
 
     const imSet = OrderedSet.build(values, (v) => v + 40_000);
-    const jsMap = new Map<string, number>(values.map((v) => [(v + 40_000).toString(), v + 40_000]));
+    const jsMap = new Map<string, number>(
+      values.map((v) => [(v + 40_000).toString(), v + 40_000])
+    );
 
     checkSetBalanceAndSize(imSet);
     expectEqual(imSet, jsMap);
@@ -302,6 +310,17 @@ describe("OrderedSet", () => {
 
     expectEqual(s.above, jsAbove);
     expectEqual(s.below, jsBelow);
+  });
+
+  it("transforms a set", () => {
+    const m = createSet(100, mkNumKeyGenerator(5000)).imSet;
+    const n = faker.datatype.number();
+    expect(
+      m.transform((t) => {
+        expect(t).to.equal(m);
+        return n;
+      })
+    ).to.equal(n);
   });
 
   it("returns undefined for min/max of empty set", () => {
@@ -478,7 +497,9 @@ describe("OrderedSet", () => {
   });
 
   it("intersects two sets", () => {
-    function* intersectionValues(): Generator<{ map1K: number } | { map2K: number } | { both: number }> {
+    function* intersectionValues(): Generator<
+      { map1K: number } | { map2K: number } | { both: number }
+    > {
       // want a bunch of keys in both sets
       const keygen = mkNumKeyGenerator(4000);
       for (let i = 0; i < 2000; i++) {
@@ -520,7 +541,9 @@ describe("OrderedSet", () => {
   });
 
   it("differences two sets", () => {
-    function* diffValues(): Generator<{ map1K: number } | { map2K: number } | { both: number }> {
+    function* diffValues(): Generator<
+      { map1K: number } | { map2K: number } | { both: number }
+    > {
       // want a bunch of keys in both sets
       const keygen = mkNumKeyGenerator(4000);
       for (let i = 0; i < 2000; i++) {

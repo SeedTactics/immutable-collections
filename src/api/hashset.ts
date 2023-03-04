@@ -396,7 +396,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
 
   /** Remove items from the HashSet that return false from a predicate
    *
-   * @category Set Operations
+   * @category Transformation
    *
    * @remarks
    * `filter` applies the function `f` to each item in the HashMap.  If `f` returns false, the
@@ -414,6 +414,19 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
     } else {
       return new HashSet(this.cfg, newRoot, newSize);
     }
+  }
+
+  /** Apply a function to the HashSet
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * Applies the provided function `f` to `this` and returns the result.  This is a convenience function
+   * which allows you to continue to chain operations without having to create a new
+   * temporary variable.
+   */
+  transform<U>(f: (s: HashSet<T>) => U): U {
+    return f(this);
   }
 
   // Creating new sets

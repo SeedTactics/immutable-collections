@@ -499,6 +499,19 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     }
   }
 
+  /** Apply a function to the HashMap
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * Applies the provided function `f` to `this` and returns the result.  This is a convenience function
+   * which allows you to continue to chain operations without having to create a new
+   * temporary variable.
+   */
+  transform<U>(f: (s: HashMap<K, V>) => U): U {
+    return f(this);
+  }
+
   // TODO: partition(f: (v: V, k: K) => boolean): readonly [HashMap<K, V>, HashMap<K, V>]
 
   /** Returns a new HashMap which combines all entries in two HashMaps

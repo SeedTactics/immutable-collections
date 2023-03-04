@@ -6,7 +6,11 @@ import { faker } from "@faker-js/faker";
 import { HashKey } from "../src/data-structures/hashing.js";
 import { HashMap } from "../src/api/hashmap.js";
 import { mkCompareByProperties } from "../src/data-structures/comparison.js";
-import { CollidingKey, distinctKeyWithHash, randomCollisionKey } from "./collision-key.js";
+import {
+  CollidingKey,
+  distinctKeyWithHash,
+  randomCollisionKey,
+} from "./collision-key.js";
 import { deepFreeze } from "./deepfreeze.js";
 import { HamtNode } from "../src/data-structures/hamt.js";
 
@@ -15,7 +19,9 @@ export interface HashMapAndJsMap<K extends HashKey, V> {
   readonly jsMap: Map<string, [K, V]>;
 }
 
-function sortEntries<K extends HashKey, V>(e: Iterable<readonly [K, V]>): Array<readonly [K, V]> {
+function sortEntries<K extends HashKey, V>(
+  e: Iterable<readonly [K, V]>
+): Array<readonly [K, V]> {
   const entries = Array.from(e);
   return entries.sort(mkCompareByProperties(([k]) => k.toString()));
 }
@@ -41,7 +47,10 @@ export function combineNullableStr(a: string | null, b: string | null): string |
   return a + b;
 }
 
-export function createMap<K extends HashKey>(size: number, key: () => K): HashMapAndJsMap<K, string> {
+export function createMap<K extends HashKey>(
+  size: number,
+  key: () => K
+): HashMapAndJsMap<K, string> {
   let imMap = HashMap.empty<K, string>();
   const jsMap = new Map<string, [K, string]>();
 
@@ -83,7 +92,10 @@ function checkBitmap<K extends HashKey, V>(imMap: HashMap<K, V>): void {
   if (root !== null) loop(root);
 }
 
-export function expectEqual<K extends HashKey, V>(imMap: HashMap<K, V>, jsMap: Map<string, [K, V]>): void {
+export function expectEqual<K extends HashKey, V>(
+  imMap: HashMap<K, V>,
+  jsMap: Map<string, [K, V]>
+): void {
   checkBitmap(imMap);
 
   const entries = sortEntries(jsMap.values());
@@ -99,8 +111,12 @@ export function expectEqual<K extends HashKey, V>(imMap: HashMap<K, V>, jsMap: M
   expect(sortEntries(imMap.toLazySeq())).to.deep.equal(entries);
   expect(sortKeys(imMap.keys())).to.deep.equal(entries.map(([k]) => k));
   expect(sortKeys(imMap.keysToLazySeq())).to.deep.equal(entries.map(([k]) => k));
-  expect(sortValues(imMap.values())).to.deep.equal(sortValues(entries.map(([_, v]) => v)));
-  expect(sortValues(imMap.valuesToLazySeq())).to.deep.equal(sortValues(entries.map(([_, v]) => v)));
+  expect(sortValues(imMap.values())).to.deep.equal(
+    sortValues(entries.map(([_, v]) => v))
+  );
+  expect(sortValues(imMap.valuesToLazySeq())).to.deep.equal(
+    sortValues(entries.map(([_, v]) => v))
+  );
 
   const forEachEntries = new Array<[K, V]>();
   imMap.forEach((v, k, m) => {
@@ -155,7 +171,9 @@ describe("HashMap", () => {
   });
 
   it("creates a number key map", () => {
-    const { imMap, jsMap } = createMap(10000, () => faker.datatype.number({ min: 0, max: 50000 }));
+    const { imMap, jsMap } = createMap(10000, () =>
+      faker.datatype.number({ min: 0, max: 50000 })
+    );
     expectEqual(imMap, jsMap);
   });
 
@@ -365,7 +383,9 @@ describe("HashMap", () => {
       entries[i] = [k, v];
     }
     const imMap = HashMap.from(entries);
-    const jsMap = new Map<string, [number, string]>(entries.map(([k, v]) => [k.toString(), [k, v]]));
+    const jsMap = new Map<string, [number, string]>(
+      entries.map(([k, v]) => [k.toString(), [k, v]])
+    );
 
     expectEqual(imMap, jsMap);
   });
@@ -418,7 +438,9 @@ describe("HashMap", () => {
     }
 
     const imMap = HashMap.build(values, (v) => v + 40_000);
-    const jsMap = new Map<string, [number, number]>(values.map((v) => [(v + 40_000).toString(), [v + 40_000, v]]));
+    const jsMap = new Map<string, [number, number]>(
+      values.map((v) => [(v + 40_000).toString(), [v + 40_000, v]])
+    );
 
     expectEqual(imMap, jsMap);
   });
@@ -439,7 +461,10 @@ describe("HashMap", () => {
     for (const t of ts) {
       const k = new CollidingKey(t % 100, t + 40_000);
       const oldV = jsMap.get(k.toString());
-      jsMap.set(k.toString(), [k, oldV === undefined ? t.toString() : oldV[1] + t.toString()]);
+      jsMap.set(k.toString(), [
+        k,
+        oldV === undefined ? t.toString() : oldV[1] + t.toString(),
+      ]);
     }
 
     expectEqual(imMap, jsMap);
@@ -450,7 +475,10 @@ describe("HashMap", () => {
 
     const newEntries = new Array<[number, string]>(500);
     for (let i = 0; i < 500; i++) {
-      newEntries[i] = [faker.datatype.number({ min: 0, max: 5000 }), faker.datatype.string()];
+      newEntries[i] = [
+        faker.datatype.number({ min: 0, max: 5000 }),
+        faker.datatype.string(),
+      ];
     }
     const newImMap = initial.imMap.append(newEntries);
 
@@ -506,7 +534,9 @@ describe("HashMap", () => {
   it("maps values in a HashMap", () => {
     const m = createMap(5000, () => randomCollisionKey());
 
-    const newImMap = m.imMap.mapValues((v, k) => v + "!!!" + k.hash.toString() + "$$$" + k.x.toString());
+    const newImMap = m.imMap.mapValues(
+      (v, k) => v + "!!!" + k.hash.toString() + "$$$" + k.x.toString()
+    );
     const newJsMap = new Map<string, [CollidingKey, string]>();
     for (const [kS, [k, v]] of m.jsMap) {
       newJsMap.set(kS, [k, v + "!!!" + k.hash.toString() + "$$$" + k.x.toString()]);
@@ -561,7 +591,9 @@ describe("HashMap", () => {
   it("collects values in an ImMap", () => {
     const m = createMap(5000, () => randomCollisionKey());
 
-    const newImMap = m.imMap.collectValues((v, k) => v + "!!!" + k.hash.toString() + "$$$" + k.x.toString());
+    const newImMap = m.imMap.collectValues(
+      (v, k) => v + "!!!" + k.hash.toString() + "$$$" + k.x.toString()
+    );
     const newJsMap = new Map<string, [CollidingKey, string]>();
     for (const [kS, [k, v]] of m.jsMap) {
       newJsMap.set(kS, [k, v + "!!!" + k.hash.toString() + "$$$" + k.x.toString()]);
@@ -632,6 +664,17 @@ describe("HashMap", () => {
     });
 
     expectEqual(newImMap, jsAfterFilter);
+  });
+
+  it("transforms a map", () => {
+    const m = createMap(500, () => randomCollisionKey()).imMap;
+    const n = faker.datatype.number();
+    expect(
+      m.transform((t) => {
+        expect(t).to.equal(m);
+        return n;
+      })
+    ).to.equal(n);
   });
 
   it("returns the map unchanged if nothing is filtered", () => {

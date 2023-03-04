@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lots of documentation improvements.
 - A few performance improvements.
 - Add LazySeq.toOrderedSet to convert a sequence to an ordered set.
+- Add `transform` function to HashMap, HashSet, OrderedMap, and OrderedSet.
 
 ### Changed
 

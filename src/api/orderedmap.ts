@@ -529,6 +529,19 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     };
   }
 
+  /** Apply a function to the OrderedMap
+   *
+   * @category Transformation
+   *
+   * @remarks
+   * Applies the provided function `f` to `this` and returns the result.  This is a convenience function
+   * which allows you to continue to chain operations without having to create a new
+   * temporary variable.
+   */
+  transform<U>(f: (s: OrderedMap<K, V>) => U): U {
+    return f(this);
+  }
+
   /** Find the minimum key and associated value in the OrderedMap
    *
    * @category Min/Max Keys

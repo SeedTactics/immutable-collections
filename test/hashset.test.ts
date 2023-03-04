@@ -4,7 +4,11 @@ import { expect } from "chai";
 import { faker } from "@faker-js/faker";
 import { HashKey } from "../src/data-structures/hashing.js";
 import { HashSet } from "../src/api/hashset.js";
-import { CollidingKey, distinctKeyWithHash, randomCollisionKey } from "./collision-key.js";
+import {
+  CollidingKey,
+  distinctKeyWithHash,
+  randomCollisionKey,
+} from "./collision-key.js";
 import { deepFreeze } from "./deepfreeze.js";
 import { createMap } from "./hashmap.test.js";
 
@@ -45,9 +49,9 @@ function expectEqual<K extends HashKey>(imSet: HashSet<K>, jsMap: Map<string, K>
   expect(sortKeys(imSet.toLazySeq())).to.deep.equal(keys);
   expect(sortKeys(imSet.keys())).to.deep.equal(keys);
   expect(sortKeys(imSet.values())).to.deep.equal(keys);
-  expect([...imSet.entries()].sort(([a], [b]) => a.toString().localeCompare(b.toString()))).to.deep.equal(
-    [...keys].map((k) => [k, k])
-  );
+  expect(
+    [...imSet.entries()].sort(([a], [b]) => a.toString().localeCompare(b.toString()))
+  ).to.deep.equal([...keys].map((k) => [k, k]));
 
   const forEachEntries = new Array<K>();
   imSet.forEach((k1, k2, m) => {
@@ -125,7 +129,9 @@ describe("HashSet", () => {
     }
 
     const imSet = HashSet.build(values, (v) => v + 40_000);
-    const jsMap = new Map<string, number>(values.map((v) => [(v + 40_000).toString(), v + 40_000]));
+    const jsMap = new Map<string, number>(
+      values.map((v) => [(v + 40_000).toString(), v + 40_000])
+    );
 
     expectEqual(imSet, jsMap);
   });
@@ -207,6 +213,17 @@ describe("HashSet", () => {
     expectEqual(newImSet, jsAfterFilter);
   });
 
+  it("transforms a set", () => {
+    const m = createSet(500, () => randomCollisionKey()).imSet;
+    const n = faker.datatype.number();
+    expect(
+      m.transform((t) => {
+        expect(t).to.equal(m);
+        return n;
+      })
+    ).to.equal(n);
+  });
+
   it("returns the set unchanged if nothing is filtered", () => {
     const initial = createSet(1000, () => randomCollisionKey());
 
@@ -227,7 +244,9 @@ describe("HashSet", () => {
   });
 
   it("unions two sets", () => {
-    function* unionValues(): Generator<{ map1K: CollidingKey } | { map2K: CollidingKey }> {
+    function* unionValues(): Generator<
+      { map1K: CollidingKey } | { map2K: CollidingKey }
+    > {
       // want a bunch of keys in both sets
       for (let i = 0; i < 2000; i++) {
         const k = randomCollisionKey();
@@ -339,7 +358,9 @@ describe("HashSet", () => {
   });
 
   it("differences two sets", () => {
-    function* diffValues(): Generator<{ map1K: CollidingKey } | { map2K: CollidingKey } | { both: CollidingKey }> {
+    function* diffValues(): Generator<
+      { map1K: CollidingKey } | { map2K: CollidingKey } | { both: CollidingKey }
+    > {
       // want a bunch of keys in both sets
       for (let i = 0; i < 2000; i++) {
         const k = randomCollisionKey();
