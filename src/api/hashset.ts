@@ -7,12 +7,12 @@ import {
   collectValues,
   difference,
   fold,
-  HamtNode,
+  Node,
   insert,
   intersection,
   iterate,
   lookup,
-  MutableHamtNode,
+  MutableNode,
   mutateInsert,
   remove,
   union,
@@ -67,7 +67,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
     // access private properties of HashMap
     const prvMap = map as unknown as {
       cfg: HashConfig<K>;
-      root: HamtNode<K, V> | null;
+      root: Node<K, V> | null;
       size: number;
     };
     return new HashSet(prvMap.cfg, prvMap.root, prvMap.size);
@@ -78,7 +78,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    * @category Creating Hash Sets
    */
   public static from<T extends HashKey>(items: Iterable<T>): HashSet<T> {
-    let root: MutableHamtNode<T, boolean> | null = null;
+    let root: MutableNode<T, boolean> | null = null;
     let size = 0;
     const cfg = mkHashConfig();
 
@@ -106,7 +106,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
     items: Iterable<R>,
     key: (v: R) => T
   ): HashSet<T> {
-    let root: MutableHamtNode<T, boolean> | null = null;
+    let root: MutableNode<T, boolean> | null = null;
     let size = 0;
     const cfg = mkHashConfig();
 
@@ -432,13 +432,9 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
   // Creating new sets
 
   private cfg: HashConfig<T>;
-  private root: HamtNode<T, unknown> | null;
+  private root: Node<T, unknown> | null;
 
-  private constructor(
-    cfg: HashConfig<T>,
-    root: HamtNode<T, unknown> | null,
-    size: number
-  ) {
+  private constructor(cfg: HashConfig<T>, root: Node<T, unknown> | null, size: number) {
     this.cfg = cfg;
     this.root = root;
     this.size = size;

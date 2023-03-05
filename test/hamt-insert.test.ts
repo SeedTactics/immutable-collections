@@ -3,7 +3,7 @@
 import { expect } from "chai";
 import { CollidingKey as Key, createKeyWithSameHash } from "./collision-key.js";
 import { mkHashConfig } from "../src/data-structures/hashing.js";
-import { InternalNode, HamtNode, insert, lookup } from "../src/data-structures/hamt.js";
+import { InternalNode, Node, insert, lookup } from "../src/data-structures/hamt.js";
 import { LazySeq } from "../src/lazyseq.js";
 
 function setNewVal(val: number): (old: number | undefined) => number {
@@ -135,7 +135,7 @@ describe("HAMT insert and lookup", () => {
   it("creates a full node", () => {
     const cfg = mkHashConfig<Key>();
     const tree = LazySeq.ofRange(0, 32).fold(
-      null as HamtNode<Key, number> | null,
+      null as Node<Key, number> | null,
       (node, i) => {
         const [n, inserted] = insert(cfg, new Key(i, i), setNewVal(i * 100), node);
         expect(inserted).to.be.true;
@@ -284,7 +284,7 @@ describe("HAMT insert and lookup", () => {
     // check that lookup and insert on invalid trees don't go into an infinite loop
 
     const cfg = mkHashConfig<number>();
-    const badNode = { bitmap: 1 << 5, children: [null] } as unknown as HamtNode<
+    const badNode = { bitmap: 1 << 5, children: [null] } as unknown as Node<
       number,
       string
     >;

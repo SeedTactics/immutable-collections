@@ -3,7 +3,7 @@
 
 import { expect } from "chai";
 //import { faker } from "@faker-js/faker";
-import { HamtNode, insert, lookup, remove } from "../src/data-structures/hamt.js";
+import { Node, insert, lookup, remove } from "../src/data-structures/hamt.js";
 import { mkHashConfig } from "../src/data-structures/hashing.js";
 import { LazySeq } from "../src/lazyseq.js";
 import { CollidingKey } from "./collision-key.js";
@@ -37,7 +37,7 @@ describe("HAMT Remove", () => {
   it("removes from a full node", () => {
     const cfg = mkHashConfig<CollidingKey>();
     const tree = LazySeq.ofRange(0, 32).fold(
-      null as HamtNode<CollidingKey, number> | null,
+      null as Node<CollidingKey, number> | null,
       (node, i) => {
         const [n, inserted] = insert(
           cfg,
@@ -76,7 +76,7 @@ describe("HAMT Remove", () => {
   it("removes from a bitmap node", () => {
     const cfg = mkHashConfig<CollidingKey>();
     const tree = LazySeq.ofRange(0, 20).fold(
-      null as HamtNode<CollidingKey, number> | null,
+      null as Node<CollidingKey, number> | null,
       (node, i) => {
         const [n, inserted] = insert(
           cfg,
@@ -195,7 +195,7 @@ describe("HAMT Remove", () => {
     // check that lookup and insert on invalid trees don't go into an infinite loop
 
     const cfg = mkHashConfig<number>();
-    const badNode = { bitmap: 1 << 5, children: [null] } as unknown as HamtNode<
+    const badNode = { bitmap: 1 << 5, children: [null] } as unknown as Node<
       number,
       string
     >;

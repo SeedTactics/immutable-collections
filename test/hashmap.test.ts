@@ -12,7 +12,7 @@ import {
   randomCollisionKey,
 } from "./collision-key.js";
 import { deepFreeze } from "./deepfreeze.js";
-import { HamtNode } from "../src/data-structures/hamt.js";
+import { Node } from "../src/data-structures/hamt.js";
 
 export interface HashMapAndJsMap<K extends HashKey, V> {
   readonly imMap: HashMap<K, V>;
@@ -80,7 +80,7 @@ function popCount(n: number): number {
 }
 
 function checkBitmap<K extends HashKey, V>(imMap: HashMap<K, V>): void {
-  function loop(node: HamtNode<K, V>): void {
+  function loop(node: Node<K, V>): void {
     if ("children" in node) {
       expect(popCount(node.bitmap)).to.equal(node.children.length);
       for (const n of node.children) {
@@ -88,7 +88,7 @@ function checkBitmap<K extends HashKey, V>(imMap: HashMap<K, V>): void {
       }
     }
   }
-  const root = (imMap as unknown as { root: HamtNode<K, V> | null }).root;
+  const root = (imMap as unknown as { root: Node<K, V> | null }).root;
   if (root !== null) loop(root);
 }
 

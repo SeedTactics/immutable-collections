@@ -8,7 +8,7 @@ import {
   difference,
   fold,
   from,
-  HamtNode,
+  Node,
   insert,
   intersection,
   iterate,
@@ -694,7 +694,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     const [newRoot, numRemoved] = difference(
       this.cfg,
       this.root,
-      (keys as unknown as { root: HamtNode<K, unknown> }).root
+      (keys as unknown as { root: Node<K, unknown> }).root
     );
     if (newRoot === this.root) {
       return this;
@@ -753,9 +753,9 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   }
 
   private cfg: HashConfig<K>;
-  private root: HamtNode<K, V> | null;
+  private root: Node<K, V> | null;
 
-  private constructor(cfg: HashConfig<K>, root: HamtNode<K, V> | null, size: number) {
+  private constructor(cfg: HashConfig<K>, root: Node<K, V> | null, size: number) {
     this.cfg = cfg;
     this.root = root;
     this.size = size;

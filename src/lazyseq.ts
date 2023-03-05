@@ -453,7 +453,7 @@ export class LazySeq<T> {
       compare: mkCompareByProperties(...fs),
     };
 
-    let s: hamt.MutableHamtNode<T, Array<T>> | null = null;
+    let s: hamt.MutableNode<T, Array<T>> | null = null;
     function appendVal(old: Array<T> | undefined, x: T): Array<T> {
       if (old === undefined) {
         return [x];

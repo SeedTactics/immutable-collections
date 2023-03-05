@@ -3,11 +3,7 @@
 import { expect } from "chai";
 import { CollidingKey as Key } from "./collision-key.js";
 import { mkHashConfig } from "../src/data-structures/hashing.js";
-import {
-  InternalNode,
-  MutableHamtNode,
-  mutateInsert,
-} from "../src/data-structures/hamt.js";
+import { InternalNode, MutableNode, mutateInsert } from "../src/data-structures/hamt.js";
 import { LazySeq } from "../src/lazyseq.js";
 
 function setNewVal(
@@ -254,7 +250,7 @@ describe("hamt mutate insert", () => {
     // check that lookup and insert on invalid trees don't go into an infinite loop
 
     const cfg = mkHashConfig<number>();
-    const badNode = { bitmap: 1 << 5, children: [null] } as unknown as MutableHamtNode<
+    const badNode = { bitmap: 1 << 5, children: [null] } as unknown as MutableNode<
       number,
       string
     >;

@@ -3,7 +3,7 @@
 import { expect } from "chai";
 import { CollidingKey as Key, createKeyWithSameHash } from "./collision-key.js";
 import { mkHashConfig } from "../src/data-structures/hashing.js";
-import { InternalNode, alter, HamtNode } from "../src/data-structures/hamt.js";
+import { InternalNode, alter, Node } from "../src/data-structures/hamt.js";
 
 function setNewVal(
   val: number | undefined,
@@ -165,7 +165,10 @@ describe("HAMT alter", () => {
     // check that lookup and insert on invalid trees don't go into an infinite loop
 
     const cfg = mkHashConfig<number>();
-    const badNode = { bitmap: 1 << 5, children: [null] } as unknown as HamtNode<number, string>;
+    const badNode = { bitmap: 1 << 5, children: [null] } as unknown as Node<
+      number,
+      string
+    >;
 
     expect(() => alter(cfg, 5, () => "hello", badNode)).to.throw(
       "Internal immutable-collections violation: hamt alter reached null"

@@ -29,7 +29,7 @@ one of the classes, all the methods and basically the entire library will get in
 has no dependencies and is relatively small but we have occasionally traded a slight increase in bundle size for
 faster performance, by implementing many specialized operations such as [HashMap.collectValues](api/HashMap.mdx#collectValues) and many others.
 
-The second API is a function API for the [hash array mapped trie](api/data_structures_hamt.mdx) and [balanced tree](api/data_structures_tree.mdx).
+The second API is a function API for the [hash array mapped trie](api/hamt.mdx) and [balanced tree](api/tree.mdx).
 These modules export individual functions and support full tree-shaking with bundlers. Only the functions that you import will be included
 in the resulting bundle.
 

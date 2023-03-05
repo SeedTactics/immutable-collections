@@ -1,5 +1,33 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
+/**
+ * Hash Array Mapped Trie (HAMT)
+ *
+ * @remarks
+ * This module contains the implementation of the [HAMT](https://en.wikipedia.org/wiki/Hash_array_mapped_trie) data structure,
+ * which is the backing data structure for the {@link class_api!HashMap} and {@link class_api!HashSet} classes.
+ *
+ * The HashMap and HashSet classes are easier to use, but the downside is current bundlers such as
+ * webpack, esbuild, swc, etc. do not tree-shake classes.  Thus, this module exposes the HAMT data structure as
+ * a collection of functions so that if you wish you can use the HAMT directly and get the benefit of tree-shaking.
+ * There is no additional functionality available in this module, so if you are already using the HashMap or
+ * HashSet classes, there is no reason to use this module.
+ *
+ * To use, import the functions from the hamt module:
+ *
+ * ```ts
+ * import * as HAMT from "@seedtactics/immutable-collections/hamt";
+ * ```
+ *
+ * A note about size: the HAMT data structure nodes do not track the size of the tree.  Instead, each function
+ * which modifies the tree returns a value to help track the size externally (for example, {@link hamt!intersection} returns
+ * the size of the intersection).  Thus, if you need to know the size, you will need to store it somewhere else and
+ * keep it updated as you modify the tree.  Note that this module guarantees that `null` represents an empty tree,
+ * so you can always check if the tree is empty or not by just comparing the root node to `null`.
+ *
+ * @module hamt
+ */
+
 import { HashConfig } from "./hashing.js";
 import * as tree from "./tree.js";
 import * as treeRotations from "./rotations.js";
@@ -32,45 +60,130 @@ keys hash to the same value, we store the collisions in a balanced tree.
   - hamt_plus: https://github.com/mattbierner/hamt_plus
 */
 
-// A leaf with the hash, key, and value.
+/*
+   For performance, always create the objects with the same properties in the same order
+   and never add or delete properties.
+   https://mathiasbynens.be/notes/shapes-ics
+
+   Technically, we don't need to store the bitmap in a full node, but javascript
+   optimizers work well when objects have the same shape.  Thus, we don't separate the
+   full nodes from the partial nodes and instead always store a bitmap.
+*/
+
+/** A leaf node with the hash, key, and value.
+ *
+ * @category Data
+ *
+ * @remarks
+ * Despite being exported to use if you wish, you don't need to access tree nodes directly.  Functions
+ * such as {@link hamt!lookup} will return the value directly.  Thus it should be rare to need to
+ * use the `LeafNode` type directly.
+ */
 export type LeafNode<K, V> = { readonly hash: number; readonly key: K; readonly val: V };
+
+/** A mutable version of the LeafNode with a mutable value.
+ *
+ * @category Data
+ *
+ * @remarks
+ * This should only be used during the initial building of the tree so that the tree can be built
+ * efficiently.  After the tree is built, you should convert to the immutable `LeafNode` type.
+ */
 export type MutableLeafNode<K, V> = { readonly hash: number; readonly key: K; val: V };
 
-// A leaf node with the hash and an array of keys and values with this same hash.
+/** A collision node, which stores the colliding entries in a balanced tree
+ *
+ * @category Data
+ *
+ * @remarks
+ * The colliding nodes are stored in a {@link tree}.
+ *
+ * Despite being exported to use if you wish, you don't need to access tree nodes directly.  Functions
+ * such as {@link hamt!lookup} will return the value directly.  Thus it should be rare to need to
+ * use the `CollisionNode` type directly.
+ */
 export type CollisionNode<K, V> = {
   readonly hash: number;
   readonly collision: tree.TreeNode<K, V>;
 };
+
+/** A mutable collision node
+ *
+ * @category Data
+ *
+ * @remarks
+ * This should only be used during the initial building of the tree so that the tree can be built
+ * efficiently.  After the tree is built, you should convert to the immutable `CollisionNode` type.
+ */
 export type MutableCollisionNode<K, V> = {
   readonly hash: number;
   collision: tree.MutableTreeNode<K, V>;
 };
 
+/** An internal node
+ *
+ * @category Data
+ *
+ * @remarks
+ * Despite being exported to use if you wish, you don't need to access tree nodes directly.  Functions
+ * such as {@link hamt!lookup} will return the value directly.  Thus it should be rare to need to
+ * use the `InternalNode` type directly.
+ *
+ * This implementation of the [HAMT](https://en.wikipedia.org/wiki/Hash_array_mapped_trie) breaks the
+ * hash into 5-bit chunks. Thus, bitmap is a 32-bit bitmap which stores which children are non-null.
+ * The non-null children are stored in the children array.
+ */
 export type InternalNode<K, V> = {
-  // bitmap stores which children are non-null and stored in the children array.
-  // Technically, we don't need to store the bitmap in a full node, but javascript
-  // optimizers work well when objects have the same shape.  Thus also ensure
-  // to always create nodes with the property bitmap first, then children.
-  // https://mathiasbynens.be/notes/shapes-ics
   readonly bitmap: number;
-  readonly children: ReadonlyArray<HamtNode<K, V>>;
+  readonly children: ReadonlyArray<Node<K, V>>;
 };
+
+/** A mutable internal node
+ *
+ * @category Data
+ *
+ * @remarks
+ * This should only be used during the initial building of the tree so that the tree can be built
+ * efficiently.  After the tree is built, you should convert to the immutable `InternalNode` type.
+ */
 export type MutableInternalNode<K, V> = {
   bitmap: number;
-  readonly children: Array<MutableHamtNode<K, V>>;
+  readonly children: Array<MutableNode<K, V>>;
 };
+
 type MutableSpineInternalNode<K, V> = {
   bitmap: number;
-  readonly children: Array<HamtNode<K, V>>;
+  readonly children: Array<Node<K, V>>;
 };
 type MutableSpineNode<K, V> = {
   readonly node: MutableSpineInternalNode<K, V>;
   readonly childIdx: number;
 };
 
-export type HamtNode<K, V> = LeafNode<K, V> | CollisionNode<K, V> | InternalNode<K, V>;
+/** A HAMT tree node
+ *
+ * @category Data
+ *
+ * @remarks
+ * This is the main data type of the HAMT tree, and the type you should use in your own code when passing around
+ * references to the tree.
+ */
+export type Node<K, V> = LeafNode<K, V> | CollisionNode<K, V> | InternalNode<K, V>;
 
-export type MutableHamtNode<K, V> = MutableLeafNode<K, V> | MutableCollisionNode<K, V> | MutableInternalNode<K, V>;
+/** A mutable HAMT tree node
+ *
+ * @category Data
+ *
+ * @remarks
+ * This should only be used during the initial building of the tree so that the tree can be built
+ * efficiently.  After the tree is built, you should convert to the immutable `Node` type.
+ */
+export type MutableNode<K, V> =
+  | MutableLeafNode<K, V>
+  | MutableCollisionNode<K, V>
+  | MutableInternalNode<K, V>;
+
+export { HashConfig, hashValues, mkHashConfig } from "./hashing.js";
 
 const bitsPerSubkey = 5;
 const subkeyMask = (1 << bitsPerSubkey) - 1;
@@ -105,7 +218,7 @@ function constUndefined() {
 export function lookup<K, V>(
   cfg: HashConfig<K>,
   k: K,
-  rootNode: HamtNode<K, V>,
+  rootNode: Node<K, V>,
   hash?: number,
   shift?: number
 ): V | undefined {
@@ -147,7 +260,9 @@ export function lookup<K, V>(
       }
     }
   } while (node);
-  throw new Error("Internal immutable-collections violation: node undefined during lookup");
+  throw new Error(
+    "Internal immutable-collections violation: node undefined during lookup"
+  );
 }
 
 // create a new node consisting of two children. Requires that the hashes are not equal
@@ -155,24 +270,24 @@ function two<K, V>(
   shift: number,
   leaf1: MutableLeafNode<K, V> | MutableCollisionNode<K, V>,
   leaf2: MutableLeafNode<K, V> | MutableCollisionNode<K, V>
-): MutableHamtNode<K, V>;
+): MutableNode<K, V>;
 function two<K, V>(
   shift: number,
   leaf1: LeafNode<K, V> | CollisionNode<K, V>,
   leaf2: LeafNode<K, V> | CollisionNode<K, V>
-): HamtNode<K, V>;
+): Node<K, V>;
 function two<K, V>(
   shift: number,
   leaf1: LeafNode<K, V> | CollisionNode<K, V>,
   leaf2: LeafNode<K, V> | CollisionNode<K, V>
-): HamtNode<K, V> {
+): Node<K, V> {
   const hash1 = leaf1.hash;
   const hash2 = leaf2.hash;
-  let root: HamtNode<K, V> | undefined;
+  let root: Node<K, V> | undefined;
 
   // as we descend through the shifts, newly created nodes are set at the zero index in the
   // parent array.
-  let parent: Array<HamtNode<K, V>> | undefined;
+  let parent: Array<Node<K, V>> | undefined;
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
@@ -196,7 +311,10 @@ function two<K, V>(
       // we can insert
       const newNode = {
         bitmap: mask1 | mask2,
-        children: fullIndex(hash1, shift) < fullIndex(hash2, shift) ? [leaf1, leaf2] : [leaf2, leaf1],
+        children:
+          fullIndex(hash1, shift) < fullIndex(hash2, shift)
+            ? [leaf1, leaf2]
+            : [leaf2, leaf1],
       };
       if (parent !== undefined) {
         parent[0] = newNode;
@@ -210,21 +328,21 @@ export function insert<K, V>(
   cfg: HashConfig<K>,
   k: K,
   getVal: (v: V | undefined) => V,
-  rootNode: HamtNode<K, V> | null
-): readonly [HamtNode<K, V>, boolean] {
+  rootNode: Node<K, V> | null
+): readonly [Node<K, V>, boolean] {
   const hash = cfg.hash(k);
 
   if (rootNode === null) {
     return [{ hash, key: k, val: getVal(undefined) }, true];
   }
 
-  let newRoot: HamtNode<K, V> | undefined;
+  let newRoot: Node<K, V> | undefined;
 
   // we will descend through the tree, leaving a trail of newly created nodes behind us.
   // Each newly created internal node will have an new array of children, and this
   // new array will be set in the parent variable.
   // Thus each time we create a new node, it must be set into the parent array at the given index.
-  let parent: Array<HamtNode<K, V>> | undefined;
+  let parent: Array<Node<K, V>> | undefined;
   let parentIdx = 0;
 
   let shift = 0;
@@ -277,7 +395,7 @@ export function insert<K, V>(
       curNode = copyOfNode.children[idx];
     } else if ("key" in curNode) {
       // node is a leaf, check if key is equal or there is a collision
-      let newNode: HamtNode<K, V>;
+      let newNode: Node<K, V>;
       let inserted = true;
       if (hash === curNode.hash) {
         const cmp = cfg.compare(k, curNode.key);
@@ -295,7 +413,13 @@ export function insert<K, V>(
           // a collision
           newNode = {
             hash,
-            collision: treeRotations.two(cmp, k, getVal(undefined), curNode.key, curNode.val),
+            collision: treeRotations.two(
+              cmp,
+              k,
+              getVal(undefined),
+              curNode.key,
+              curNode.val
+            ),
           };
         }
       } else {
@@ -310,7 +434,7 @@ export function insert<K, V>(
       return [newRoot ?? newNode, inserted];
     } else {
       // existing collision node
-      let newNode: HamtNode<K, V> | undefined = undefined;
+      let newNode: Node<K, V> | undefined = undefined;
       let inserted = true;
       if (hash === curNode.hash) {
         // check and extend the existing collision node
@@ -343,8 +467,8 @@ export function mutateInsert<K, T, V>(
   k: K,
   t: T,
   getVal: (old: V | undefined, t: T) => V,
-  rootNode: MutableHamtNode<K, V> | null
-): MutableHamtNode<K, V> {
+  rootNode: MutableNode<K, V> | null
+): MutableNode<K, V> {
   const hash = cfg.hash(k);
 
   if (rootNode === null) {
@@ -352,7 +476,7 @@ export function mutateInsert<K, T, V>(
   }
 
   // we descend through the tree, keeping track of the parent and the index into the parent array
-  let parent: Array<MutableHamtNode<K, V>> | undefined;
+  let parent: Array<MutableNode<K, V>> | undefined;
   let parentIdx = 0;
 
   let shift = 0;
@@ -386,7 +510,7 @@ export function mutateInsert<K, T, V>(
       curNode = parent[idx];
     } else if ("key" in curNode) {
       // node is a leaf, check if key is equal or there is a collision
-      let newNode: MutableHamtNode<K, V>;
+      let newNode: MutableNode<K, V>;
       if (hash === curNode.hash) {
         const cmp = cfg.compare(k, curNode.key);
         if (cfg.compare(k, curNode.key) === 0) {
@@ -397,7 +521,13 @@ export function mutateInsert<K, T, V>(
           // a collision
           newNode = {
             hash,
-            collision: treeRotations.two(cmp, k, getVal(undefined, t), curNode.key, curNode.val),
+            collision: treeRotations.two(
+              cmp,
+              k,
+              getVal(undefined, t),
+              curNode.key,
+              curNode.val
+            ),
           };
         }
       } else {
@@ -429,15 +559,17 @@ export function mutateInsert<K, T, V>(
       }
     }
   } while (curNode);
-  throw new Error("Internal immutable-collections violation: hamt mutate insert reached null");
+  throw new Error(
+    "Internal immutable-collections violation: hamt mutate insert reached null"
+  );
 }
 
 export function from<K, V>(
   cfg: HashConfig<K>,
   items: Iterable<readonly [K, V]>,
   merge?: (v1: V, v2: V) => V
-): [HamtNode<K, V> | null, number] {
-  let root: MutableHamtNode<K, V> | null = null;
+): [Node<K, V> | null, number] {
+  let root: MutableNode<K, V> | null = null;
   let size = 0;
 
   let val: (old: V | undefined, v: V) => V;
@@ -465,20 +597,24 @@ export function from<K, V>(
   return [root, size];
 }
 
-export function build<K, V>(cfg: HashConfig<K>, items: Iterable<V>, key: (v: V) => K): [HamtNode<K, V> | null, number];
+export function build<K, V>(
+  cfg: HashConfig<K>,
+  items: Iterable<V>,
+  key: (v: V) => K
+): [Node<K, V> | null, number];
 export function build<T, K, V>(
   cfg: HashConfig<K>,
   items: Iterable<T>,
   key: (v: T) => K,
   val: (old: V | undefined, t: T) => V
-): [HamtNode<K, V> | null, number];
+): [Node<K, V> | null, number];
 export function build<T, K, V>(
   cfg: HashConfig<K>,
   items: Iterable<T>,
   key: (t: T) => K,
   val?: (old: V | undefined, t: T) => V
-): [HamtNode<K, V> | null, number] {
-  let root: MutableHamtNode<K, V> | null = null;
+): [Node<K, V> | null, number] {
+  let root: MutableNode<K, V> | null = null;
   let size = 0;
 
   let getVal: (old: V | undefined, t: T) => V;
@@ -506,7 +642,9 @@ export function build<T, K, V>(
   return [root, size];
 }
 
-function hasSingleLeafOrCollision<K, V>(node: HamtNode<K, V>): LeafNode<K, V> | CollisionNode<K, V> | null {
+function hasSingleLeafOrCollision<K, V>(
+  node: Node<K, V>
+): LeafNode<K, V> | CollisionNode<K, V> | null {
   // eslint-disable-next-line no-constant-condition
   while (true) {
     if ("children" in node) {
@@ -526,7 +664,7 @@ function removeChildFromEndOfSpine<K, V>(
   spine: ReadonlyArray<MutableSpineNode<K, V>>,
   hash: number,
   shift: number
-): HamtNode<K, V> {
+): Node<K, V> {
   // remove the node pointed to by the last spine entry
   // there are three cases:
   // - a full node is transitioned to a bitmap indexed node
@@ -590,10 +728,10 @@ function addToSpine<K, V>(
 export function remove<K, V>(
   cfg: HashConfig<K>,
   k: K,
-  rootNode: HamtNode<K, V> | null,
+  rootNode: Node<K, V> | null,
   hash?: number,
   shift?: number
-): HamtNode<K, V> | null {
+): Node<K, V> | null {
   if (rootNode === null) {
     return null;
   }
@@ -654,7 +792,7 @@ export function remove<K, V>(
         if (newRoot === curNode.collision) {
           return rootNode;
         }
-        let newNode: HamtNode<K, V>;
+        let newNode: Node<K, V>;
         if (newRoot.size === 1) {
           // switch back to a leaf node
           newNode = { hash, key: newRoot.key, val: newRoot.val };
@@ -682,8 +820,8 @@ export function alter<K, V>(
   cfg: HashConfig<K>,
   k: K,
   f: (oldV: V | undefined) => V | undefined,
-  rootNode: HamtNode<K, V> | null
-): [HamtNode<K, V> | null, number] {
+  rootNode: Node<K, V> | null
+): [Node<K, V> | null, number] {
   if (rootNode === null) {
     const newVal = f(undefined);
     if (newVal === undefined) {
@@ -749,7 +887,7 @@ export function alter<K, V>(
       shift = shift + bitsPerSubkey;
       curNode = newNode.children[idx];
     } else if ("key" in curNode) {
-      let newNode: HamtNode<K, V>;
+      let newNode: Node<K, V>;
       let sizeChange: number;
       if (hash === curNode.hash) {
         const cmp = cfg.compare(k, curNode.key);
@@ -804,7 +942,7 @@ export function alter<K, V>(
       }
     } else {
       // collision
-      let newNode: HamtNode<K, V> | undefined;
+      let newNode: Node<K, V> | undefined;
       let sizeChange: number;
       if (hash === curNode.hash) {
         // collision node always has at least two nodes, so removing one will still leave non-empty tree
@@ -846,12 +984,15 @@ export function alter<K, V>(
   throw new Error("Internal immutable-collections violation: hamt alter reached null");
 }
 
-export function* iterate<K, V, R>(f: (k: K, v: V) => R, root: HamtNode<K, V> | null): IterableIterator<R> {
+export function* iterate<K, V, R>(
+  f: (k: K, v: V) => R,
+  root: Node<K, V> | null
+): IterableIterator<R> {
   if (root === null) return;
 
-  const stack: Array<HamtNode<K, V>> = [root];
+  const stack: Array<Node<K, V>> = [root];
 
-  let node: HamtNode<K, V> | undefined;
+  let node: Node<K, V> | undefined;
   while ((node = stack.pop())) {
     if ("children" in node) {
       for (let i = 0, arr = node.children, len = arr.length; i < len; i++) {
@@ -865,13 +1006,17 @@ export function* iterate<K, V, R>(f: (k: K, v: V) => R, root: HamtNode<K, V> | n
   }
 }
 
-export function fold<K, V, T>(f: (acc: T, key: K, val: V) => T, zero: T, root: HamtNode<K, V> | null): T {
+export function fold<K, V, T>(
+  f: (acc: T, key: K, val: V) => T,
+  zero: T,
+  root: Node<K, V> | null
+): T {
   let acc = zero;
   if (root === null) return acc;
 
-  const stack: Array<HamtNode<K, V>> = [root];
+  const stack: Array<Node<K, V>> = [root];
 
-  let node: HamtNode<K, V> | undefined;
+  let node: Node<K, V> | undefined;
   while ((node = stack.pop())) {
     if ("children" in node) {
       for (let i = 0, arr = node.children, len = arr.length; i < len; i++) {
@@ -886,12 +1031,15 @@ export function fold<K, V, T>(f: (acc: T, key: K, val: V) => T, zero: T, root: H
   return acc;
 }
 
-export function mapValues<K, V1, V2>(f: (v: V1, k: K) => V2, root: HamtNode<K, V1> | null): HamtNode<K, V2> | null {
+export function mapValues<K, V1, V2>(
+  f: (v: V1, k: K) => V2,
+  root: Node<K, V1> | null
+): Node<K, V2> | null {
   if (root === null) return null;
 
-  function loop(node: HamtNode<K, V1>): HamtNode<K, V2> {
+  function loop(node: Node<K, V1>): Node<K, V2> {
     if ("children" in node) {
-      let newArr: Array<HamtNode<K, V2>> | undefined = undefined;
+      let newArr: Array<Node<K, V2>> | undefined = undefined;
       for (let i = 0, arr = node.children, len = arr.length; i < len; i++) {
         const n = arr[i];
         const newN = loop(n);
@@ -899,7 +1047,10 @@ export function mapValues<K, V1, V2>(f: (v: V1, k: K) => V2, root: HamtNode<K, V
           // if i > 0 and newArr is undefined, we must have had a previous value === and therefore
           // know that V1 is the same type as V2, but typescript does not know that
           if ((n as unknown) !== (newN as unknown)) {
-            newArr = [...(arr.slice(0, i) as unknown as ReadonlyArray<HamtNode<K, V2>>), newN];
+            newArr = [
+              ...(arr.slice(0, i) as unknown as ReadonlyArray<Node<K, V2>>),
+              newN,
+            ];
           }
         } else {
           newArr.push(newN);
@@ -909,13 +1060,13 @@ export function mapValues<K, V1, V2>(f: (v: V1, k: K) => V2, root: HamtNode<K, V
         return { bitmap: node.bitmap, children: newArr };
       } else {
         // if newArr is undefined, we know that V1 is the same as V2.
-        return node as unknown as HamtNode<K, V2>;
+        return node as unknown as Node<K, V2>;
       }
     } else if ("key" in node) {
       const newVal = f(node.val, node.key);
       if ((node.val as unknown) === (newVal as unknown)) {
         // if the values are ===, the type of V1 equals the type of V2
-        return node as unknown as HamtNode<K, V2>;
+        return node as unknown as Node<K, V2>;
       } else {
         return { hash: node.hash, key: node.key, val: newVal };
       }
@@ -923,7 +1074,7 @@ export function mapValues<K, V1, V2>(f: (v: V1, k: K) => V2, root: HamtNode<K, V
       const newRoot = tree.mapValues(f, node.collision);
       if ((newRoot as unknown) === (node.collision as unknown)) {
         // if the values are ===, the type of V1 equals the type of V2
-        return node as unknown as HamtNode<K, V2>;
+        return node as unknown as Node<K, V2>;
       } else {
         // mapValues on a non-null tree produces a non-null tree
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -938,15 +1089,15 @@ export function mapValues<K, V1, V2>(f: (v: V1, k: K) => V2, root: HamtNode<K, V
 export function collectValues<K, V1, V2>(
   f: (v: V1, k: K) => V2 | undefined,
   filterNull: boolean,
-  root: HamtNode<K, V1> | null
-): [HamtNode<K, V2> | null, number] {
+  root: Node<K, V1> | null
+): [Node<K, V2> | null, number] {
   if (root === null) return [null, 0];
 
   let newSize = 0;
-  function loop(node: HamtNode<K, V1>): HamtNode<K, V2> | null {
+  function loop(node: Node<K, V1>): Node<K, V2> | null {
     if ("children" in node) {
       const origBitmap = node.bitmap;
-      let newArr: Array<HamtNode<K, V2>> | undefined = undefined;
+      let newArr: Array<Node<K, V2>> | undefined = undefined;
       let newBitmap = origBitmap;
 
       for (
@@ -963,11 +1114,18 @@ export function collectValues<K, V1, V2>(
               // if i > 0 and newArr is undefined, we must have had a previous value === and therefore
               // know that V1 is the same type as V2, but typescript does not know that
               if ((n as unknown) !== (newN as unknown)) {
-                newArr = [...(node.children.slice(0, idx) as unknown as ReadonlyArray<HamtNode<K, V2>>), newN];
+                newArr = [
+                  ...(node.children.slice(0, idx) as unknown as ReadonlyArray<
+                    Node<K, V2>
+                  >),
+                  newN,
+                ];
               }
             } else {
               // filter out the value
-              newArr = [...(node.children.slice(0, idx) as unknown as ReadonlyArray<HamtNode<K, V2>>)];
+              newArr = [
+                ...(node.children.slice(0, idx) as unknown as ReadonlyArray<Node<K, V2>>),
+              ];
               newBitmap = newBitmap & ~mask;
             }
           } else {
@@ -996,7 +1154,7 @@ export function collectValues<K, V1, V2>(
         }
       } else {
         // if newArr is undefined, we know that V1 is the same as V2.
-        return node as unknown as HamtNode<K, V2>;
+        return node as unknown as Node<K, V2>;
       }
     } else if ("key" in node) {
       const newVal = f(node.val, node.key);
@@ -1008,14 +1166,14 @@ export function collectValues<K, V1, V2>(
       } else {
         newSize++;
         // if vals are ===, we know that V1 is the same as V2.
-        return node as unknown as HamtNode<K, V2>;
+        return node as unknown as Node<K, V2>;
       }
     } else {
       const newCol = tree.collectValues(f, filterNull, node.collision);
       if ((newCol as unknown) === (node.collision as unknown)) {
         newSize += node.collision.size;
         // if vals are ===, we know that V1 is the same as V2.
-        return node as unknown as HamtNode<K, V2>;
+        return node as unknown as Node<K, V2>;
       } else if (newCol === null) {
         return null;
       } else if (newCol.size === 1) {
@@ -1036,15 +1194,15 @@ export function collectValues<K, V1, V2>(
 export function union<K, V>(
   cfg: HashConfig<K>,
   f: (v1: V, v2: V, k: K) => V,
-  root1: HamtNode<K, V> | null,
-  root2: HamtNode<K, V> | null
-): [HamtNode<K, V> | null, number] {
+  root1: Node<K, V> | null,
+  root2: Node<K, V> | null
+): [Node<K, V> | null, number] {
   if (root1 === null) return [root2, 0];
   if (root2 === null) return [root1, 0];
 
   let intersectionSize = 0;
 
-  function loop(shift: number, node1: HamtNode<K, V>, node2: HamtNode<K, V>): HamtNode<K, V> {
+  function loop(shift: number, node1: Node<K, V>, node2: Node<K, V>): Node<K, V> {
     // Leaf vs Leaf
     if ("key" in node1 && "key" in node2) {
       if (node1.hash === node2.hash) {
@@ -1142,14 +1300,21 @@ export function union<K, V>(
       // merge the two nodes, but don't create a copy until we find something different between
       // the two nodes.  That is, keep newArr undefined while the union is equal to just node1
       // This is left-biased and will prefer the left-hand node (node1)
-      let newArr: Array<HamtNode<K, V>> | undefined = undefined;
+      let newArr: Array<Node<K, V>> | undefined = undefined;
       for (
-        let mask = 1, node1Idx = 0, node2Idx = 0, remainingBitmap = node1bitmap | node2bitmap;
+        let mask = 1,
+          node1Idx = 0,
+          node2Idx = 0,
+          remainingBitmap = node1bitmap | node2bitmap;
         remainingBitmap !== 0;
         remainingBitmap &= ~mask, mask <<= 1
       ) {
         if (mask & intersectionBitmap) {
-          const newNode = loop(shift + bitsPerSubkey, node1.children[node1Idx], node2.children[node2Idx]);
+          const newNode = loop(
+            shift + bitsPerSubkey,
+            node1.children[node1Idx],
+            node2.children[node2Idx]
+          );
           if (newArr) {
             // we already have a new array, so just add the new node
             newArr.push(newNode);
@@ -1262,15 +1427,15 @@ export function union<K, V>(
 export function intersection<K, V>(
   cfg: HashConfig<K>,
   f: (v1: V, v2: V, k: K) => V,
-  root1: HamtNode<K, V> | null,
-  root2: HamtNode<K, V> | null
-): [HamtNode<K, V> | null, number] {
+  root1: Node<K, V> | null,
+  root2: Node<K, V> | null
+): [Node<K, V> | null, number] {
   if (root1 === null) return [null, 0];
   if (root2 === null) return [null, 0];
 
   let intersectionSize = 0;
 
-  function loop(shift: number, node1: HamtNode<K, V>, node2: HamtNode<K, V>): HamtNode<K, V> | null {
+  function loop(shift: number, node1: Node<K, V>, node2: Node<K, V>): Node<K, V> | null {
     // Leaf vs anything
     if ("key" in node1) {
       const other = lookup(cfg, node1.key, node2, node1.hash, shift);
@@ -1326,15 +1491,22 @@ export function intersection<K, V>(
       // merge the two nodes, but don't create a copy until we find something different between
       // the two nodes.  That is, keep newArr undefined while the intersection is equal to just node1
       // This is left-biased and will prefer the left-hand node (node1)
-      let newArr: Array<HamtNode<K, V>> | undefined = undefined;
+      let newArr: Array<Node<K, V>> | undefined = undefined;
       let newBitmap = intersectionBitmap;
       for (
-        let mask = 1, node1Idx = 0, node2Idx = 0, remainingBitmap = node1bitmap | node2bitmap;
+        let mask = 1,
+          node1Idx = 0,
+          node2Idx = 0,
+          remainingBitmap = node1bitmap | node2bitmap;
         remainingBitmap !== 0;
         remainingBitmap &= ~mask, mask <<= 1
       ) {
         if (mask & intersectionBitmap) {
-          const newNode = loop(shift + bitsPerSubkey, node1.children[node1Idx], node2.children[node2Idx]);
+          const newNode = loop(
+            shift + bitsPerSubkey,
+            node1.children[node1Idx],
+            node2.children[node2Idx]
+          );
           if (newArr) {
             // we already have a new array
             if (newNode === null) {
@@ -1373,7 +1545,9 @@ export function intersection<K, V>(
       } else if (newArr.length === 0) {
         return null;
       } else if (newArr.length === 1) {
-        return hasSingleLeafOrCollision(newArr[0]) ?? { bitmap: newBitmap, children: newArr };
+        return (
+          hasSingleLeafOrCollision(newArr[0]) ?? { bitmap: newBitmap, children: newArr }
+        );
       } else {
         return { bitmap: newBitmap, children: newArr };
       }
@@ -1434,15 +1608,19 @@ export function intersection<K, V>(
 
 export function difference<K, V1, V2>(
   cfg: HashConfig<K>,
-  root1: HamtNode<K, V1> | null,
-  root2: HamtNode<K, V2> | null
-): readonly [HamtNode<K, V1> | null, number] {
+  root1: Node<K, V1> | null,
+  root2: Node<K, V2> | null
+): readonly [Node<K, V1> | null, number] {
   if (root2 === null) return [root1, 0];
   if (root1 === null) return [null, 0];
 
   let numRemoved = 0;
 
-  function loop(shift: number, node1: HamtNode<K, V1>, node2: HamtNode<K, V2>): HamtNode<K, V1> | null {
+  function loop(
+    shift: number,
+    node1: Node<K, V1>,
+    node2: Node<K, V2>
+  ): Node<K, V1> | null {
     if ("key" in node1) {
       const has = lookup(cfg, node1.key, node2, node1.hash, shift);
       if (has === undefined) {
@@ -1470,7 +1648,7 @@ export function difference<K, V1, V2>(
       const intersectionBitmap = node1bitmap & node2bitmap;
 
       // merge the two nodes, but don't create a copy until we find something to remove
-      let newArr: Array<HamtNode<K, V1>> | undefined = undefined;
+      let newArr: Array<Node<K, V1>> | undefined = undefined;
       let newBitmap = node1bitmap;
       for (
         let mask = 1, node1Idx = 0, node2Idx = 0, remainingBitmap = node1bitmap;
@@ -1478,7 +1656,11 @@ export function difference<K, V1, V2>(
         remainingBitmap &= ~mask, mask <<= 1
       ) {
         if (mask & intersectionBitmap) {
-          const newNode = loop(shift + bitsPerSubkey, node1.children[node1Idx], node2.children[node2Idx]);
+          const newNode = loop(
+            shift + bitsPerSubkey,
+            node1.children[node1Idx],
+            node2.children[node2Idx]
+          );
           if (newArr) {
             // we already have a new array
             if (newNode === null) {
@@ -1516,7 +1698,9 @@ export function difference<K, V1, V2>(
       } else if (newArr.length === 0) {
         return null;
       } else if (newArr.length === 1) {
-        return hasSingleLeafOrCollision(newArr[0]) ?? { bitmap: newBitmap, children: newArr };
+        return (
+          hasSingleLeafOrCollision(newArr[0]) ?? { bitmap: newBitmap, children: newArr }
+        );
       } else {
         return { bitmap: newBitmap, children: newArr };
       }
@@ -1575,7 +1759,12 @@ export function difference<K, V1, V2>(
         // as a child in which case this bitmap node should not exist.
         if (oldArr.length === 2) {
           const other = oldArr[1 - idx];
-          return hasSingleLeafOrCollision(other) ?? { bitmap: node1bitmap & ~m, children: [other] };
+          return (
+            hasSingleLeafOrCollision(other) ?? {
+              bitmap: node1bitmap & ~m,
+              children: [other],
+            }
+          );
         } else {
           const newArr = [...oldArr.slice(0, idx), ...oldArr.slice(idx + 1)];
           return { bitmap: node1bitmap & ~m, children: newArr };
@@ -1619,9 +1808,9 @@ export function difference<K, V1, V2>(
 export function adjust<K, V1, V2>(
   cfg: HashConfig<K>,
   f: (v1: V1 | undefined, v2: V2, k: K) => V1 | undefined,
-  root1: HamtNode<K, V1> | null,
-  root2: HamtNode<K, V2> | null
-): readonly [HamtNode<K, V1> | null, number] {
+  root1: Node<K, V1> | null,
+  root2: Node<K, V2> | null
+): readonly [Node<K, V1> | null, number] {
   if (root2 === null) return [root1, 0];
   if (root1 === null) {
     const [newRoot, newSize] = collectValues(fWithUndefined, false, root2);
@@ -1633,7 +1822,11 @@ export function adjust<K, V1, V2>(
   }
 
   let numRemoved = 0;
-  function loop(shift: number, node1: HamtNode<K, V1>, node2: HamtNode<K, V2>): HamtNode<K, V1> | null {
+  function loop(
+    shift: number,
+    node1: Node<K, V1>,
+    node2: Node<K, V2>
+  ): Node<K, V1> | null {
     if ("key" in node1 && "key" in node2) {
       if (node1.hash === node2.hash) {
         const cmp = cfg.compare(node1.key, node2.key);
@@ -1645,7 +1838,7 @@ export function adjust<K, V1, V2>(
           } else if (newVal === node1.val) {
             return node1;
           } else if ((newVal as unknown) === node2.val) {
-            return node2 as unknown as HamtNode<K, V1>;
+            return node2 as unknown as Node<K, V1>;
           } else {
             return { hash: node1.hash, key: node1.key, val: newVal };
           }
@@ -1656,7 +1849,10 @@ export function adjust<K, V1, V2>(
             return node1;
           } else {
             numRemoved -= 1;
-            return { hash: node1.hash, collision: treeRotations.two(cmp, node1.key, node1.val, node2.key, newVal) };
+            return {
+              hash: node1.hash,
+              collision: treeRotations.two(cmp, node1.key, node1.val, node2.key, newVal),
+            };
           }
         }
       } else {
@@ -1674,7 +1870,12 @@ export function adjust<K, V1, V2>(
         // altering the node1 tree cannot produce null, because node1 has at least two elements and we are
         // adjusting only a single key (noed2.key)
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const newCol1 = tree.alter(cfg, node2.key, (oldV) => f(oldV, node2.val, node2.key), node1.collision)!;
+        const newCol1 = tree.alter(
+          cfg,
+          node2.key,
+          (oldV) => f(oldV, node2.val, node2.key),
+          node1.collision
+        )!;
         if (newCol1 === node1.collision) {
           return node1;
         } else if (newCol1.size === 1) {
@@ -1714,7 +1915,11 @@ export function adjust<K, V1, V2>(
           return node1;
         } else if (newTree.size === 1) {
           numRemoved -= 1;
-          return two(shift, node1, { hash: node2.hash, key: newTree.key, val: newTree.val });
+          return two(shift, node1, {
+            hash: node2.hash,
+            key: newTree.key,
+            val: newTree.val,
+          });
         } else {
           numRemoved -= newTree.size;
           return two(shift, node1, { hash: node2.hash, collision: newTree });
@@ -1741,7 +1946,11 @@ export function adjust<K, V1, V2>(
           return node1;
         } else if (newTree.size === 1) {
           numRemoved -= 1;
-          return two(shift, node1, { hash: node2.hash, key: newTree.key, val: newTree.val });
+          return two(shift, node1, {
+            hash: node2.hash,
+            key: newTree.key,
+            val: newTree.val,
+          });
         } else {
           numRemoved -= newTree.size;
           return two(shift, node1, { hash: node2.hash, collision: newTree });
@@ -1758,15 +1967,22 @@ export function adjust<K, V1, V2>(
       // merge the two nodes, but don't create a copy until we find something different between
       // the two nodes.  That is, keep newArr undefined while the union is equal to just node1
       // This is left-biased and will prefer the left-hand node (node1)
-      let newArr: Array<HamtNode<K, V1>> | undefined = undefined;
+      let newArr: Array<Node<K, V1>> | undefined = undefined;
       let newBitmap = node1bitmap;
       for (
-        let mask = 1, node1Idx = 0, node2Idx = 0, remainingBitmap = node1bitmap | node2bitmap;
+        let mask = 1,
+          node1Idx = 0,
+          node2Idx = 0,
+          remainingBitmap = node1bitmap | node2bitmap;
         remainingBitmap !== 0;
         remainingBitmap &= ~mask, mask <<= 1
       ) {
         if (mask & intersectionBitmap) {
-          const newNode = loop(shift + bitsPerSubkey, node1.children[node1Idx], node2.children[node2Idx]);
+          const newNode = loop(
+            shift + bitsPerSubkey,
+            node1.children[node1Idx],
+            node2.children[node2Idx]
+          );
 
           if (newArr) {
             // we already have a new array
@@ -1795,7 +2011,11 @@ export function adjust<K, V1, V2>(
           }
           node1Idx++;
         } else if (mask & node2bitmap) {
-          const [newChild, newSize] = collectValues(fWithUndefined, false, node2.children[node2Idx]);
+          const [newChild, newSize] = collectValues(
+            fWithUndefined,
+            false,
+            node2.children[node2Idx]
+          );
           if (newChild !== null) {
             numRemoved -= newSize;
             // add the new child into the new node1
@@ -1816,7 +2036,9 @@ export function adjust<K, V1, V2>(
       } else if (newArr.length === 0) {
         return null;
       } else if (newArr.length === 1) {
-        return hasSingleLeafOrCollision(newArr[0]) ?? { bitmap: newBitmap, children: newArr };
+        return (
+          hasSingleLeafOrCollision(newArr[0]) ?? { bitmap: newBitmap, children: newArr }
+        );
       } else {
         return { bitmap: newBitmap, children: newArr };
       }
@@ -1852,7 +2074,12 @@ export function adjust<K, V1, V2>(
           // as a child in which case this bitmap node should not exist.
           if (oldArr.length === 2) {
             const other = oldArr[1 - idx];
-            return hasSingleLeafOrCollision(other) ?? { bitmap: node1bitmap & ~m, children: [other] };
+            return (
+              hasSingleLeafOrCollision(other) ?? {
+                bitmap: node1bitmap & ~m,
+                children: [other],
+              }
+            );
           } else {
             const newArr = [...oldArr.slice(0, idx), ...oldArr.slice(idx + 1)];
             return { bitmap: node1bitmap & ~m, children: newArr };
@@ -1888,7 +2115,7 @@ export function adjust<K, V1, V2>(
       const mask1 = mask(hash1, shift);
       const node2bitmap = node2int.bitmap;
 
-      let newArr: Array<HamtNode<K, V1>> | undefined = undefined;
+      let newArr: Array<Node<K, V1>> | undefined = undefined;
       let newBitmap = node2bitmap;
       for (
         let mask = 1, node2Idx = 0, remainingBitmap = node2bitmap | mask1;
@@ -1896,13 +2123,17 @@ export function adjust<K, V1, V2>(
         remainingBitmap &= ~mask, mask <<= 1
       ) {
         if (mask & node2bitmap) {
-          let newChild: HamtNode<K, V1> | null;
+          let newChild: Node<K, V1> | null;
           if (mask & mask1) {
             // loop on the node1 and node2 child
             newChild = loop(shift + bitsPerSubkey, node1, node2int.children[node2Idx]);
           } else {
             let newSize: number;
-            [newChild, newSize] = collectValues(fWithUndefined, false, node2int.children[node2Idx]);
+            [newChild, newSize] = collectValues(
+              fWithUndefined,
+              false,
+              node2int.children[node2Idx]
+            );
             numRemoved -= newSize;
           }
           if (newArr) {
@@ -1918,11 +2149,17 @@ export function adjust<K, V1, V2>(
             // if node2Idx > 0 and newArr is undefined, we must have had a previous value === and therefore
             // know that V1 is the same type as V2, but typescript does not know that
             if (newChild === null) {
-              newArr = [...(node2int.children.slice(0, node2Idx) as unknown as ReadonlyArray<HamtNode<K, V1>>)];
+              newArr = [
+                ...(node2int.children.slice(0, node2Idx) as unknown as ReadonlyArray<
+                  Node<K, V1>
+                >),
+              ];
               newBitmap &= ~mask;
             } else {
               newArr = [
-                ...(node2int.children.slice(0, node2Idx) as unknown as ReadonlyArray<HamtNode<K, V1>>),
+                ...(node2int.children.slice(0, node2Idx) as unknown as ReadonlyArray<
+                  Node<K, V1>
+                >),
                 newChild,
               ];
             }
@@ -1937,18 +2174,25 @@ export function adjust<K, V1, V2>(
           } else {
             // if node2Idx > 0 and newArr is undefined, we must have had a previous value === and therefore
             // know that V1 is the same type as V2, but typescript does not know that
-            newArr = [...(node2int.children.slice(0, node2Idx) as unknown as ReadonlyArray<HamtNode<K, V1>>), node1];
+            newArr = [
+              ...(node2int.children.slice(0, node2Idx) as unknown as ReadonlyArray<
+                Node<K, V1>
+              >),
+              node1,
+            ];
           }
         }
       }
 
       if (!newArr) {
         // if newArr is undefined, we know that V1 is the same as V2.
-        return node2 as unknown as HamtNode<K, V1>;
+        return node2 as unknown as Node<K, V1>;
       } else if (newArr.length === 0) {
         return null;
       } else if (newArr.length === 1) {
-        return hasSingleLeafOrCollision(newArr[0]) ?? { bitmap: newBitmap, children: newArr };
+        return (
+          hasSingleLeafOrCollision(newArr[0]) ?? { bitmap: newBitmap, children: newArr }
+        );
       } else {
         return { bitmap: newBitmap, children: newArr };
       }

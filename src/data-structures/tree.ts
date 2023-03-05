@@ -1,5 +1,10 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
+/** Size-Balanced Binary Tree
+ *
+ * @module tree
+ */
+
 import { ComparisionConfig } from "./comparison.js";
 import {
   combineAfterInsertOrRemove,
@@ -22,7 +27,11 @@ The algorithms here are copied pretty much directly from haskell's containers
 library: https://github.com/haskell/containers/blob/master/containers/src/Data/Map/Internal.hs
 */
 
-export function lookup<K, V>({ compare }: ComparisionConfig<K>, k: K, root: TreeNode<K, V> | null): V | undefined {
+export function lookup<K, V>(
+  { compare }: ComparisionConfig<K>,
+  k: K,
+  root: TreeNode<K, V> | null
+): V | undefined {
   let node = root;
   while (node) {
     const c = compare(k, node.key);
@@ -92,7 +101,13 @@ export function alter<K, V>(
       } else if (newVal === node.val) {
         return node;
       } else {
-        return { key: k, val: newVal, size: node.size, left: node.left, right: node.right };
+        return {
+          key: k,
+          val: newVal,
+          size: node.size,
+          left: node.left,
+          right: node.right,
+        };
       }
     } else if (c < 0) {
       const newLeft = loop(node.left);
@@ -123,7 +138,8 @@ export function mutateInsert<K, V, T>(
 ): MutableTreeNode<K, V> {
   let newLeaf = true;
   function insertLoop(node: MutableTreeNode<K, V> | null): MutableTreeNode<K, V> {
-    if (node === null) return { key: k, val: getVal(undefined, t), size: 1, left: null, right: null };
+    if (node === null)
+      return { key: k, val: getVal(undefined, t), size: 1, left: null, right: null };
     const c = compare(k, node.key);
     if (c < 0) {
       node.left = insertLoop(node.left);
@@ -211,7 +227,13 @@ export function build<T, K, V>(
 
   function insertLoop(node: MutableTreeNode<K, V> | null): MutableTreeNode<K, V> {
     if (node === null)
-      return { key: k, val: val ? val(undefined, t) : (t as unknown as V), size: 1, left: null, right: null };
+      return {
+        key: k,
+        val: val ? val(undefined, t) : (t as unknown as V),
+        size: 1,
+        left: null,
+        right: null,
+      };
     const c = compare(k, node.key);
     if (c < 0) {
       node.left = insertLoop(node.left);
@@ -247,7 +269,10 @@ export function build<T, K, V>(
   return root;
 }
 
-export function* iterateAsc<K, V, T>(f: (k: K, v: V) => T, root: TreeNode<K, V> | null): IterableIterator<T> {
+export function* iterateAsc<K, V, T>(
+  f: (k: K, v: V) => T,
+  root: TreeNode<K, V> | null
+): IterableIterator<T> {
   const nodes: Array<TreeNode<K, V>> = [];
   let node: TreeNode<K, V> | null = root;
   while (node !== null || nodes.length > 0) {
@@ -263,7 +288,10 @@ export function* iterateAsc<K, V, T>(f: (k: K, v: V) => T, root: TreeNode<K, V> 
   }
 }
 
-export function* iterateDesc<K, V, T>(f: (k: K, v: V) => T, root: TreeNode<K, V> | null): IterableIterator<T> {
+export function* iterateDesc<K, V, T>(
+  f: (k: K, v: V) => T,
+  root: TreeNode<K, V> | null
+): IterableIterator<T> {
   const nodes: Array<TreeNode<K, V>> = [];
   let node: TreeNode<K, V> | null = root;
   while (node !== null || nodes.length > 0) {
@@ -279,7 +307,11 @@ export function* iterateDesc<K, V, T>(f: (k: K, v: V) => T, root: TreeNode<K, V>
   }
 }
 
-export function foldl<K, V, T>(f: (acc: T, k: K, v: V) => T, zero: T, root: TreeNode<K, V> | null): T {
+export function foldl<K, V, T>(
+  f: (acc: T, k: K, v: V) => T,
+  zero: T,
+  root: TreeNode<K, V> | null
+): T {
   const nodes: Array<TreeNode<K, V>> = [];
   let node: TreeNode<K, V> | null = root;
   let acc = zero;
@@ -298,7 +330,11 @@ export function foldl<K, V, T>(f: (acc: T, k: K, v: V) => T, zero: T, root: Tree
   return acc;
 }
 
-export function foldr<K, V, T>(f: (k: K, v: V, acc: T) => T, zero: T, root: TreeNode<K, V> | null): T {
+export function foldr<K, V, T>(
+  f: (k: K, v: V, acc: T) => T,
+  zero: T,
+  root: TreeNode<K, V> | null
+): T {
   const nodes: Array<TreeNode<K, V>> = [];
   let node: TreeNode<K, V> | null = root;
   let acc = zero;
@@ -317,7 +353,10 @@ export function foldr<K, V, T>(f: (k: K, v: V, acc: T) => T, zero: T, root: Tree
   return acc;
 }
 
-export function mapValues<K, V1, V2>(f: (v: V1, k: K) => V2, root: TreeNode<K, V1> | null): TreeNode<K, V2> | null {
+export function mapValues<K, V1, V2>(
+  f: (v: V1, k: K) => V2,
+  root: TreeNode<K, V1> | null
+): TreeNode<K, V2> | null {
   function loop(n: TreeNode<K, V1> | null): TreeNode<K, V2> | null {
     if (!n) return null;
     const newLeft = loop(n.left);
@@ -326,7 +365,11 @@ export function mapValues<K, V1, V2>(f: (v: V1, k: K) => V2, root: TreeNode<K, V
 
     // typescript won't let us compare V1 with V2, but if the types V1 are equal to V2 and the values are equal, we want to
     // return the tree unchanged.
-    if ((newVal as unknown) === (n.val as unknown) && newLeft === n.left && newRight === n.right) {
+    if (
+      (newVal as unknown) === (n.val as unknown) &&
+      newLeft === n.left &&
+      newRight === n.right
+    ) {
       // if the values are equal, the types must be equal as well
       return n as unknown as TreeNode<K, V2>;
     } else {
@@ -352,7 +395,11 @@ export function collectValues<K, V1, V2>(
     }
     // typescript won't let us compare V1 with V2, but if the types V1 are equal to V2 and the values are equal, we want to
     // return the tree unchanged.
-    else if ((newVal as unknown) === (n.val as unknown) && newLeft === n.left && newRight === n.right) {
+    else if (
+      (newVal as unknown) === (n.val as unknown) &&
+      newLeft === n.left &&
+      newRight === n.right
+    ) {
       // if the values are equal, the types must be equal as well
       return n as unknown as TreeNode<K, V2>;
     } else {
@@ -369,7 +416,11 @@ export interface SplitResult<K, V> {
   readonly above: TreeNode<K, V> | null;
 }
 
-export function split<K, V>({ compare }: ComparisionConfig<K>, k: K, root: TreeNode<K, V> | null): SplitResult<K, V> {
+export function split<K, V>(
+  { compare }: ComparisionConfig<K>,
+  k: K,
+  root: TreeNode<K, V> | null
+): SplitResult<K, V> {
   function loop(n: TreeNode<K, V> | null): SplitResult<K, V> {
     if (!n) return { below: null, val: undefined, above: null };
     const c = compare(k, n.key);
@@ -393,7 +444,9 @@ export function partition<K, V>(
   f: (k: K, v: V) => boolean,
   root: TreeNode<K, V> | null
 ): readonly [TreeNode<K, V> | null, TreeNode<K, V> | null] {
-  function loop(node: TreeNode<K, V> | null): readonly [TreeNode<K, V> | null, TreeNode<K, V> | null] {
+  function loop(
+    node: TreeNode<K, V> | null
+  ): readonly [TreeNode<K, V> | null, TreeNode<K, V> | null] {
     if (node === null) return [null, null];
     const [leftTrue, leftFalse] = loop(node.left);
     const [rightTrue, rightFalse] = loop(node.right);
@@ -430,20 +483,37 @@ export function union<K, V>(
   root1: TreeNode<K, V> | null,
   root2: TreeNode<K, V> | null
 ): TreeNode<K, V> | null {
-  function loop(n1: TreeNode<K, V> | null, n2: TreeNode<K, V> | null): TreeNode<K, V> | null {
+  function loop(
+    n1: TreeNode<K, V> | null,
+    n2: TreeNode<K, V> | null
+  ): TreeNode<K, V> | null {
     if (!n1) return n2;
     if (!n2) return n1;
     if (!n1.left && !n1.right) {
-      return alter(cfg, n1.key, (oldVal) => (oldVal === undefined ? n1.val : f(n1.val, oldVal, n1.key)), n2);
+      return alter(
+        cfg,
+        n1.key,
+        (oldVal) => (oldVal === undefined ? n1.val : f(n1.val, oldVal, n1.key)),
+        n2
+      );
     }
     if (!n2.left && !n2.right) {
-      return alter(cfg, n2.key, (oldVal) => (oldVal === undefined ? n2.val : f(oldVal, n2.val, n2.key)), n1);
+      return alter(
+        cfg,
+        n2.key,
+        (oldVal) => (oldVal === undefined ? n2.val : f(oldVal, n2.val, n2.key)),
+        n1
+      );
     }
 
     const s = split(cfg, n1.key, n2);
     const newLeft = loop(n1.left, s.below);
     const newRight = loop(n1.right, s.above);
-    if (newLeft === n1.left && newRight === n1.right && (s.val === undefined || s.val === n1.val)) {
+    if (
+      newLeft === n1.left &&
+      newRight === n1.right &&
+      (s.val === undefined || s.val === n1.val)
+    ) {
       return n1;
     } else if (s.val !== undefined) {
       return combineDifferentSizes(newLeft, n1.key, f(n1.val, s.val, n1.key), newRight);
@@ -461,7 +531,10 @@ export function intersection<K, V>(
   root1: TreeNode<K, V> | null,
   root2: TreeNode<K, V> | null
 ): TreeNode<K, V> | null {
-  function loop(n1: TreeNode<K, V> | null, n2: TreeNode<K, V> | null): TreeNode<K, V> | null {
+  function loop(
+    n1: TreeNode<K, V> | null,
+    n2: TreeNode<K, V> | null
+  ): TreeNode<K, V> | null {
     if (!n1) return null;
     if (!n2) return null;
 
@@ -487,7 +560,10 @@ export function difference<K, V1, V2>(
   root1: TreeNode<K, V1> | null,
   root2: TreeNode<K, V2> | null
 ): TreeNode<K, V1> | null {
-  function loop(n1: TreeNode<K, V1> | null, n2: TreeNode<K, V2> | null): TreeNode<K, V1> | null {
+  function loop(
+    n1: TreeNode<K, V1> | null,
+    n2: TreeNode<K, V2> | null
+  ): TreeNode<K, V1> | null {
     if (!n1) return null;
     if (!n2) return n1;
 
@@ -520,7 +596,10 @@ export function adjust<K, V1, V2>(
     return f(undefined, v2, k);
   }
 
-  function loop(n1: TreeNode<K, V1> | null, n2: TreeNode<K, V2> | null): TreeNode<K, V1> | null {
+  function loop(
+    n1: TreeNode<K, V1> | null,
+    n2: TreeNode<K, V2> | null
+  ): TreeNode<K, V1> | null {
     if (!n2) return n1;
     if (!n1) return collectValues(fWithUndefined, false, n2);
 
