@@ -62,6 +62,13 @@ export type ToHashable<T> =
 /** The possible types for a key in a {@link HashMap} */
 export type HashKey = string | number | boolean | Date | (HashableObj & ComparableObj);
 
+/** The configuration for a HashMap
+ *
+ * @category Hashing
+ *
+ * @remarks
+ * This combines a {@link ComparisonConfig} with a hash function for the key type.
+ */
 export type HashConfig<K> = ComparisionConfig<K> & {
   readonly hash: (v: K) => number;
 };
@@ -169,6 +176,15 @@ export function hashValues(
 // for the keyEq and hash function which check the type of the key and then
 // replace the configuration with the correct one.
 
+/** Create a HashConfig based on the key type
+ *
+ * @category Hashing
+ *
+ * @remarks
+ * This function is used to create a {@link HashConfig} based on the type of key.  It supports
+ * numbers, strings, booleans, dates, and objects which implement the {@link HashableObj} interface.
+ * Note that this uses {@link hashValues} and is thus NOT cryptographically secure.
+ */
 export function mkHashConfig<K extends HashKey>(): HashConfig<K> {
   // eslint-disable-next-line prefer-const
   let m: InternalHashConfig<K>;

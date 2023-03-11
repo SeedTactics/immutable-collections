@@ -2,6 +2,7 @@ import {
   Comment,
   DeclarationReflection,
   PageEvent,
+  ReferenceReflection,
   ReflectionFlag,
   ReflectionKind,
 } from "typedoc";
@@ -48,6 +49,17 @@ function renderChild(pageU: PageEvent<unknown>, child: DeclarationReflection): s
       return renderTypeAlias(pageU, child);
     case ReflectionKind.Interface:
       return renderInterface(child);
+    case ReflectionKind.Reference:
+      if (child instanceof ReferenceReflection) {
+        const target = child.getTargetReflectionDeep();
+        if (target instanceof DeclarationReflection) {
+          return renderChild(pageU, target);
+        } else {
+          throw new Error("Target is not a declaration reflection");
+        }
+      } else {
+        throw new Error("Reference is not a ReferenceReflection");
+      }
 
     default:
       throw new Error(
@@ -94,11 +106,38 @@ export function pageTemplate(page: PageEvent<DeclarationReflection>): string {
           c.children.findIndex((child) => !child.flags.hasFlag(ReflectionFlag.Private)) >=
           0
       );
+
+    // When typedoc processes categories, it removes the category comment block from the
+    // list of comments.  Thus if a declaration is processesd twice like with a reference,
+    // the second time the category comment has been removed during the first time and thus
+    // the reference is categorized as "Other".  Mutable data strikes again!
+    const otherReferences =
+      cats
+        .find((c) => c.title === "Other")
+        ?.children?.filter((d) => d instanceof ReferenceReflection)
+        .map((d) => {
+          // I couldn't see a way of getting the category comment back, so I'm just going to
+          // hard code the categories...
+
+          let category: string | undefined;
+          if (d.name === "HashableObj" || d.name === "hashValues") {
+            category = "Hashing";
+          }
+          return { category, d };
+        }) ?? [];
+
     for (const group of cats) {
       str += `## ${group.title}\n\n`;
-      for (const child of group.children) {
+      for (const child of group.children.filter(
+        (d) => otherReferences.findIndex((r) => r.d === d) < 0
+      )) {
         if (child.flags.hasFlag(ReflectionFlag.Private)) continue;
         str += renderChild(pageU, child);
+      }
+      for (const otherRef of otherReferences) {
+        if (otherRef.category === group.title) {
+          str += renderChild(pageU, otherRef.d);
+        }
       }
     }
   } else {

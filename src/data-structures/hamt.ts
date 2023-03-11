@@ -183,7 +183,7 @@ export type MutableNode<K, V> =
   | MutableCollisionNode<K, V>
   | MutableInternalNode<K, V>;
 
-export { HashConfig, hashValues, mkHashConfig } from "./hashing.js";
+export { HashConfig, HashableObj, hashValues, mkHashConfig } from "./hashing.js";
 
 const bitsPerSubkey = 5;
 const subkeyMask = (1 << bitsPerSubkey) - 1;
