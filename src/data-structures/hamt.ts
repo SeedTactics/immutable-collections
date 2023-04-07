@@ -215,6 +215,10 @@ function constUndefined() {
   return undefined;
 }
 
+/** Lookup a key in a HAMT
+ *
+ * @category Basic Operations
+ */
 export function lookup<K, V>(
   cfg: HashConfig<K>,
   k: K,
@@ -324,6 +328,21 @@ function two<K, V>(
   }
 }
 
+/** Insert or update a key and value in a HAMT
+ *
+ * @category Basic Operations
+ *
+ * @remarks
+ * This function lookus up the key and if it is found, the existing value is passed to `getVal`.
+ * Otherwise, undefined is passed to `getVal`.  The return value from `getVal` is then placed
+ * into the tree.  This function guarantees that if the return value from getVal is `===`
+ * the existing the value, the tree is returned unchanged (and the tree root will be the exact same
+ * object). The empty tree is represented by `null`.
+ *
+ * This returns a tuple of the new tree after the operation and a boolean which is
+ * true if the size has increased and false if the value overwrote an existing value and thus
+ * the size of the tree didn't change.  You can use this to externally track the size of the tree.
+ */
 export function insert<K, V>(
   cfg: HashConfig<K>,
   k: K,
@@ -462,6 +481,25 @@ export function insert<K, V>(
   throw new Error("Internal immutable-collections violation: hamt insert reached null");
 }
 
+/** Mutably insert a key and value into a HAMT tree
+ *
+ * @category Initial Building
+ *
+ * @remarks
+ * This function is designed to only be used during the initial construction of
+ * a HAMT from a network request or other data structure.
+ * {@link from} and {@link build} internally use `mutateInsert` and are easier to use,
+ * this is exported for advanced use.
+ *
+ * An empty tree is represented as null and the tree will be mutated as values
+ * are inserted.  The return value is the new root and the old root should not be referenced
+ * again.  Once the tree is built, the type can be converted from {@link MutableNode} to {@link Node}.
+ * Typically this should happen in a single function whose return value is {@link Node}.
+ * See the source code of {@link from} and {@link build} for examples of size tracking.
+ *
+ * If you wish to track the size, it must be done inside the `getVal` function.  If `getVal`
+ * is passed undefined, then the size is increasing by one.
+ */
 export function mutateInsert<K, T, V>(
   cfg: HashConfig<K>,
   k: K,
@@ -564,6 +602,20 @@ export function mutateInsert<K, T, V>(
   );
 }
 
+/** Efficiently create a HAMT from a sequence of key-value pairs
+ *
+ * @category Initial Building
+ *
+ * @remarks
+ * `from` efficiently creates a HAMT from a sequence of key-value pairs.  An optional `merge` function
+ * can be provided.  When `from` detects a duplicate key, the merge function is called to determine
+ * the value associated to the key.  The first parameter `v1` to the merge function is the existing value
+ * and the second parameter `v2` is the new value just recieved from the sequence. The return value from the
+ * merge function is the value associated to the key.  If no merge function is provided, the second value `v2`
+ * is used, overwriting the first value `v1`.
+ *
+ * The return value is a tuple of the new tree and the size of the tree.
+ */
 export function from<K, V>(
   cfg: HashConfig<K>,
   items: Iterable<readonly [K, V]>,
@@ -597,17 +649,43 @@ export function from<K, V>(
   return [root, size];
 }
 
+/** Efficently create a new HAMT
+ *
+ * @category Initial Building
+ *
+ * @remarks
+ * `build` efficiently creates a HAMT from a sequence of values and a key extraction function.  If a
+ * duplicate key is found, the later value is used and the earlier value is overwritten.  If this is
+ * not desired, use the more generalized version of `build` which also provides a value extraction function.
+ *
+ * The return value is a tuple of the new tree and the size of the tree.
+ */
 export function build<K, V>(
   cfg: HashConfig<K>,
   items: Iterable<V>,
   key: (v: V) => K
 ): [Node<K, V> | null, number];
+
+/** Efficently create a new HAMT
+ *
+ * @category Initial Building
+ *
+ * @remarks
+ * `build` efficiently creates a HAMT from a sequence of items, a key extraction function, and a value extraction
+ * function.  The sequence of initial items can have any type `T`, and for each item the key is extracted.  If the key does not
+ * yet exist, the `val` extraction function is called with `undefined` to retrieve the value associated to the key.
+ * If the key already exists in the HAMT, the `val` extraction function is called with the `old` value to
+ * merge the new item `t` into the existing value `old`.
+ *
+ * The return value is a tuple of the new tree and the size of the tree.
+ */
 export function build<T, K, V>(
   cfg: HashConfig<K>,
   items: Iterable<T>,
   key: (v: T) => K,
   val: (old: V | undefined, t: T) => V
 ): [Node<K, V> | null, number];
+
 export function build<T, K, V>(
   cfg: HashConfig<K>,
   items: Iterable<T>,
@@ -725,6 +803,15 @@ function addToSpine<K, V>(
   spine.push({ node, childIdx });
 }
 
+/** Remove a key from a HAMT
+ *
+ * @category Basic Operations
+ *
+ * @remarks
+ * If the key exists, `remove` returns a new tree with the entry removed.  Otherwise, `remove` returns the
+ * tree root node unchanged.  This can be used to track the size if you wish, decrement the size if the new root
+ * is not `===` to the old root.
+ */
 export function remove<K, V>(
   cfg: HashConfig<K>,
   k: K,
@@ -816,6 +903,22 @@ export function remove<K, V>(
   throw new Error("Internal immutable-collections violation: hamt remove reached null");
 }
 
+/** Insert, change, or remove a key from a HAMT
+ *
+ * @category Basic Operations
+ *
+ * @remarks
+ * `alter` is a generalization of {@link lookup}, {@link insert}, and {@link HashMap#delete}.
+ * It can be used to insert a new entry, modify an existing entry, or
+ * delete an existing entry.  `alter` first looks for the key in the map.  The function `f` is then
+ * applied to the existing value if the key was found and `undefined` if the key does not exist.
+ * If the function `f` returns `undefined`, the entry is deleted and if `f` returns a value, the
+ * entry is updated to use the new value.
+ *
+ * The return value is a tuple of the new root and the size change (either +1, 0, or -1).
+ * If the key is not found and `f` returns undefined or the key exists and the function `f` returns
+ * a value `===` to the existing value, then the root instance is returned unchanged.
+ */
 export function alter<K, V>(
   cfg: HashConfig<K>,
   k: K,
