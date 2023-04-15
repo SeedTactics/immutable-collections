@@ -734,6 +734,9 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * it is still very fast to use {@link HashMap.from} or {@link HashMap.build} to create the `keysToAdjust` map and
    * then pass it to `adjust`.  `adjust` is very efficient because it can overlap the structure of the two trees and
    * perform the merge in a single pass through both trees.
+   *
+   * `adjust` guarantees that if no entries are added, removed, or modified from `this`, then the HashMap object
+   * is returned unchanged.
    */
   adjust<V2>(
     keysToAdjust: HashMap<K, V2>,

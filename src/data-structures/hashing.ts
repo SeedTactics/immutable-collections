@@ -68,6 +68,11 @@ export type HashKey = string | number | boolean | Date | (HashableObj & Comparab
  *
  * @remarks
  * This combines a {@link ComparisonConfig} with a hash function for the key type.
+ *
+ * A `HashConfig` is passed to most functions manipulating the HAMT data structure.  You only need one
+ * `HashConfig` per key type so you can store a single `HashConfig` in a global variable per key type.
+ * The {@link mkHashConfig} or {@link hashValues} functions can help implement the hash function if you do not have security
+ * considerations.
  */
 export type HashConfig<K> = ComparisionConfig<K> & {
   readonly hash: (v: K) => number;
@@ -124,7 +129,7 @@ function dateHash(d: Date): number {
 /** Combine multiple hashable values into a single hash
  *
  * @remarks
- * Useful helper function to implement the {@link HashableObj} type to allow custom keys in a {@link HashMap}.
+ * Useful helper function to hash multiple values to a single hash.
  * This uses the [FNV-1 hash function](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function), which is
  * **NOT** secure.  If you need a secure hash, use something like [highwayhash](https://github.com/google/highwayhash#third-party-implementations--bindings)
  * and implement a custom {@link HashableObj} interface.

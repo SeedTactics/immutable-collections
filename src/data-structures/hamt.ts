@@ -75,9 +75,9 @@ keys hash to the same value, we store the collisions in a balanced tree.
  * @category Data
  *
  * @remarks
- * Despite being exported to use if you wish, you don't need to access tree nodes directly.  Functions
- * such as {@link hamt!lookup} will return the value directly.  Thus it should be rare to need to
- * use the `LeafNode` type directly.
+ * Despite being exported to use if you wish, you don't need to access tree nodes directly,
+ * the functions in this module manipulate the tree for you.  Thus it should be rare to need
+ * to use this type.
  */
 export type LeafNode<K, V> = { readonly hash: number; readonly key: K; readonly val: V };
 
@@ -98,9 +98,9 @@ export type MutableLeafNode<K, V> = { readonly hash: number; readonly key: K; va
  * @remarks
  * The colliding nodes are stored in a {@link tree}.
  *
- * Despite being exported to use if you wish, you don't need to access tree nodes directly.  Functions
- * such as {@link hamt!lookup} will return the value directly.  Thus it should be rare to need to
- * use the `CollisionNode` type directly.
+ * Despite being exported to use if you wish, you don't need to access tree nodes directly,
+ * the functions in this module manipulate the tree for you.  Thus it should be rare to need
+ * to use this type.
  */
 export type CollisionNode<K, V> = {
   readonly hash: number;
@@ -125,9 +125,9 @@ export type MutableCollisionNode<K, V> = {
  * @category Data
  *
  * @remarks
- * Despite being exported to use if you wish, you don't need to access tree nodes directly.  Functions
- * such as {@link hamt!lookup} will return the value directly.  Thus it should be rare to need to
- * use the `InternalNode` type directly.
+ * Despite being exported to use if you wish, you don't need to access tree nodes directly,
+ * the functions in this module manipulate the tree for you.  Thus it should be rare to need
+ * to use this type.
  *
  * This implementation of the [HAMT](https://en.wikipedia.org/wiki/Hash_array_mapped_trie) breaks the
  * hash into 5-bit chunks. Thus, bitmap is a 32-bit bitmap which stores which children are non-null.
@@ -908,7 +908,7 @@ export function remove<K, V>(
  * @category Basic Operations
  *
  * @remarks
- * `alter` is a generalization of {@link lookup}, {@link insert}, and {@link HashMap#delete}.
+ * `alter` is a generalization of {@link lookup}, {@link insert}, and {@link remove}.
  * It can be used to insert a new entry, modify an existing entry, or
  * delete an existing entry.  `alter` first looks for the key in the map.  The function `f` is then
  * applied to the existing value if the key was found and `undefined` if the key does not exist.
@@ -1087,6 +1087,14 @@ export function alter<K, V>(
   throw new Error("Internal immutable-collections violation: hamt alter reached null");
 }
 
+/** Iterates the entries in the HAMT
+ *
+ * @category Iteration
+ *
+ * @remarks This function produces an [iterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterator_protocol)
+ * that applies the function `f` to each key and value and yields the results.  This iterator can be used only once, you must
+ * call `iterate` again if you want to iterate the tree again.  The order of iteration is undefined.
+ */
 export function* iterate<K, V, R>(
   f: (k: K, v: V) => R,
   root: Node<K, V> | null
@@ -1109,6 +1117,10 @@ export function* iterate<K, V, R>(
   }
 }
 
+/** Reduce all the entries in the HAMT to a single value
+ *
+ * @category Iteration
+ */
 export function fold<K, V, T>(
   f: (acc: T, key: K, val: V) => T,
   zero: T,
@@ -1134,6 +1146,15 @@ export function fold<K, V, T>(
   return acc;
 }
 
+/** Transform the values in a HAMT using a function
+ *
+ * @category Iteration
+ *
+ * @remarks
+ * `mapValues` applies the function `f` to each value and key in the HAMT and returns a new HAMT
+ * with the same keys but the values adjusted to the result of the function `f`. `mapValues`
+ * guarantees that if no values are changed, then the HAMT root node returned unchanged.
+ */
 export function mapValues<K, V1, V2>(
   f: (v: V1, k: K) => V2,
   root: Node<K, V1> | null
@@ -1189,6 +1210,18 @@ export function mapValues<K, V1, V2>(
   return loop(root);
 }
 
+/** Transform or delete the values in a HAMT using a function
+ *
+ * @category Transformation
+ *
+ * @remarks
+ * `collectValues` applies the function `f` to each value and key in the HAMT.  If `f` returns null or undefined,
+ * the key and value is removed.  Otherwise, the returned value from `f` is used as the new value associated to the key k.
+ * `collectValues` guarantees that if no values are changed, then the root node is returned
+ * unchanged.
+ *
+ * The return value is a tuple of the new root node and size of the new HAMT.
+ */
 export function collectValues<K, V1, V2>(
   f: (v: V1, k: K) => V2 | undefined,
   filterNull: boolean,
@@ -1294,6 +1327,21 @@ export function collectValues<K, V1, V2>(
   return [newRoot, newSize];
 }
 
+/** Returns a new HAMT which combines all entries in two HAMTs
+ *
+ * @category Bulk Modification
+ *
+ * @remarks
+ * `union` produces a new HAMT which contains all the entries in both HAMT.  If a
+ * key appears in only one of the two maps, the value from the map is used.  If a key appears
+ * in both maps, the provided merge function is used to determine the value.
+ * `union` guarantees that if the resulting HAMT is equal to `root1`, then the `root1` object
+ * instance is returned unchanged.
+ *
+ * The return value is a tuple of the new root node and the size of the *intersection* (since
+ * the algorithm can skip and not traverse sections of the tree that are not in both trees).
+ * Thus, to compute the size after the union, the formula is `root1size + root2size - intersectionSize`.
+ */
 export function union<K, V>(
   cfg: HashConfig<K>,
   f: (v1: V, v2: V, k: K) => V,
@@ -1527,6 +1575,18 @@ export function union<K, V>(
   return [newRoot, intersectionSize];
 }
 
+/** Returns a new HAMT which contains only entries whose keys are in both HAMTs
+ *
+ * @category Bulk Modification
+ *
+ * @remarks
+ * `intersection` produces a HAMT which contains all the entries which have keys in
+ * both HAMTs.  For each such entry, the merge function is used to determine the resulting value.
+ * `intersection` guarantees that if the resulting HAMT is equal to `root1`, then `root1` is returned
+ * unchanged.
+ *
+ * The return value is a tuple of the new HAMT and the size of the intersection, so the number of entries in the new HAMT.
+ */
 export function intersection<K, V>(
   cfg: HashConfig<K>,
   f: (v1: V, v2: V, k: K) => V,
@@ -1709,6 +1769,20 @@ export function intersection<K, V>(
   return [newRoot, intersectionSize];
 }
 
+/** Returns a new HAMT which contains only keys which appear in the first but not the second HAMT
+ *
+ * @category Bulk Modification
+ *
+ * @remarks
+ * `difference` produces a HAMT which contains all the entries in `root1` where the key does
+ * **not** exist in `root2`.  Can think of this as `root1 - root2` where the subtraction
+ * is removing all the keys in `root2` from `root1`.  The values of the `root2` HashMap are ignored and
+ * can be any value `V2`.
+ *
+ * The return value is a tuple of the HAMT root and the number of entries removed from `root1`.
+ * `difference` guarantees that if no entries are removed from `root1`, then the HashMap object
+ * instance is returned unchanged.
+ */
 export function difference<K, V1, V2>(
   cfg: HashConfig<K>,
   root1: Node<K, V1> | null,
@@ -1908,6 +1982,20 @@ export function difference<K, V1, V2>(
   return [loop(0, root1, root2), numRemoved];
 }
 
+/** Return a HAMT which adjusts all the provided keys with a specified modification function.
+ *
+ * @category Bulk Modification
+ *
+ * @remarks
+ * `adjust` is passed two HAMTs: `root1` is the HAMT to modify and `root2` is the keys to adjust associated to helper
+ * values of type `V2` (the type `V2` can be anything and does not need to be related `V`).
+ * For each key in `root2` to modify, `adjust` looks up the key in `root1` and then calls the function `f`
+ * with the current existing value in `root1` (or `undefined` if the key does not exist) and the helper value from `root2`
+ * associated with the key. The return value from `f` is set as the new value for the key, or removed if the return value is `undefined`.
+ *
+ * The return value is a tuple of the HAMT root and the number of keys removed.  Note the number of keys removed can be negative if
+ * nodes were added to the HAMT.  `adjust` guarantees that if nothing was added, removed, or changed, then `root1` is returned.
+ */
 export function adjust<K, V1, V2>(
   cfg: HashConfig<K>,
   f: (v1: V1 | undefined, v2: V2, k: K) => V1 | undefined,
