@@ -87,6 +87,7 @@ export function pageTemplate(page: PageEvent<DeclarationReflection>): string {
 
   str += 'import Export from "@site/src/components/ApiExport";\n';
   str += 'import Summary from "@site/src/components/ApiSummary";\n\n';
+  str += 'import Remarks from "@site/src/components/ApiRemarks";\n\n';
 
   if (module.comment && module.comment.summary.length >= 1) {
     str += `# ${module.comment.summary[0].text}\n\n`;

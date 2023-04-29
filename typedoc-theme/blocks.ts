@@ -57,7 +57,9 @@ export function renderComment(
 ): string {
   if (!comment) return "";
   let str = `<Summary>\n\n${displayPartsToMarkdown(page, comment.summary)}</Summary>\n\n`;
+  str += "<Remarks>\n\n";
   str += renderBlocks(page, comment.blockTags, onlyFirstParagraph);
+  str += "\n</Remarks>\n\n";
   return str;
 }
 
