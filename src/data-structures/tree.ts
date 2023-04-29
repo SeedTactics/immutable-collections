@@ -2,6 +2,22 @@
 
 /** Size-Balanced Binary Tree
  *
+ * @remarks
+ * This module contains the implementation of a size-balanced binary tree,
+ * which is the backing data structure for the {@link class_api!OrderedMap} and {@link class_api!OrderedSet} classes.
+ *
+ * The OrderedMap and OrderedSet classes are easier to use, but the downside is current bundlers such as
+ * webpack, esbuild, swc, etc. do not tree-shake classes.  Thus, this module exposes the tree as
+ * a collection of functions so that if you wish you can use this directly and get the benefit of tree-shaking.
+ * There is no additional functionality available in this module, so if you are already using the OrderedMap or
+ * OrderedSet classes, there is no reason to use this module.
+ *
+ * To use, import the functions from the hamt module:
+ *
+ * ```ts
+ * import * as tree from "@seedtactics/immutable-collections/tree";
+ * ```
+ *
  * @module tree
  */
 
@@ -20,6 +36,13 @@ import {
 } from "./rotations.js";
 export { TreeNode, MutableTreeNode } from "./rotations.js";
 
+export {
+  ComparisionConfig,
+  mkComparisonConfig,
+  ComparableObj,
+  mkCompareByProperties,
+} from "./comparison.js";
+
 /*
 Implementation of a size-balanced binary tree.
 
@@ -27,6 +50,10 @@ The algorithms here are copied pretty much directly from haskell's containers
 library: https://github.com/haskell/containers/blob/master/containers/src/Data/Map/Internal.hs
 */
 
+/** Lookup a key in the tree
+ *
+ * @category Lookup
+ */
 export function lookup<K, V>(
   { compare }: ComparisionConfig<K>,
   k: K,
@@ -47,6 +74,10 @@ export function lookup<K, V>(
   return undefined;
 }
 
+/** Find the minimum key in the tree and return the key and value.
+ *
+ * @category Lookup
+ */
 export function lookupMin<K, V>(root: TreeNode<K, V>): readonly [K, V] {
   let node = root;
   // eslint-disable-next-line no-constant-condition
@@ -60,6 +91,10 @@ export function lookupMin<K, V>(root: TreeNode<K, V>): readonly [K, V] {
   }
 }
 
+/** Find the maximum key in the tree and return the key and value.
+ *
+ * @category Lookup
+ */
 export function lookupMax<K, V>(root: TreeNode<K, V>): readonly [K, V] {
   let node = root;
   // eslint-disable-next-line no-constant-condition
@@ -77,6 +112,25 @@ export function lookupMax<K, V>(root: TreeNode<K, V>): readonly [K, V] {
    showed that a recursive function was faster than a loop+stack, and that dedicated insert/remove
    functions had roughly the same performance as the generalized alter function.
 */
+
+/** Insert, update or delete an entry in the tree
+ *
+ * @remarks
+ * Benchmarking showed that dedicated insert and remove functions were the same speed as a generalized
+ * alter function, so we only implement alter (which helps bundle size as well).
+ *
+ * `alter` first looks for the key in the tree.  The function `f` is then applied to the existing value
+ * if the key was found and `undefined` if the key does not exist.  If the function `f`
+ * returns `undefined`, the entry is deleted and if `f` returns a value, the entry is updated
+ * to use the new value.
+ *
+ * If the key is not found and `f` returns undefined or the key exists and the function `f` returns
+ * a value `===` to the existing value, then the tree object instance is returned unchanged.
+ *
+ * Runs in time O(log n)
+ *
+ * @category Modification
+ */
 export function alter<K, V>(
   { compare }: ComparisionConfig<K>,
   k: K,
@@ -129,6 +183,21 @@ export function alter<K, V>(
   return loop(root);
 }
 
+/** Insert mutably a key and value into a mutable tree
+ *
+ * @remarks
+ * This function is designed to only be used during the initial construction of
+ * a tree from a network request or other data structure.
+ * {@link from} and {@link build} internally use `mutateInsert` and are easier to use,
+ * this is exported for advanced use.
+ *
+ * An empty tree is represented as null and the tree will be mutated as values
+ * are inserted.  The return value is the new root and the old root should not be referenced
+ * again.  Once the tree is built, the type can be converted from {@link MutableTreeNode} to {@link TreeNode}.
+ * Typically this should happen in a single function whose return value is {@link TreeNode}.
+ *
+ * @category Initial Construction
+ */
 export function mutateInsert<K, V, T>(
   { compare }: ComparisionConfig<K>,
   k: K,
@@ -170,6 +239,18 @@ export function mutateInsert<K, V, T>(
   return insertLoop(root);
 }
 
+/** Efficiently create a tree from a sequence of key-value pairs
+ *
+ * @category Initial Construction
+ *
+ * @remarks
+ * `from` efficiently creates a tree from a sequence of key-value pairs.  An optional `merge` function
+ * can be provided.  When `from` detects a duplicate key, the merge function is called to determine
+ * the value associated to the key.  The first parameter `v1` to the merge function is the existing value
+ * and the second parameter `v2` is the new value just recieved from the sequence. The return value from the
+ * merge function is the value associated to the key.  If no merge function is provided, the second value `v2`
+ * is used, overwriting the first value `v1`.
+ */
 export function from<K, V>(
   { compare }: ComparisionConfig<K>,
   items: Iterable<readonly [K, V]>,
@@ -213,6 +294,39 @@ export function from<K, V>(
 
   return root;
 }
+
+/** Efficently create a new tree
+ *
+ * @category Initial Construction
+ *
+ * @remarks
+ * `build` efficiently creates a tree from a sequence of values and a key extraction function.  If a
+ * duplicate key is found, the later value is used and the earlier value is overwritten.  If this is
+ * not desired, use the more generalized version of `build` which also provides a value extraction function.
+ */
+export function build<K, V>(
+  { compare }: ComparisionConfig<K>,
+  items: Iterable<V>,
+  key: (t: V) => K
+): TreeNode<K, V> | null;
+
+/** Efficently create a new HAMT
+ *
+ * @category Initial Construction
+ *
+ * @remarks
+ * `build` efficiently creates a tree from a sequence of items, a key extraction function, and a value extraction
+ * function.  The sequence of initial items can have any type `T`, and for each item the key is extracted.  If the key does not
+ * yet exist, the `val` extraction function is called with `undefined` to retrieve the value associated to the key.
+ * If the key already exists in the tree, the `val` extraction function is called with the `old` value to
+ * merge the new item `t` into the existing value `old`.
+ */
+export function build<T, K, V>(
+  { compare }: ComparisionConfig<K>,
+  items: Iterable<T>,
+  key: (t: T) => K,
+  val: (old: V | undefined, t: T) => V
+): TreeNode<K, V> | null;
 
 export function build<T, K, V>(
   { compare }: ComparisionConfig<K>,
@@ -269,6 +383,14 @@ export function build<T, K, V>(
   return root;
 }
 
+/** Iterates the entries in ascending order
+ *
+ * @category Iteration
+ *
+ * @remarks This function produces an [iterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterator_protocol)
+ * that applies the function `f` to each key and value in ascending order of keys and yields the results.  This iterator can be used only once, you must
+ * call `iterate` again if you want to iterate the tree again.
+ */
 export function* iterateAsc<K, V, T>(
   f: (k: K, v: V) => T,
   root: TreeNode<K, V> | null
@@ -288,6 +410,14 @@ export function* iterateAsc<K, V, T>(
   }
 }
 
+/** Iterates the entries in descending order
+ *
+ * @category Iteration
+ *
+ * @remarks This function produces an [iterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterator_protocol)
+ * that applies the function `f` to each key and value in descending order of keys and yields the results.  This iterator can be used only once, you must
+ * call `iterate` again if you want to iterate the tree again.
+ */
 export function* iterateDesc<K, V, T>(
   f: (k: K, v: V) => T,
   root: TreeNode<K, V> | null
@@ -307,6 +437,15 @@ export function* iterateDesc<K, V, T>(
   }
 }
 
+/** Reduce all the entries in the tree to a single value
+ *
+ * @category Iteration
+ *
+ * @remarks
+ * The letter-l in `foldl` stands for left.  Thinking of all the entries as an ascending list, `foldl` starts
+ * combining entries from the left side.  Thus, the entry with the smallest key is combined with the zero value,
+ * which is then combined with the next smallest key, and so on.
+ */
 export function foldl<K, V, T>(
   f: (acc: T, k: K, v: V) => T,
   zero: T,
@@ -330,6 +469,15 @@ export function foldl<K, V, T>(
   return acc;
 }
 
+/** Reduce all the entries in the tree to a single value
+ *
+ * @category Iteration
+ *
+ * @remarks
+ * The letter-r in `foldr` stands for right.  Thinking of all the entries as an ascending list, `foldr` starts
+ * combining entries from the right side.  Thus, the entry with the largest key is combined with the zero value,
+ * which is then combined with the second-to-largest key, and so on.
+ */
 export function foldr<K, V, T>(
   f: (k: K, v: V, acc: T) => T,
   zero: T,
@@ -353,6 +501,19 @@ export function foldr<K, V, T>(
   return acc;
 }
 
+/** Transform the values in the tree using a function
+ *
+ * @category Transformation
+ *
+ * @remarks
+ * `mapValues` applies the function `f` to each value and key in the tree and returns a new tree
+ * with the same keys but the values adjusted to the result of the function `f`.  This can be done efficiently because
+ * the keys are unchanged the arrangement of the tree is unchanged.
+ * `mapValues` guarantees that if no values are changed, then the tree object instance is returned
+ * unchanged.
+ *
+ * This runs in O(n) time.
+ */
 export function mapValues<K, V1, V2>(
   f: (v: V1, k: K) => V2,
   root: TreeNode<K, V1> | null
@@ -380,6 +541,18 @@ export function mapValues<K, V1, V2>(
   return loop(root);
 }
 
+/** Transform or delete the values in the tree using a function
+ *
+ * @category Transformation
+ *
+ * @remarks
+ * `collectValues` applies the function `f` to each value and key in the OrderedMap.  If `f` returns null or undefined,
+ * the key and value is removed.  Otherwise, the returned value from `f` is used as the new value associated to the key k.
+ * `collectValues` guarantees that if no values are changed, then the tree object instance is returned
+ * unchanged.
+ *
+ * This runs in O(n) time.
+ */
 export function collectValues<K, V1, V2>(
   f: (v: V1, k: K) => V2 | undefined,
   filterNull: boolean,
@@ -410,12 +583,27 @@ export function collectValues<K, V1, V2>(
   return loop(root);
 }
 
-export interface SplitResult<K, V> {
+/** The result of splitting a tree into keys above and below a given key
+ *
+ * @category Lookup
+ */
+export type SplitResult<K, V> = {
   readonly below: TreeNode<K, V> | null;
   readonly val: V | undefined;
   readonly above: TreeNode<K, V> | null;
-}
+};
 
+/** Split a tree on a key
+ *
+ * @remarks
+ * `split` splits a tree into keys below and above a given key.  The return type consists of
+ * a balanced tree of all keys less than the given key, the value associated to the given key if
+ * it exists, and a balanced tree of all keys greater than the given key.
+ *
+ * Runs in O(log n) time.
+ *
+ * @category Lookup
+ */
 export function split<K, V>(
   { compare }: ComparisionConfig<K>,
   k: K,
@@ -440,6 +628,22 @@ export function split<K, V>(
   return loop(root);
 }
 
+/** Partition a tree based on a boolean function
+ *
+ * @remarks
+ * The function `f` is applied to each key and value.  The entries for which `f` returns `true`
+ * are placed in one tree and entries for which `f` returns false are placed in the other.
+ * The two trees are returned as a tuple, with the `true` ordered map returned as the first
+ * element of the tuple.
+ *
+ * If the function `f` returns `true` for all entries, then the first tree object instance
+ * is guaranteed to be === to the initial tree object instance.  Similar for if `f` returns `false` for
+ * all entries.
+ *
+ * This runs in O(n) time.
+ *
+ * @category Lookup
+ */
 export function partition<K, V>(
   f: (k: K, v: V) => boolean,
   root: TreeNode<K, V> | null

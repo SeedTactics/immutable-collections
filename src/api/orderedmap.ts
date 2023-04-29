@@ -140,7 +140,10 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     val?: (old: V | undefined, t: T) => V
   ): OrderedMap<K, V> {
     const cfg = mkComparisonConfig();
-    return new OrderedMap(cfg, build(cfg, items, key, val));
+    return new OrderedMap(
+      cfg,
+      build(cfg, items, key, val as (old: V | undefined, t: T) => V)
+    );
   }
 
   /** size is a readonly property containing the number of entries in the OrderedMap.

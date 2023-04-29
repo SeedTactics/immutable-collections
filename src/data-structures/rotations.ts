@@ -27,25 +27,46 @@ The algorithms here are copied pretty much directly from haskell's containers
 library: https://github.com/haskell/containers/blob/master/containers/src/Data/Map/Internal.hs
 */
 
-// For javascript optimization, ensure all nodes created share the same shape.
-// This means that each time a node is created, the properties must be initialized
-// in the same order: key, val, size, left, right.
-// https://mathiasbynens.be/notes/shapes-ics
-export interface TreeNode<K, V> {
+/*
+ For javascript optimization, ensure all nodes created share the same shape.
+ This means that each time a node is created, the properties must be initialized
+ in the same order: key, val, size, left, right.
+ https://mathiasbynens.be/notes/shapes-ics
+*/
+
+/** A tree node with a key, value, and size
+ *
+ * @remarks
+ * This is the main data type of a balanced tree, and the type you should use in your own code when passing around
+ * references to the tree.  You can directly access the `size` property to determine the number of elements in the tree.
+ * (This module guarantees that the empty tree is always represented by `null`.)
+ *
+ * @category Data
+ */
+export type TreeNode<K, V> = {
   readonly key: K;
   readonly val: V;
   readonly size: number;
   readonly left: TreeNode<K, V> | null;
   readonly right: TreeNode<K, V> | null;
-}
+};
 
-export interface MutableTreeNode<K, V> {
+/** A mutable tree node with a key, value, and size
+ *
+ * @remarks
+ * This should only be used during the initial building of the tree so that the tree can be built
+ * efficiently.  After the tree is built, you should convert to the immutable `TreeNode` type and use
+ * the various immutable adjustment operations.
+ *
+ * @category Data
+ */
+export type MutableTreeNode<K, V> = {
   key: K;
   val: V;
   size: number;
   left: MutableTreeNode<K, V> | null;
   right: MutableTreeNode<K, V> | null;
-}
+};
 
 // the rotations maintain that the size of the left and right
 // subtrees are within a delta multiple of each other.
@@ -181,7 +202,12 @@ function balanceRightUndefined<K, V>(k: K, v: V, left: TreeNode<K, V>): TreeNode
   */
 }
 
-function rotateLeft<K, V>(k: K, v: V, left: TreeNode<K, V>, right: TreeNode<K, V>): TreeNode<K, V> {
+function rotateLeft<K, V>(
+  k: K,
+  v: V,
+  left: TreeNode<K, V>,
+  right: TreeNode<K, V>
+): TreeNode<K, V> {
   const rl = right.left!;
   const rr = right.right!;
   if (rl.size < ratio * rr.size) {
@@ -223,7 +249,12 @@ function rotateLeft<K, V>(k: K, v: V, left: TreeNode<K, V>, right: TreeNode<K, V
   };
 }
 
-function rotateRight<K, V>(k: K, v: V, left: TreeNode<K, V>, right: TreeNode<K, V>): TreeNode<K, V> {
+function rotateRight<K, V>(
+  k: K,
+  v: V,
+  left: TreeNode<K, V>,
+  right: TreeNode<K, V>
+): TreeNode<K, V> {
   const ll = left.left!;
   const lr = left.right!;
   if (lr.size < ratio * ll.size) {
@@ -375,15 +406,27 @@ export function combineDifferentSizes<K, V>(
   if (left === null) return insertMin(k, v, right);
   if (right === null) return insertMax(k, v, left);
   if (right.size > delta * left.size) {
-    return combineAfterLeftIncrease(combineDifferentSizes(left, k, v, right.left), right.key, right.val, right.right);
+    return combineAfterLeftIncrease(
+      combineDifferentSizes(left, k, v, right.left),
+      right.key,
+      right.val,
+      right.right
+    );
   }
   if (left.size > delta * right.size) {
-    return combineAfterRightIncrease(left.left, left.key, left.val, combineDifferentSizes(left.right, k, v, right));
+    return combineAfterRightIncrease(
+      left.left,
+      left.key,
+      left.val,
+      combineDifferentSizes(left.right, k, v, right)
+    );
   }
   return { key: k, val: v, size: 1 + left.size + right.size, left, right };
 }
 
-export function removeMin<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, V> | null } {
+export function removeMin<K, V>(
+  node: TreeNode<K, V>
+): { k: K; v: V; rest: TreeNode<K, V> | null } {
   const left = node.left;
   if (left === null) {
     return { k: node.key, v: node.val, rest: node.right };
@@ -394,7 +437,9 @@ export function removeMin<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeN
   }
 }
 
-export function removeMax<K, V>(node: TreeNode<K, V>): { k: K; v: V; rest: TreeNode<K, V> | null } {
+export function removeMax<K, V>(
+  node: TreeNode<K, V>
+): { k: K; v: V; rest: TreeNode<K, V> | null } {
   const right = node.right;
   if (right === null) {
     return { k: node.key, v: node.val, rest: node.left };
@@ -429,10 +474,20 @@ export function glueDifferentSizes<K, V>(
   if (left === null) return right;
   if (right === null) return left;
   if (right.size > delta * left.size) {
-    return combineAfterLeftIncrease(glueDifferentSizes(left, right.left), right.key, right.val, right.right);
+    return combineAfterLeftIncrease(
+      glueDifferentSizes(left, right.left),
+      right.key,
+      right.val,
+      right.right
+    );
   }
   if (left.size > delta * right.size) {
-    return combineAfterRightIncrease(left.left, left.key, left.val, glueDifferentSizes(left.right, right));
+    return combineAfterRightIncrease(
+      left.left,
+      left.key,
+      left.val,
+      glueDifferentSizes(left.right, right)
+    );
   }
   return glueSizeBalanced(left, right);
 }
@@ -499,7 +554,9 @@ function mutateRotateRight<K, V>(node: MutableTreeNode<K, V>): MutableTreeNode<K
   return left;
 }
 
-export function mutateBalanceAfterLeftIncrease<K, V>(node: MutableTreeNode<K, V>): MutableTreeNode<K, V> {
+export function mutateBalanceAfterLeftIncrease<K, V>(
+  node: MutableTreeNode<K, V>
+): MutableTreeNode<K, V> {
   // mutate is only used to insert (not remove), so after left increase we know left is not null
   const leftSize = node.left!.size;
   const rightSize = node.right?.size ?? 0;
@@ -519,7 +576,9 @@ export function mutateBalanceAfterLeftIncrease<K, V>(node: MutableTreeNode<K, V>
   return node;
 }
 
-export function mutateBalanceAfterRightIncrease<K, V>(node: MutableTreeNode<K, V>): MutableTreeNode<K, V> {
+export function mutateBalanceAfterRightIncrease<K, V>(
+  node: MutableTreeNode<K, V>
+): MutableTreeNode<K, V> {
   const leftSize = node.left?.size ?? 0;
   // mutate is only used to insert (not remove), so after right increase we know right is not null
   const rightSize = node.right!.size;
