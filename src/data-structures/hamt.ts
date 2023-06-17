@@ -1212,11 +1212,12 @@ export function mapValues<K, V1, V2>(
 
 /** Transform or delete the values in a HAMT using a function
  *
- * @category Transformation
+ * @category Iteration
  *
  * @remarks
- * `collectValues` applies the function `f` to each value and key in the HAMT.  If `f` returns null or undefined,
- * the key and value is removed.  Otherwise, the returned value from `f` is used as the new value associated to the key k.
+ * `collectValues` applies the function `f` to each value and key in the HAMT, with the return value from `f` the new value
+ * associated to the key.  If `f` returns undefined, the key and value is removed.  If `filterNull` is true and `f` returns null,
+ * the key and value are also removed. If `filterNull` is false, null values are kept and only undefined values are removed.
  * `collectValues` guarantees that if no values are changed, then the root node is returned
  * unchanged.
  *
@@ -1344,7 +1345,7 @@ export function collectValues<K, V1, V2>(
  */
 export function union<K, V>(
   cfg: HashConfig<K>,
-  f: (v1: V, v2: V, k: K) => V,
+  merge: (v1: V, v2: V, k: K) => V,
   root1: Node<K, V> | null,
   root2: Node<K, V> | null
 ): [Node<K, V> | null, number] {
@@ -1360,7 +1361,7 @@ export function union<K, V>(
         const cmp = cfg.compare(node1.key, node2.key);
         if (cmp === 0) {
           intersectionSize++;
-          const newVal = f(node1.val, node2.val, node1.key);
+          const newVal = merge(node1.val, node2.val, node1.key);
           if (newVal === node1.val) {
             return node1;
           } else if (newVal === node2.val) {
@@ -1389,7 +1390,7 @@ export function union<K, V>(
               return node1.val;
             } else {
               intersectionSize++;
-              return f(node1.val, v2, node1.key);
+              return merge(node1.val, v2, node1.key);
             }
           },
           node2.collision
@@ -1413,7 +1414,7 @@ export function union<K, V>(
               return node2.val;
             } else {
               intersectionSize++;
-              return f(v1, node2.val, node2.key);
+              return merge(v1, node2.val, node2.key);
             }
           },
           node1.collision
@@ -1430,7 +1431,7 @@ export function union<K, V>(
       if (node1.hash === node2.hash) {
         // union of non-empty trees is non-empty
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const newRoot = tree.union(cfg, f, node1.collision, node2.collision)!;
+        const newRoot = tree.union(cfg, merge, node1.collision, node2.collision)!;
         if (newRoot === node1.collision) {
           return node1;
         } else {
@@ -1589,7 +1590,7 @@ export function union<K, V>(
  */
 export function intersection<K, V>(
   cfg: HashConfig<K>,
-  f: (v1: V, v2: V, k: K) => V,
+  merge: (v1: V, v2: V, k: K) => V,
   root1: Node<K, V> | null,
   root2: Node<K, V> | null
 ): [Node<K, V> | null, number] {
@@ -1604,7 +1605,7 @@ export function intersection<K, V>(
       const other = lookup(cfg, node1.key, node2, node1.hash, shift);
       if (other !== undefined) {
         intersectionSize++;
-        const newVal = f(node1.val, other, node1.key);
+        const newVal = merge(node1.val, other, node1.key);
         if (newVal === node1.val) {
           return node1;
         } else {
@@ -1617,7 +1618,7 @@ export function intersection<K, V>(
       const other = lookup(cfg, node2.key, node1, node2.hash, shift);
       if (other !== undefined) {
         intersectionSize++;
-        const newVal = f(other, node2.val, node2.key);
+        const newVal = merge(other, node2.val, node2.key);
         if (newVal === node2.val) {
           return node2;
         } else {
@@ -1630,7 +1631,7 @@ export function intersection<K, V>(
 
     // Collision vs Collision
     else if ("collision" in node1 && "collision" in node2) {
-      const newRoot = tree.intersection(cfg, f, node1.collision, node2.collision);
+      const newRoot = tree.intersection(cfg, merge, node1.collision, node2.collision);
       if (newRoot === node1.collision) {
         intersectionSize += node1.collision.size;
         return node1;
@@ -1780,8 +1781,8 @@ export function intersection<K, V>(
  * can be any value `V2`.
  *
  * The return value is a tuple of the HAMT root and the number of entries removed from `root1`.
- * `difference` guarantees that if no entries are removed from `root1`, then the HashMap object
- * instance is returned unchanged.
+ * `difference` guarantees that if no entries are removed from `root1`, then `root1` object
+ * is returned unchanged.
  */
 export function difference<K, V1, V2>(
   cfg: HashConfig<K>,
@@ -1988,7 +1989,7 @@ export function difference<K, V1, V2>(
  *
  * @remarks
  * `adjust` is passed two HAMTs: `root1` is the HAMT to modify and `root2` is the keys to adjust associated to helper
- * values of type `V2` (the type `V2` can be anything and does not need to be related `V`).
+ * values of type `V2` (the type `V2` can be anything and does not need to be related `V1`).
  * For each key in `root2` to modify, `adjust` looks up the key in `root1` and then calls the function `f`
  * with the current existing value in `root1` (or `undefined` if the key does not exist) and the helper value from `root2`
  * associated with the key. The return value from `f` is set as the new value for the key, or removed if the return value is `undefined`.

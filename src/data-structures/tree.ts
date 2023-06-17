@@ -546,8 +546,9 @@ export function mapValues<K, V1, V2>(
  * @category Transformation
  *
  * @remarks
- * `collectValues` applies the function `f` to each value and key in the OrderedMap.  If `f` returns null or undefined,
- * the key and value is removed.  Otherwise, the returned value from `f` is used as the new value associated to the key k.
+ * `collectValues` applies the function `f` to each value and key in the tree and uses the return value from
+ * `f` as the new value.  If `f` returns undefined, the key and value is removed.  If `filterNull` is true and
+ * `f` returns null, the key and value are also removed.
  * `collectValues` guarantees that if no values are changed, then the tree object instance is returned
  * unchanged.
  *
@@ -633,7 +634,7 @@ export function split<K, V>(
  * @remarks
  * The function `f` is applied to each key and value.  The entries for which `f` returns `true`
  * are placed in one tree and entries for which `f` returns false are placed in the other.
- * The two trees are returned as a tuple, with the `true` ordered map returned as the first
+ * The two trees are returned as a tuple, with the `true` tree returned as the first
  * element of the tuple.
  *
  * If the function `f` returns `true` for all entries, then the first tree object instance
@@ -671,19 +672,58 @@ export function partition<K, V>(
   return loop(root);
 }
 
+/** The combination of a single key-value and a balanced tree of all remaining values
+ *
+ * @category Lookup
+ */
 export interface ViewResult<K, V> {
   k: K;
   v: V;
   rest: TreeNode<K, V> | null;
 }
 
+/** Extract the minimum key and compute a balanced tree of all other values
+ *
+ * @category Lookup
+ *
+ * @remarks
+ * `minView` finds the minimum key and then removes it, producing a new balanced
+ * tree of all other keys and values.  Both the removed key and value and the newly
+ * balanced tree is returned.
+ *
+ * Runs in O(log n) time, so can be used to efficiently pop the minimum key.
+ */
 export const minView: <K, V>(root: TreeNode<K, V>) => ViewResult<K, V> = removeMin;
 
+/** Extract the maximum key and compute a balanced tree of all other values
+ *
+ * @category Lookup
+ *
+ * @remarks
+ * `maxView` finds the maximum key and then removes it, producing a new balanced
+ * tree of all other keys and values.  Both the removed key and value and the newly
+ * balanced tree is returned.
+ *
+ * Runs in O(log n) time, so can be used to efficiently pop the maximum key.
+ */
 export const maxView: <K, V>(root: TreeNode<K, V>) => ViewResult<K, V> = removeMax;
 
+/** Returns a new tree which combines all entries in two trees
+ *
+ * @category Bulk Modification
+ *
+ * @remarks
+ * `union` produces a new balanced tree which contains all the entries in both trees.  If a
+ * key appears in only one of the two trees, the value from the tree is used.  If a key appears
+ * in both trees, the provided merge function is used to determine the value.
+ * `union` guarantees that if the resulting tree is equal to `root1`, then the `root1` object
+ * instance is returned unchanged.
+ *
+ * Runs in time O(m log(n/m)) where m is the size of the smaller tree and n is the size of the larger tree.
+ */
 export function union<K, V>(
   cfg: ComparisionConfig<K>,
-  f: (v1: V, v2: V, k: K) => V,
+  merge: (v1: V, v2: V, k: K) => V,
   root1: TreeNode<K, V> | null,
   root2: TreeNode<K, V> | null
 ): TreeNode<K, V> | null {
@@ -697,7 +737,7 @@ export function union<K, V>(
       return alter(
         cfg,
         n1.key,
-        (oldVal) => (oldVal === undefined ? n1.val : f(n1.val, oldVal, n1.key)),
+        (oldVal) => (oldVal === undefined ? n1.val : merge(n1.val, oldVal, n1.key)),
         n2
       );
     }
@@ -705,7 +745,7 @@ export function union<K, V>(
       return alter(
         cfg,
         n2.key,
-        (oldVal) => (oldVal === undefined ? n2.val : f(oldVal, n2.val, n2.key)),
+        (oldVal) => (oldVal === undefined ? n2.val : merge(oldVal, n2.val, n2.key)),
         n1
       );
     }
@@ -720,7 +760,12 @@ export function union<K, V>(
     ) {
       return n1;
     } else if (s.val !== undefined) {
-      return combineDifferentSizes(newLeft, n1.key, f(n1.val, s.val, n1.key), newRight);
+      return combineDifferentSizes(
+        newLeft,
+        n1.key,
+        merge(n1.val, s.val, n1.key),
+        newRight
+      );
     } else {
       return combineDifferentSizes(newLeft, n1.key, n1.val, newRight);
     }
@@ -729,9 +774,21 @@ export function union<K, V>(
   return loop(root1, root2);
 }
 
+/** Returns a new tree which contains only entries whose keys are in both trees
+ *
+ * @category Bulk Modification
+ *
+ * @remarks
+ * `intersection` produces a tree which contains all the entries which have keys in
+ * both trees.  For each such entry, the merge function is used to determine the resulting value.
+ * `intersection` guarantees that if the resulting tree is equal to `root1`, then `root1` is returned
+ * unchanged.
+ *
+ * Runs in time O(m log(n/m)) where m is the size of the smaller tree and n is the size of the larger tree.
+ */
 export function intersection<K, V>(
   cfg: ComparisionConfig<K>,
-  f: (v1: V, v2: V, k: K) => V,
+  merge: (v1: V, v2: V, k: K) => V,
   root1: TreeNode<K, V> | null,
   root2: TreeNode<K, V> | null
 ): TreeNode<K, V> | null {
@@ -749,7 +806,12 @@ export function intersection<K, V>(
       if (newLeft === n1.left && newRight === n1.right && s.val === n1.val) {
         return n1;
       } else {
-        return combineDifferentSizes(newLeft, n1.key, f(n1.val, s.val, n1.key), newRight);
+        return combineDifferentSizes(
+          newLeft,
+          n1.key,
+          merge(n1.val, s.val, n1.key),
+          newRight
+        );
       }
     } else {
       return glueDifferentSizes(newLeft, newRight);
@@ -759,6 +821,20 @@ export function intersection<K, V>(
   return loop(root1, root2);
 }
 
+/** Returns a new tree which contains only keys which appear in the first but not the second tree
+ *
+ * @category Bulk Modification
+ *
+ * @remarks
+ * `difference` produces a tree which contains all the entries in `root1` where the key does
+ * **not** exist in `root2`.  Can think of this as `root1 - root2` where the subtraction
+ * is removing all the keys in `root2` from `root1`.  The values of the `root2` tree are ignored and
+ * can be any value `V2`.
+ * `difference` guarantees that if no entries are removed from `root1`, then `root1` object
+ * is returned unchanged.
+ *
+ * Runs in time O(m log(n/m)) where m is the size of the smaller tree and n is the size of the larger tree.
+ */
 export function difference<K, V1, V2>(
   cfg: ComparisionConfig<K>,
   root1: TreeNode<K, V1> | null,
@@ -790,6 +866,21 @@ export function difference<K, V1, V2>(
   return loop(root1, root2);
 }
 
+/** Return a tree which adjusts all the provided keys with a specified modification function.
+ *
+ * @category Bulk Modification
+ *
+ * @remarks
+ * `adjust` is passed two trees: `root1` is the tree to modify and `root2` is the keys to adjust associated to helper
+ * values of type `V2` (the type `V2` can be anything and does not need to be related `V1`).
+ * For each key in `root2` to modify, `adjust` looks up the key in `root1` and then calls the function `f`
+ * with the current existing value in `root1` (or `undefined` if the key does not exist) and the helper value from `root2`
+ * associated with the key. The return value from `f` is set as the new value for the key, or removed if the return value is `undefined`.
+ *
+ * `adjust` guarantees that if nothing was added, removed, or changed, then `root1` is returned.
+ *
+ * Runs in time O(n + m) where n and m are the sizes of the two trees.
+ */
 export function adjust<K, V1, V2>(
   cfg: ComparisionConfig<K>,
   f: (v1: V1 | undefined, v2: V2, k: K) => V1 | undefined,
