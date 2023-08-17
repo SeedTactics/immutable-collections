@@ -6,7 +6,6 @@ import ts from "typescript";
 import * as tsdoc from "@microsoft/tsdoc";
 
 type DocFile = {
-  readonly docId: string;
   readonly docTitle: string;
   readonly tsFile: string;
   readonly singleClass: string | null;
@@ -14,19 +13,16 @@ type DocFile = {
 
 const allFiles: ReadonlyArray<DocFile> = [
   {
-    docId: "class_api",
     docTitle: "A title",
     tsFile: "../src/api/classes.ts",
     singleClass: null,
   },
   {
-    docId: "hashmap",
     docTitle: "A title",
     tsFile: "../src/api/hashmap.ts",
     singleClass: "HashMap",
   },
   {
-    docId: "lazyseq",
     docTitle: "A title",
     tsFile: "../src/lazyseq.ts",
     singleClass: "LazySeq",
@@ -62,7 +58,7 @@ function emitDocFile(doc: DocFile) {
   let lastCategory: string | null = null;
 
   write("---\n");
-  write(`id: ${doc.docId}\n`);
+  write(`id: ${path.basename(doc.tsFile, ".ts")}\n`);
   write(`title: ${doc.docTitle}\n`);
   write("---\n\n");
   write(`import Export from "@site/src/components/ApiExport";\n`);
@@ -139,6 +135,19 @@ function emitDocFile(doc: DocFile) {
     if (comment.remarksBlock) {
       write("<Remarks>\n");
       renderDocNode(comment.remarksBlock.content);
+      const example = comment.customBlocks.filter(
+        (b) => b.blockTag.tagName === "@example"
+      );
+      if (example.length > 0) {
+        write("<details>\n\n");
+        for (const ex of example) {
+          write("<summary>Example</summary>\n\n");
+          write("<div>\n\n");
+          renderDocNode(ex.content);
+          write("\n</div>\n\n");
+        }
+        write("</details>\n\n");
+      }
       write("\n</Remarks>\n");
     }
     write("\n");
