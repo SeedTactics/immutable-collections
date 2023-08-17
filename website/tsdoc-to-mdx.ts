@@ -59,7 +59,7 @@ function emitDocFile(doc: DocFile) {
   const sourceFile = program.getSourceFile(doc.tsFile);
   const srcTxt = sourceFile.getFullText();
   const anchorCount = new Map<string, number>();
-  // TODO: categories
+  let lastCategory: string | null = null;
 
   write("---\n");
   write(`id: ${doc.docId}\n`);
@@ -84,6 +84,14 @@ function emitDocFile(doc: DocFile) {
     sourceFile.forEachChild(renderNode);
   }
   fs.closeSync(outHandle);
+
+  function simpleDocnodeToString(docNode: tsdoc.DocNode): string {
+    if (docNode instanceof tsdoc.DocExcerpt) {
+      return docNode.content.toString();
+    } else {
+      return docNode.getChildNodes().map(simpleDocnodeToString).join("");
+    }
+  }
 
   function renderDocNode(docNode: tsdoc.DocNode): void {
     if (docNode) {
@@ -201,6 +209,18 @@ function emitDocFile(doc: DocFile) {
               : modFlags & ts.ModifierFlags.Static
               ? "static "
               : "𝑜𝑏𝑗.";
+          const categoryDoc = comment.customBlocks.find(
+            (b) => b.blockTag.tagName === "@category"
+          )?.content;
+          if (!categoryDoc) {
+            console.log("Missing category in " + decl.name.getText(sourceFile));
+            exit(1);
+          }
+          const category = simpleDocnodeToString(categoryDoc);
+          if (category !== lastCategory) {
+            write("### " + category + "\n\n");
+            lastCategory = category;
+          }
           renderExport(decl, prefix);
           renderComment(comment);
         }
