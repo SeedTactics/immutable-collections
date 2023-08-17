@@ -30,14 +30,14 @@ type NotUndefined = {} | null;
  * @remarks
  * The `HashMap<K, V>` class stores key-value pairs where the keys have type `K`
  * and the values type `V`.  Keys can be numbers, strings, booleans, dates, or
- * custom objects which implement the {@link class_api!HashableObj} and {@link class_api!ComparableObj} interfaces.
+ * custom objects which implement the {@link ./classes#HashableObj} and {@link ./classes#ComparableObj} interfaces.
  * `HashMap` implements the typescript-builtin `ReadonlyMap` interface (which
  * consists of the read-only methods of [the JS builtin
  * Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)).
  *
  * The HashMap is immutable, which means that no changes or mutations are
  * allowed directly to the HashMap.  Instead, modification operations such as
- * {@link HashMap#delete} return a new HashMap which contains the result of the
+ * {@link HashMap.delete} return a new HashMap which contains the result of the
  * modification.  The original HashMap is unchanged and can continue to be
  * accessed and used.  The HashMap implements this efficiently using structural
  * sharing and does not require a full copy.
@@ -47,17 +47,17 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    *
    * @category Creating Hash Maps
    *
-   * @remarks The key type must extend {@link class_api!HashKey}, which consists of strings,
+   * @remarks The key type must extend {@link ./classes#HashKey}, which consists of strings,
    * numbers, dates, booleans, or a custom user-defined object which implements
-   * the {@link class_api!HashableObj} and {@link class_api!ComparableObj} interfaces.
+   * the {@link ./classes#HashableObj} and {@link ./classes#ComparableObj} interfaces.
    * These interfaces allows you to create complex keys which are made up of multiple properties.  Values can
    * have any type but can not contain `undefined`.  The value type can include
    * `null` if you wish to represent missing or empty values.
    *
-   * While you can start with an empty `HashMap` and then use {@link HashMap#set}
+   * While you can start with an empty `HashMap` and then use {@link HashMap.set}
    * to add entries, it is more efficient to create the HashMap in bulk using
    * either the static {@link HashMap.from} or {@link HashMap.build} or using
-   * various methods on {@link LazySeq} to convert a `LazySeq` to a `HashMap`.
+   * various methods on {@link ../lazyseq#LazySeq} to convert a `LazySeq` to a `HashMap`.
    *
    * @example
    * ```ts
@@ -85,7 +85,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * merge function is the value associated to the key.  If no merge function is provided, the second value `v2`
    * is used, overwriting the first value `v1`.
    *
-   * If you have a LazySeq, the LazySeq.{@link LazySeq#toHashMap} method is an easy way to call `from`.
+   * If you have a LazySeq, the LazySeq.{@link ../lazyseq#LazySeq.toHashMap} method is an easy way to call `from`.
    *
    * @example
    * ```ts
@@ -218,7 +218,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * This provides an iterator for all the entries in the map.  The order of iteration is an
    * implementation detail and cannot be relied upon, it depends on the hashes and how the internal
    * data is organized. Similar to the builtin [Map.entries](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map/entries),
-   * it can only be iterated once.  Use {@link HashMap#toLazySeq} to create an iterable that can be
+   * it can only be iterated once.  Use {@link HashMap.toLazySeq} to create an iterable that can be
    * iterated more than once.
    *
    */
@@ -234,7 +234,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * This provides an iterator for all the keys in the map.  The order of iteration is an
    * implementation detail and cannot be relied upon, it depends on the hashes and how the internal
    * data is organized. Similar to the builtin [Map.keys](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map/keys),
-   * it can only be iterated once.  Use {@link HashMap#keysToLazySeq} to create an iterable that can be
+   * it can only be iterated once.  Use {@link HashMap.keysToLazySeq} to create an iterable that can be
    * iterated more than once.
    *
    */
@@ -250,7 +250,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * This provides an iterator for all the values in the map.  The order of iteration is an
    * implementation detail and cannot be relied upon, it depends on the hashes and how the internal
    * data is organized. Similar to the builtin [Map.values](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map/values),
-   * it can only be iterated once.  Use {@link HashMap#valuesToLazySeq} to create an iterable that can be
+   * it can only be iterated once.  Use {@link HashMap.valuesToLazySeq} to create an iterable that can be
    * iterated more than once.
    *
    */
@@ -319,7 +319,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    *
    * @remarks
    * This function is O(1) and very fast because the backing data structure is reused.
-   * Essentially, the HashMap and {@link HashSet} classes are just two different APIs against the
+   * Essentially, the HashMap and {@link ./hashset#HashSet} classes are just two different APIs against the
    * same underlying tree.  Since both HashSet and HashMap are immutable, they can both
    * share the same underlying tree without problems.
    */
@@ -359,7 +359,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * @category Modification
    *
    * @remarks
-   * The modify function is a more efficient combination of {@link HashMap#get} and {@link HashMap#set}.  `modify` first
+   * The modify function is a more efficient combination of {@link HashMap.get} and {@link HashMap.set}.  `modify` first
    * looks for the key in the map.  If the key is found, the function `f` is applied to the
    * existing value and the result is used to set the new value.  If the key is not found, the
    * function `f` is applied to `undefined` and the result is used to set the new value.
@@ -398,8 +398,8 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * @category Modification
    *
    * @remarks
-   * `alter` is a generalization of {@link HashMap#get}, {@link HashMap#set}, {@link HashMap#modify},
-   * and {@link HashMap#delete}.  It can be used to insert a new entry, modify an existing entry, or
+   * `alter` is a generalization of {@link HashMap.get}, {@link HashMap.set}, {@link HashMap.modify},
+   * and {@link HashMap.delete}.  It can be used to insert a new entry, modify an existing entry, or
    * delete an existing entry.  `alter` first looks for the key in the map.  The function `f` is then
    * applied to the existing value if the key was found and `undefined` if the key does not exist.
    * If the function `f` returns `undefined`, the entry is deleted and if `f` returns a value, the
@@ -425,7 +425,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * `mapValues` applies the function `f` to each value and key in the HashMap and returns a new HashMap
    * with the same keys but the values adjusted to the result of the function `f`.  This can be done efficiently because
    * the keys are unchanged the arrangement of the data structure is unchanged.  If you wish to transform
-   * both the keys and the values, use {@link HashMap#toLazySeq}, map the lazy sequence, and then convert the
+   * both the keys and the values, use {@link HashMap.toLazySeq}, map the lazy sequence, and then convert the
    * lazy sequence back to a HashMap.  (This is the most efficient way to transform both the keys and values, since
    * if the keys change the entire data structure needs to be rebuilt anyway.)
    *
@@ -451,7 +451,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * `collectValues` applies the function `f` to each value and key in the HashMap.  If `f` returns null or undefined,
    * the key and value is removed.  Otherwise, the returned value from `f` is used as the new value associated to the key k.
    * This can be done efficiently because the keys are unchanged the arrangement of the data
-   * structure is unchanged.  If you wish to transform both the keys and the values, use {@link HashMap#toLazySeq},
+   * structure is unchanged.  If you wish to transform both the keys and the values, use {@link HashMap.toLazySeq},
    * map the lazy sequence, and then convert the lazy sequence back to a HashMap.  (This is the most efficient
    * way to transform both the keys and values, since if the keys change the entire data structure needs to be
    * rebuilt anyway.)
@@ -547,7 +547,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * @category Bulk Modification
    *
    * @remarks
-   * `HashMap.union` is the static version of {@link HashMap#union} and allows unioning more than two HashMaps
+   * `HashMap.union` is the static version of {@link HashMap.union} and allows unioning more than two HashMaps
    * at once.  It produces a new HashMap which contains all the entries in all the HashMaps.  If a
    * key appears in only one of the maps, the value from that map is used.  If a key appears
    * in multiple maps, the provided merge function is used to determine the value.  The order of merging
@@ -585,10 +585,10 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * @category Bulk Modification
    *
    * @remarks
-   * `append` is just a shorthand for a combination of {@link HashMap.from} and {@link HashMap#union}.  `union`
+   * `append` is just a shorthand for a combination of {@link HashMap.from} and {@link HashMap.union}.  `union`
    * is very efficient at combining data structures, so the fastest way to bulk-add entries is to first create
    * a data structure of the entries to add and then union them into the existing data structure.  Thus, if you
-   * already have a HashMap or {@link HashMap.build} is more ergonomic, you should just directly use {@link HashMap#union}.
+   * already have a HashMap or {@link HashMap.build} is more ergonomic, you should just directly use {@link HashMap.union}.
    */
   append(items: Iterable<readonly [K, V & NotUndefined]>): HashMap<K, V> {
     return this.union(HashMap.from(items));
@@ -629,7 +629,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * @category Bulk Modification
    *
    * @remarks
-   * `HashMap.intersection` is a static version of {@link HashMap#intersection}, and produces a new HashMap
+   * `HashMap.intersection` is a static version of {@link HashMap.intersection}, and produces a new HashMap
    * which contains the entries which have keys in all specified HashMaps.  For each such entry, the merge
    * function is used to determine the resulting value.
    *
