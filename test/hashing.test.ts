@@ -40,10 +40,10 @@ class ComplexKey {
 
 describe("Hashing", () => {
   it("detects a hash key object", () => {
-    const k = new IntStrKey(faker.datatype.number(), faker.datatype.string());
+    const k = new IntStrKey(faker.number.int(), faker.string.sample());
     expect(isHashableObj(k)).to.be.true;
-    expect(isHashableObj(faker.datatype.string())).to.be.false;
-    expect(isHashableObj({ foo: faker.datatype.string() })).to.be.false;
+    expect(isHashableObj(faker.string.sample())).to.be.false;
+    expect(isHashableObj({ foo: faker.string.sample() })).to.be.false;
   });
 
   it("hashes a string", () => {
@@ -73,7 +73,7 @@ describe("Hashing", () => {
     expect(cfg.hash(min32bit)).to.equal(min32bit);
     expect(cfg.hash(max32bit)).to.equal(max32bit);
 
-    const small = faker.datatype.number({ min: min32bit, max: max32bit });
+    const small = faker.number.int({ min: min32bit, max: max32bit });
     expect(cfg.hash(small)).to.equal(small);
   });
 
@@ -89,7 +89,7 @@ describe("Hashing", () => {
 
     const cfg = mkHashConfig<number>();
 
-    const large = faker.datatype.number({ min: max32bit + 1, max: Number.MAX_SAFE_INTEGER });
+    const large = faker.number.int({ min: max32bit + 1, max: Number.MAX_SAFE_INTEGER });
     expect(cfg.hash(large)).not.to.equal(large);
 
     expect(cfg.hash(12345678901234)).to.equal(1013586311);

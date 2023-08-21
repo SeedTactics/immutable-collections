@@ -25,7 +25,7 @@ function sortEntries<K extends OrderedMapKey, V>(
 
 function randomNullableStr(): string | null {
   if (Math.random() < 0.1) return null;
-  return faker.datatype.string();
+  return faker.string.sample();
 }
 
 function combineNullableStr(a: string | null, b: string | null): string | null {
@@ -87,7 +87,7 @@ export function createMap<K extends OrderedMapKey>(
 
   for (let i = 0; i < size; i++) {
     const k = key();
-    const v = faker.datatype.string();
+    const v = faker.string.sample();
     if (i % 2 === 0) {
       ordMap = ordMap.set(k, v);
       jsMap.set(k.toString(), [k, v]);
@@ -175,7 +175,7 @@ describe("Ordered Map", () => {
   });
 
   it("creates a string key map", () => {
-    const { ordMap, jsMap } = createMap(10000, () => faker.datatype.string());
+    const { ordMap, jsMap } = createMap(10000, () => faker.string.sample());
     expectEqual(ordMap, jsMap);
   });
 
@@ -204,7 +204,7 @@ describe("Ordered Map", () => {
   });
 
   it("creates a date-keyed map", () => {
-    const { ordMap, jsMap } = createMap(1000, () => faker.datatype.datetime());
+    const { ordMap, jsMap } = createMap(1000, () => faker.date.anytime());
     expectEqual(ordMap, jsMap);
   });
 
@@ -217,7 +217,7 @@ describe("Ordered Map", () => {
     let ordMap = OrderedMap.empty<number, string>();
     const jsMap = new Map<string, [number, string]>();
     for (let i = 0; i < 1000; i++) {
-      const v = faker.datatype.string();
+      const v = faker.string.sample();
       ordMap = ordMap.set(i, v);
       jsMap.set(i.toString(), [i, v]);
     }
@@ -232,7 +232,7 @@ describe("Ordered Map", () => {
     let ordMap = OrderedMap.empty<number, string>();
     const jsMap = new Map<string, [number, string]>();
     for (let i = 1000; i >= 0; i--) {
-      const v = faker.datatype.string();
+      const v = faker.string.sample();
       ordMap = ordMap.set(i, v);
       jsMap.set(i.toString(), [i, v]);
     }
@@ -287,7 +287,7 @@ describe("Ordered Map", () => {
   });
 
   it("leaves map unchanged when altering the same value", () => {
-    const { ordMap } = createMap(5000, () => faker.datatype.string());
+    const { ordMap } = createMap(5000, () => faker.string.sample());
 
     for (const [k, v] of ordMap.toAscLazySeq().take(1000)) {
       const newM = ordMap.alter(k, (old) => {
@@ -353,7 +353,7 @@ describe("Ordered Map", () => {
         newJsMap.delete(k.toString());
       } else {
         // add new value (use odd key)
-        const newVal = faker.datatype.string();
+        const newVal = faker.string.sample();
         newM = newM.alter(k + 1, (oldV) => {
           expect(oldV).to.be.undefined;
           return newVal;
@@ -371,7 +371,7 @@ describe("Ordered Map", () => {
     const entries = new Array<[number, string]>(size + 50);
     for (let i = 0; i < size; i++) {
       const k = Math.floor(Math.random() * 5000);
-      const v = faker.datatype.string();
+      const v = faker.string.sample();
       entries[i] = [k, v];
       // duplicate the first 50 entries at the end
       if (i < 50) {
@@ -391,7 +391,7 @@ describe("Ordered Map", () => {
     const size = 1000;
     const entries = new Array<[number, string]>(size);
     for (let i = 0; i < size; i++) {
-      const v = faker.datatype.string();
+      const v = faker.string.sample();
       entries[i] = [i, v];
     }
     const imMap = OrderedMap.from(entries);
@@ -407,7 +407,7 @@ describe("Ordered Map", () => {
     const size = 1000;
     const entries = new Array<[number, string]>(size);
     for (let i = size; i >= 0; i--) {
-      const v = faker.datatype.string();
+      const v = faker.string.sample();
       entries[i] = [i, v];
     }
     const imMap = OrderedMap.from(entries);
@@ -424,7 +424,7 @@ describe("Ordered Map", () => {
     const entries = new Array<[number, string]>(size);
     for (let i = 0; i < size; i++) {
       const k = Math.floor(Math.random() * 5000);
-      const v = faker.datatype.string();
+      const v = faker.string.sample();
       entries[i] = [k, v];
     }
     const imMap = OrderedMap.from(entries, (a, b) => a + b);
@@ -459,7 +459,7 @@ describe("Ordered Map", () => {
     const size = 1000;
     const ts = new Array<number>(size);
     for (let i = 0; i < size; i++) {
-      ts[i] = faker.datatype.number({ min: 0, max: 5000 });
+      ts[i] = faker.number.int({ min: 0, max: 5000 });
     }
 
     const imMap = OrderedMap.build<number, string, string>(
@@ -706,7 +706,7 @@ describe("Ordered Map", () => {
 
   it("transforms a map", () => {
     const m = createMap(500, () => randomCollisionKey()).ordMap;
-    const n = faker.datatype.number();
+    const n = faker.number.int();
     expect(
       m.transform((t) => {
         expect(t).to.equal(m);

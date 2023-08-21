@@ -38,7 +38,7 @@ function sortValues<V>(e: Iterable<V>): Array<V> {
 
 export function randomNullableStr(): string | null {
   if (Math.random() < 0.1) return null;
-  return faker.datatype.string();
+  return faker.string.sample();
 }
 
 export function combineNullableStr(a: string | null, b: string | null): string | null {
@@ -56,7 +56,7 @@ export function createMap<K extends HashKey>(
 
   for (let i = 0; i < size; i++) {
     const k = key();
-    const v = faker.datatype.string();
+    const v = faker.string.sample();
     if (i % 2 === 0) {
       imMap = imMap.set(k, v);
       jsMap.set(k.toString(), [k, v]);
@@ -166,13 +166,13 @@ describe("HashMap", () => {
   });
 
   it("creates a string key map", () => {
-    const { imMap, jsMap } = createMap(10000, () => faker.datatype.string());
+    const { imMap, jsMap } = createMap(10000, () => faker.string.sample());
     expectEqual(imMap, jsMap);
   });
 
   it("creates a number key map", () => {
     const { imMap, jsMap } = createMap(10000, () =>
-      faker.datatype.number({ min: 0, max: 50000 })
+      faker.number.int({ min: 0, max: 50000 })
     );
     expectEqual(imMap, jsMap);
   });
@@ -197,7 +197,7 @@ describe("HashMap", () => {
   });
 
   it("creates a date-keyed map", () => {
-    const { imMap, jsMap } = createMap(1000, () => faker.datatype.datetime());
+    const { imMap, jsMap } = createMap(1000, () => faker.date.anytime());
     expectEqual(imMap, jsMap);
   });
 
@@ -240,7 +240,7 @@ describe("HashMap", () => {
   });
 
   it("leaves map unchanged when modifying the same value", () => {
-    const maps = createMap(500, () => faker.datatype.string());
+    const maps = createMap(500, () => faker.string.sample());
 
     for (const [k, v] of maps.imMap.toLazySeq().take(4000)) {
       const newHashM = maps.imMap.modify(k, (old) => {
@@ -282,7 +282,7 @@ describe("HashMap", () => {
 
   it("inserts into empty map using alter", () => {
     const k = randomCollisionKey();
-    const v = faker.datatype.string();
+    const v = faker.string.sample();
     const m = HashMap.empty<CollidingKey, string>().alter(k, (existing) => {
       expect(existing).to.be.undefined;
       return v;
@@ -344,7 +344,7 @@ describe("HashMap", () => {
       } else {
         // add new value
         const newK = randomCollisionKey();
-        const newVal = faker.datatype.string();
+        const newVal = faker.string.sample();
         newM = newM.alter(newK, (oldV) => {
           expect(oldV).to.be.undefined;
           return newVal;
@@ -378,8 +378,8 @@ describe("HashMap", () => {
     const size = 1000;
     const entries = new Array<[number, string]>(size);
     for (let i = 0; i < size; i++) {
-      const k = faker.datatype.number({ min: 0, max: 5000 });
-      const v = faker.datatype.string();
+      const k = faker.number.int({ min: 0, max: 5000 });
+      const v = faker.string.sample();
       entries[i] = [k, v];
     }
     const imMap = HashMap.from(entries);
@@ -395,7 +395,7 @@ describe("HashMap", () => {
     const entries = new Array<[CollidingKey, string]>(size);
     for (let i = 0; i < size; i++) {
       const k = randomCollisionKey();
-      const v = faker.datatype.string();
+      const v = faker.string.sample();
       entries[i] = [k, v];
     }
     const imMap = HashMap.from(entries, (a, b) => a + b);
@@ -414,8 +414,8 @@ describe("HashMap", () => {
     const entries = new Array<[CollidingKey, string]>(size * 2);
     for (let i = 0; i < size; i++) {
       const k = randomCollisionKey();
-      entries[i] = [k, faker.datatype.string()];
-      entries[size + i] = [k, faker.datatype.string()];
+      entries[i] = [k, faker.string.sample()];
+      entries[size + i] = [k, faker.string.sample()];
     }
     const imMap = HashMap.from(entries, (a) => a);
 
@@ -434,7 +434,7 @@ describe("HashMap", () => {
     const size = 1000;
     const values = new Array<number>(size);
     for (let i = 0; i < size; i++) {
-      values[i] = faker.datatype.number({ min: 0, max: 5000 });
+      values[i] = faker.number.int({ min: 0, max: 5000 });
     }
 
     const imMap = HashMap.build(values, (v) => v + 40_000);
@@ -449,7 +449,7 @@ describe("HashMap", () => {
     const size = 1000;
     const ts = new Array<number>(size);
     for (let i = 0; i < size; i++) {
-      ts[i] = faker.datatype.number({ min: 0, max: 5000 });
+      ts[i] = faker.number.int({ min: 0, max: 5000 });
     }
 
     const imMap = HashMap.build<number, CollidingKey, string>(
@@ -471,13 +471,13 @@ describe("HashMap", () => {
   });
 
   it("appends to a map", () => {
-    const initial = createMap(1000, () => faker.datatype.number({ min: 0, max: 5000 }));
+    const initial = createMap(1000, () => faker.number.int({ min: 0, max: 5000 }));
 
     const newEntries = new Array<[number, string]>(500);
     for (let i = 0; i < 500; i++) {
       newEntries[i] = [
-        faker.datatype.number({ min: 0, max: 5000 }),
-        faker.datatype.string(),
+        faker.number.int({ min: 0, max: 5000 }),
+        faker.string.sample(),
       ];
     }
     const newImMap = initial.imMap.append(newEntries);
@@ -492,7 +492,7 @@ describe("HashMap", () => {
   });
 
   it("leaves map unchanged when appending existing entries", () => {
-    const initial = createMap(1000, () => faker.datatype.number({ min: 0, max: 5000 }));
+    const initial = createMap(1000, () => faker.number.int({ min: 0, max: 5000 }));
 
     const someEntries = initial.imMap.toLazySeq().drop(5).take(10);
     const newImMap = initial.imMap.append(someEntries);
@@ -668,7 +668,7 @@ describe("HashMap", () => {
 
   it("transforms a map", () => {
     const m = createMap(500, () => randomCollisionKey()).imMap;
-    const n = faker.datatype.number();
+    const n = faker.number.int();
     expect(
       m.transform((t) => {
         expect(t).to.equal(m);

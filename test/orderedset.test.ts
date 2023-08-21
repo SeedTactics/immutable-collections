@@ -97,7 +97,7 @@ describe("OrderedSet", () => {
   });
 
   it("creates a string set", () => {
-    const { imSet, jsMap } = createSet(10_000, () => faker.datatype.string());
+    const { imSet, jsMap } = createSet(10_000, () => faker.string.sample());
     expectEqual(imSet, jsMap);
   });
 
@@ -107,7 +107,7 @@ describe("OrderedSet", () => {
   });
 
   it("iterates more than once", () => {
-    const { imSet, jsMap } = createSet(500, () => faker.datatype.string());
+    const { imSet, jsMap } = createSet(500, () => faker.string.sample());
     const expected = sortKeys(jsMap.values());
 
     // iterate object itself twice
@@ -314,7 +314,7 @@ describe("OrderedSet", () => {
 
   it("transforms a set", () => {
     const m = createSet(100, mkNumKeyGenerator(5000)).imSet;
-    const n = faker.datatype.number();
+    const n = faker.number.int();
     expect(
       m.transform((t) => {
         expect(t).to.equal(m);
