@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "^2.4.1",
+    "@docusaurus/types": "^2.4.1",
     "@microsoft/tsdoc": "^0.14.2",
     "@tsconfig/docusaurus": "^2.0.0",
     "ts-node": "^10.9.1",

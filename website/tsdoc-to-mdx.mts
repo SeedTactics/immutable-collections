@@ -4,8 +4,18 @@ import * as path from "node:path";
 import * as cp from "node:child_process";
 import ts from "typescript";
 import * as tsdoc from "@microsoft/tsdoc";
+//import { SidebarsConfig } from "@docusaurus/plugin-content-docs";
+import basePackage from "../package.json" assert { type: "json" };
+
+const majorMinorVersion = basePackage.version.substring(
+  0,
+  basePackage.version.lastIndexOf("."),
+);
+
+// List of all ts files to process into API docs
 
 type DocFile = {
+  readonly sidebarLabel: string;
   readonly docTitle: string;
   readonly tsFile: string;
   readonly singleClass: string | null;
@@ -13,22 +23,20 @@ type DocFile = {
 
 const allFiles: ReadonlyArray<DocFile> = [
   {
+    sidebarLabel: "Class API",
     docTitle: "A title",
     tsFile: "../src/api/classes.ts",
     singleClass: null,
   },
   {
+    sidebarLabel: "HashMap",
     docTitle: "A title",
     tsFile: "../src/api/hashmap.ts",
     singleClass: "HashMap",
   },
-  {
-    docTitle: "A title",
-    tsFile: "../src/lazyseq.ts",
-    singleClass: "LazySeq",
-  },
 ];
 
+// Calculate the git revision of the current commit
 const gitRev = cp
   .execSync("git rev-parse HEAD")
   .toString()
@@ -36,22 +44,64 @@ const gitRev = cp
   .replace("\r", "");
 const srcPrefix = `https://github.com/SeedTactics/immutable-collections/blob/${gitRev}/`;
 
-if (!fs.existsSync(path.join("docs", "api"))) {
-  fs.mkdirSync(path.join("docs", "api"));
+// Create the versioned docs directory if it doesn't exist
+if (!fs.existsSync(path.join("versioned_docs", "version-" + majorMinorVersion))) {
+  console.log("Creating versioned docs directory");
+  cp.execSync("pnpm docusaurus docs:version " + majorMinorVersion);
+  fs.mkdirSync(path.join("versioned_docs", "version-" + majorMinorVersion, "api"));
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const sidebar: { docsSidebar: unknown[] } = JSON.parse(
+    fs.readFileSync(
+      path.join("versioned_sidebars", "version-" + majorMinorVersion + ".json"),
+      "utf8",
+    ),
+  );
+  sidebar["docsSidebar"].push({
+    type: "category",
+    label: "API",
+    items: allFiles.map((f) => ({
+      type: "doc" as const,
+      id: path.basename(f.tsFile, ".ts"),
+      label: f.sidebarLabel,
+      description: f.docTitle,
+    })),
+  });
+  fs.writeFileSync(
+    path.join("versioned_sidebars", "version-" + majorMinorVersion + ".json"),
+    JSON.stringify(sidebar, null, 2),
+  );
 }
+
+// Load the typescript code
+const tsConfig = ts.parseJsonSourceFileConfigFileContent(
+  ts.readJsonConfigFile(
+    ts.findConfigFile(path.resolve(".."), (f) => ts.sys.fileExists(f), "tsconfig.json"),
+    (f) => ts.sys.readFile(f),
+  ),
+  ts.sys,
+  path.resolve("../"),
+);
+const program = ts.createProgram(tsConfig.fileNames, tsConfig.options);
+
+// Emit all the docs
 for (const d of allFiles) {
+  console.log("Emitting " + d.tsFile);
   emitDocFile(d);
 }
 
 function emitDocFile(doc: DocFile) {
   const outHandle = fs.openSync(
-    path.join("docs", "api", path.basename(doc.tsFile, ".ts") + ".mdx"),
-    "w"
+    path.join(
+      "versioned_docs",
+      "version-" + majorMinorVersion,
+      "api",
+      path.basename(doc.tsFile, ".ts") + ".mdx",
+    ),
+    "w",
   );
   function write(s: string): void {
     fs.writeFileSync(outHandle, s);
   }
-  const program = ts.createProgram([doc.tsFile], { target: ts.ScriptTarget.ES2022 });
   const sourceFile = program.getSourceFile(doc.tsFile);
   const srcTxt = sourceFile.getFullText();
   const anchorCount = new Map<string, number>();
@@ -136,7 +186,7 @@ function emitDocFile(doc: DocFile) {
       write("<Remarks>\n");
       renderDocNode(comment.remarksBlock.content);
       const example = comment.customBlocks.filter(
-        (b) => b.blockTag.tagName === "@example"
+        (b) => b.blockTag.tagName === "@example",
       );
       if (example.length > 0) {
         write("<details>\n\n");
@@ -219,7 +269,7 @@ function emitDocFile(doc: DocFile) {
               ? "static "
               : "𝑜𝑏𝑗.";
           const categoryDoc = comment.customBlocks.find(
-            (b) => b.blockTag.tagName === "@category"
+            (b) => b.blockTag.tagName === "@category",
           )?.content;
           if (!categoryDoc) {
             console.log("Missing category in " + decl.name.getText(sourceFile));
@@ -269,7 +319,7 @@ function emitDocFile(doc: DocFile) {
       (comment) =>
         srcTxt.charCodeAt(comment.pos + 1) === 0x2a /* ts.CharacterCodes.asterisk */ &&
         srcTxt.charCodeAt(comment.pos + 2) === 0x2a /* ts.CharacterCodes.asterisk */ &&
-        srcTxt.charCodeAt(comment.pos + 3) !== 0x2f /* ts.CharacterCodes.slash */
+        srcTxt.charCodeAt(comment.pos + 3) !== 0x2f /* ts.CharacterCodes.slash */,
     );
     if (commentRanges.length === 0) {
       return;
@@ -286,7 +336,7 @@ function emitDocFile(doc: DocFile) {
 
     const parser = new tsdoc.TSDocParser(customConfiguration);
     const context = parser.parseRange(
-      tsdoc.TextRange.fromStringRange(srcTxt, commentRanges[0].pos, commentRanges[0].end)
+      tsdoc.TextRange.fromStringRange(srcTxt, commentRanges[0].pos, commentRanges[0].end),
     );
     if (context.log.messages.length > 0) {
       console.log("Error in tsdoc comment");
@@ -295,7 +345,7 @@ function emitDocFile(doc: DocFile) {
         console.log(
           `${sourceFile.fileName}(${location.line + 1},${
             location.character + 1
-          }): [TSDoc] ${m.toString()}`
+          }): [TSDoc] ${m.toString()}`,
         );
       }
       exit(1);
