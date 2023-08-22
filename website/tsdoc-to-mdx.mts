@@ -2,7 +2,7 @@ import { exit } from "node:process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as cp from "node:child_process";
-import ts, { SymbolDisplayPart } from "typescript";
+import ts from "typescript";
 //import { SidebarsConfig } from "@docusaurus/plugin-content-docs";
 import basePackage from "../package.json" assert { type: "json" };
 
@@ -133,7 +133,10 @@ function emitDocFile(doc: DocFile) {
   }
   fs.closeSync(outHandle);
 
-  function renderDisplayParts(parts: ReadonlyArray<SymbolDisplayPart>): void {
+  function renderDisplayParts(
+    parts: ReadonlyArray<ts.SymbolDisplayPart>,
+    onlyFirstParagraph: boolean = false,
+  ): void {
     for (const part of parts) {
       if (part.kind === "link") {
         // text is something like '{@link' or '}' so just ignore
@@ -150,6 +153,10 @@ function emitDocFile(doc: DocFile) {
         const hash = linkRefs[linkRefs.length - 1];
         write(`[${link}](${page ?? ""}${hash ? "#" : ""}${hash})`);
       } else if (part.kind === "text") {
+        if (onlyFirstParagraph && part.text.indexOf("\n\n") >= 0) {
+          write(part.text.substring(0, part.text.indexOf("\n\n")));
+          return;
+        }
         write(part.text);
       } else {
         console.log("UNKNWON Display Part: " + part.kind);
@@ -157,7 +164,7 @@ function emitDocFile(doc: DocFile) {
     }
   }
 
-  function renderDocComment(sig: ts.Symbol): void {
+  function renderDocComment(sig: ts.Symbol, onlyFirstParagraph: boolean = false): void {
     write("<Summary>\n\n");
     renderDisplayParts(sig.getDocumentationComment(program.getTypeChecker()));
     write("\n\n</Summary>\n\n");
@@ -166,7 +173,7 @@ function emitDocFile(doc: DocFile) {
     const remarks = docs.find((t) => t.name === "remarks");
     if (remarks) {
       write("<Remarks>\n\n");
-      renderDisplayParts(remarks.text);
+      renderDisplayParts(remarks.text, onlyFirstParagraph);
       write("\n\n");
       const example = docs.filter((b) => b.name === "example");
       if (example.length > 0) {
@@ -184,18 +191,24 @@ function emitDocFile(doc: DocFile) {
     write("\n");
   }
 
-  function renderExport(sig: ts.SignatureDeclaration, namePrefix: string): void {
-    let anchor = sig.name.getText().replace("[", "").replace("]", "").replace(".", "_");
+  function renderExport(node: ts.NamedDeclaration): void {
+    let anchor = node.name.getText().replace("[", "").replace("]", "").replace(".", "_");
     if (anchorCount.has(anchor)) {
       anchorCount.set(anchor, anchorCount.get(anchor) + 1);
       anchor = anchor + anchorCount.get(anchor).toString();
     } else {
       anchorCount.set(anchor, 1);
     }
+    const file = path.relative(path.resolve(".."), node.getSourceFile().fileName);
+    const line = node.getSourceFile().getLineAndCharacterOfPosition(node.getStart());
 
-    const src = srcPrefix + path.relative("..", doc.tsFile);
-
+    const src = srcPrefix + file + "#L" + (line.line + 1);
     write(`<Export anchor="${anchor}" src="${src}">\n\n`);
+  }
+
+  function renderSigExport(sig: ts.SignatureDeclaration, namePrefix: string): void {
+    renderExport(sig);
+
     write("```typescript\n");
 
     if (namePrefix) {
@@ -222,10 +235,43 @@ function emitDocFile(doc: DocFile) {
     write("</Export>\n\n");
   }
 
+  function renderClassExport(cl: ts.ClassDeclaration): void {
+    renderExport(cl);
+    write("```typescript\n");
+    write("class " + cl.name.getText());
+    if (cl.typeParameters) {
+      write("<");
+      write(cl.typeParameters.map((t) => t.getFullText()).join(","));
+      write(">");
+    }
+    write("\n```\n\n");
+    write("</Export>\n\n");
+  }
+
+  function renderCategory(symb: ts.Symbol): void {
+    const category = symb.getJsDocTags().find((n) => n.name === "category");
+    if (!category) {
+      return;
+    }
+    if (category.text.length !== 1 || category.text[0].kind !== "text") {
+      console.log("Invalid category for " + symb.name);
+      exit(1);
+    }
+    if (category.text[0].text !== lastCategory) {
+      write("### " + category.text[0].text + "\n\n");
+      lastCategory = category.text[0].text;
+    }
+  }
+
   function renderNode(node: ts.Node, symb?: ts.Symbol) {
     switch (node.kind) {
       case ts.SyntaxKind.ClassDeclaration: {
-        console.log("TODO: class decl");
+        const cl = node as ts.ClassDeclaration;
+        symb = symb ?? program.getTypeChecker().getSymbolAtLocation(cl.name);
+        renderCategory(symb);
+        renderClassExport(cl);
+        renderDocComment(symb);
+        write(`[See full class details for ${symb.name}](./${symb.name})\n\n`);
         break;
       }
 
@@ -236,11 +282,7 @@ function emitDocFile(doc: DocFile) {
         const decl = node as ts.SignatureDeclaration;
         symb = symb ?? program.getTypeChecker().getSymbolAtLocation(decl.name);
         const modFlags = ts.getCombinedModifierFlags(decl);
-        const category = symb.getJsDocTags().find((n) => n.name === "category");
-        if (!category) {
-          console.log("category is missing");
-        }
-        if (category && !(modFlags & ts.ModifierFlags.Private)) {
+        if (!(modFlags & ts.ModifierFlags.Private)) {
           const prefix =
             node.kind === ts.SyntaxKind.FunctionDeclaration
               ? "function "
@@ -249,15 +291,8 @@ function emitDocFile(doc: DocFile) {
               : modFlags & ts.ModifierFlags.Static
               ? "static "
               : "𝑜𝑏𝑗.";
-          if (category.text.length !== 1 || category.text[0].kind !== "text") {
-            console.log("Invalid category ");
-            exit(1);
-          }
-          if (category.text[0].text !== lastCategory) {
-            write("### " + category.text[0].text + "\n\n");
-            lastCategory = category.text[0].text;
-          }
-          renderExport(decl, prefix);
+          renderCategory(symb);
+          renderSigExport(decl, prefix);
           renderDocComment(symb);
         }
         break;
@@ -274,29 +309,23 @@ function emitDocFile(doc: DocFile) {
       case ts.SyntaxKind.ExportDeclaration: {
         const ex = node as ts.ExportDeclaration;
         ex.exportClause?.forEachChild((n) => {
-          console.log("TODO: Export " + n.getText());
-          if (n.getText() === "hashValues") {
-            const refFile = path.resolve(
-              path.join(
-                path.dirname(doc.tsFile),
-                ex.moduleSpecifier.getText().replace(/"/g, "").replace(/\.js/, ".ts"),
-              ),
-            );
-            console.log(refFile);
-            const refModule = program.getSourceFile(refFile);
-            const refSymbol = program.getTypeChecker().getSymbolAtLocation(refModule);
-            const exp = refSymbol.exports.get(ts.escapeLeadingUnderscores(n.getText()));
-            console.log(exp.declarations[0].kind);
-            renderNode(exp.declarations[0], exp);
-          }
+          const refFile = path.resolve(
+            path.join(
+              path.dirname(doc.tsFile),
+              ex.moduleSpecifier.getText().replace(/"/g, "").replace(/\.js/, ".ts"),
+            ),
+          );
+          const refModule = program
+            .getTypeChecker()
+            .getSymbolAtLocation(program.getSourceFile(refFile));
+          const exp = refModule.exports.get(ts.escapeLeadingUnderscores(n.getText()));
+          renderNode(exp.declarations[0], exp);
         });
         break;
       }
 
       default:
         console.log("Node " + node.kind);
-
-      // TODO: reference
     }
   }
 
