@@ -288,6 +288,7 @@ function emitDocFile(doc: DocFile) {
       case ts.SyntaxKind.FunctionDeclaration:
       case ts.SyntaxKind.MethodDeclaration:
       case ts.SyntaxKind.ConstructSignature:
+      case ts.SyntaxKind.GetAccessor:
       case ts.SyntaxKind.PropertyDeclaration: {
         const decl = node as ts.SignatureDeclaration;
         symb = symb ?? program.getTypeChecker().getSymbolAtLocation(decl.name);
