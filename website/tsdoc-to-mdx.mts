@@ -51,7 +51,7 @@ if (!fs.existsSync(path.join("versioned_docs", "version-" + majorMinorVersion)))
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const sidebar: { docsSidebar: unknown[] } = JSON.parse(
     fs.readFileSync(
-      path.join("versioned_sidebars", "version-" + majorMinorVersion + ".json"),
+      path.join("versioned_sidebars", "version-" + majorMinorVersion + "-sidebars.json"),
       "utf8",
     ),
   );
@@ -60,13 +60,13 @@ if (!fs.existsSync(path.join("versioned_docs", "version-" + majorMinorVersion)))
     label: "API",
     items: allFiles.map((f) => ({
       type: "doc" as const,
-      id: path.basename(f.tsFile, ".ts"),
+      id: "api/" + path.basename(f.tsFile, ".ts"),
       label: f.sidebarLabel,
-      description: f.docTitle,
+      //description: f.docTitle,
     })),
   });
   fs.writeFileSync(
-    path.join("versioned_sidebars", "version-" + majorMinorVersion + ".json"),
+    path.join("versioned_sidebars", "version-" + majorMinorVersion + "-sidebars.json"),
     JSON.stringify(sidebar, null, 2),
   );
 }

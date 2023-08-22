@@ -55,7 +55,7 @@ const config = {
           },
           {
             type: "doc",
-            docId: "api/class_api",
+            docId: "api/classes",
             position: "left",
             label: "API",
           },
@@ -83,12 +83,13 @@ const config = {
             items: [
               {
                 label: "Class API",
-                to: "/docs/api/class_api",
+                to: "/docs/api/classes",
               },
               {
                 label: "HashMap",
                 to: "/docs/api/HashMap",
               },
+              /*
               {
                 label: "OrderedMap",
                 to: "/docs/api/OrderedMap",
@@ -97,6 +98,7 @@ const config = {
                 label: "LazySeq",
                 to: "/docs/api/LazySeq",
               },
+              */
             ],
           },
           {
