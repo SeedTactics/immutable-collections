@@ -248,6 +248,14 @@ function emitDocFile(doc: DocFile) {
     write("</Export>\n\n");
   }
 
+  function renderFull(node: ts.NamedDeclaration): void {
+    renderExport(node);
+    write("```typescript\n");
+    write(node.getText());
+    write("\n```\n\n");
+    write("</Export>\n\n");
+  }
+
   function renderCategory(symb: ts.Symbol): void {
     const category = symb.getJsDocTags().find((n) => n.name === "category");
     if (!category) {
@@ -298,9 +306,14 @@ function emitDocFile(doc: DocFile) {
         break;
       }
 
-      case ts.SyntaxKind.TypeAliasDeclaration:
-        console.log("TODO: type alias");
+      case ts.SyntaxKind.TypeAliasDeclaration: {
+        const alias = node as ts.TypeAliasDeclaration;
+        symb = symb ?? program.getTypeChecker().getSymbolAtLocation(alias.name);
+        renderCategory(symb);
+        renderFull(alias);
+        renderDocComment(symb);
         break;
+      }
 
       case ts.SyntaxKind.InterfaceDeclaration:
         console.log("TODO: interface");
@@ -325,7 +338,7 @@ function emitDocFile(doc: DocFile) {
       }
 
       default:
-        console.log("Node " + node.kind);
+        console.log("Unused Node " + node.kind);
     }
   }
 
