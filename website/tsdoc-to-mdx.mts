@@ -124,7 +124,7 @@ function emitDocFile(doc: DocFile) {
       if (n.kind === ts.SyntaxKind.ClassDeclaration) {
         const d = n as ts.ClassDeclaration;
         if (d.name.getText() === doc.singleClass) {
-          renderClassNode(d);
+          renderClassPage(d);
         }
       }
     });
@@ -279,7 +279,9 @@ function emitDocFile(doc: DocFile) {
         renderCategory(symb);
         renderClassExport(cl);
         renderDocComment(symb);
-        write(`[See full class details for ${symb.name}](./${symb.name})\n\n`);
+        write(
+          `[See full class details for ${symb.name}](./${symb.name.toLowerCase()})\n\n`,
+        );
         break;
       }
 
@@ -342,7 +344,7 @@ function emitDocFile(doc: DocFile) {
     }
   }
 
-  function renderClassNode(node: ts.ClassDeclaration) {
+  function renderClassPage(node: ts.ClassDeclaration) {
     write("```typescript\n");
     write("class " + node.name.getText());
     if (node.typeParameters) {
