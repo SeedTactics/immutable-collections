@@ -43,13 +43,13 @@ function constUndefined() {
  *
  * @remarks
  * The `OrderedMap<K, V>` class stores key-value pairs where the keys have type `K` and the values type `V`.
- * Keys can be numbers, strings, booleans, dates, or custom objects which implement the {@link class_api!ComparableObj} interface.
+ * Keys can be numbers, strings, booleans, dates, or custom objects which implement the {@link ./classes#ComparableObj} interface.
  * The entries are stored in a balanced binary tree, and various methods can iterate over the entries in either ascending
  * or descending order of keys.  OrderedMap implements the typescript-builtin `ReadonlyMap` interface (which
  * consists of the read-only methods of [the JS builtin Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)).
  *
  * The OrderedMap is immutable, which means that no changes or mutations are allowed directly to the OrderedMap.
- * Instead, modification operations such as {@link OrderedMap#alter} return a new OrderedMap which contains the
+ * Instead, modification operations such as {@link OrderedMap.alter} return a new OrderedMap which contains the
  * result of the modification.  The original OrderedMap is unchanged and can continue to be accessed and used.
  * The OrderedMap implements this efficiently using structural sharing and does not require a full copy; indeed,
  * the `alter` method will copy at most `O(log n)` entries.
@@ -60,14 +60,14 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * @category Creating Ordered Maps
    *
    * @remarks
-   * The key type must extend {@link class_api!OrderedMapKey}, which consists of strings, numbers, dates, booleans, or a custom
-   * user-defined object which implements the {@link class_api!ComparableObj} interface.  The `ComparableObj` interface allows you
+   * The key type must extend {@link ./classes#OrderedMapKey}, which consists of strings, numbers, dates, booleans, or a custom
+   * user-defined object which implements the {@link ./classes#ComparableObj} interface.  The `ComparableObj` interface allows you
    * to create complex keys which are made up of multiple properties.  Values can have any type but can not
    * contain `undefined`.  The value type can include `null` if you wish to represent missing or empty values.
    *
-   * While you can start with an empty `OrderedMap` and then use {@link OrderedMap#set} to add entries, it
+   * While you can start with an empty `OrderedMap` and then use {@link OrderedMap.set} to add entries, it
    * is more efficient to create the OrderedMap in bulk using either the static {@link OrderedMap.from} or {@link OrderedMap.build}
-   * or using various methods on {@link LazySeq} to convert a `LazySeq` to an `OrderedMap`.
+   * or using various methods on {@link ./lazyseq#LazySeq} to convert a `LazySeq` to an `OrderedMap`.
    */
   public static empty<K extends OrderedMapKey, V extends NotUndefined>(): OrderedMap<
     K,
@@ -87,13 +87,13 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * and the second parameter `v2` is the new value just recieved from the sequence. The return value from the
    * merge function is the value associated to the key.  If no merge function is provided, the second value `v2`
    * is used, overwriting the first value `v1`.
-   * If you have a LazySeq, the LazySeq.{@link LazySeq#toOrderedMap} method is an easy way to call `from`.
+   * If you have a LazySeq, the LazySeq.{@link ./lazyseq#LazySeq.toOrderedMap} method is an easy way to call `from`.
    *
    * Runs in time O(n log n)
    */
   public static from<K extends OrderedMapKey, V extends NotUndefined>(
     items: Iterable<readonly [K, V]>,
-    merge?: (v1: V, v2: V) => V
+    merge?: (v1: V, v2: V) => V,
   ): OrderedMap<K, V> {
     const cfg = mkComparisonConfig();
     return new OrderedMap(cfg, from(cfg, items, merge));
@@ -112,7 +112,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    */
   public static build<K extends OrderedMapKey, V extends NotUndefined>(
     items: Iterable<V>,
-    key: (v: V) => K
+    key: (v: V) => K,
   ): OrderedMap<K, V>;
 
   /** Efficently create a new OrderedMap
@@ -131,18 +131,18 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
   public static build<T, K extends OrderedMapKey, V extends NotUndefined>(
     items: Iterable<T>,
     key: (v: T) => K,
-    val: (old: V | undefined, t: T) => V
+    val: (old: V | undefined, t: T) => V,
   ): OrderedMap<K, V>;
 
   public static build<T, K extends OrderedMapKey, V extends NotUndefined>(
     items: Iterable<T>,
     key: (t: T) => K,
-    val?: (old: V | undefined, t: T) => V
+    val?: (old: V | undefined, t: T) => V,
   ): OrderedMap<K, V> {
     const cfg = mkComparisonConfig();
     return new OrderedMap(
       cfg,
-      build(cfg, items, key, val as (old: V | undefined, t: T) => V)
+      build(cfg, items, key, val as (old: V | undefined, t: T) => V),
     );
   }
 
@@ -195,7 +195,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * @remarks
    * This provides an iterator for all the entries in the map in ascending order of keys.
    * Similar to the builtin [Map.entries](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map/entries),
-   * it can only be iterated once.  Use {@link OrderedMap#toAscLazySeq} or {@link OrderedMap#toDescLazySeq} to create an iterable that can be
+   * it can only be iterated once.  Use {@link OrderedMap.toAscLazySeq} or {@link OrderedMap.toDescLazySeq} to create an iterable that can be
    * iterated more than once.
    */
   entries(): IterableIterator<[K, V]> {
@@ -209,7 +209,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * @remarks
    * This provides an iterator for all the keys in the map in ascending order of keys.
    * Similar to the builtin [Map.keys](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map/keys),
-   * it can only be iterated once.  Use {@link OrderedMap#keysToAscLazySeq} or {@link OrderedMap#keysToDescLazySeq} to
+   * it can only be iterated once.  Use {@link OrderedMap.keysToAscLazySeq} or {@link OrderedMap.keysToDescLazySeq} to
    * create an iterable that can be iterated more than once.
    */
   keys(): IterableIterator<K> {
@@ -224,7 +224,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * This provides an iterator for all the values in the map.  Despite only yielding values, the order of
    * iteration is in ascending order of keys.
    * Similar to the builtin [Map.values](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map/values),
-   * it can only be iterated once.  Use {@link OrderedMap#valuesToAscLazySeq} or {@link OrderedMap#valuesToDescLazySeq} to create an iterable that can be
+   * it can only be iterated once.  Use {@link OrderedMap.valuesToAscLazySeq} or {@link OrderedMap.valuesToDescLazySeq} to create an iterable that can be
    * iterated more than once.
    *
    */
@@ -247,7 +247,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
         return undefined;
       },
       undefined,
-      this.root
+      this.root,
     );
   }
 
@@ -337,7 +337,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    *
    * @remarks
    * This function is O(1) and very fast because the backing data structure is reused.
-   * Essentially, the OrderedMap and {@link OrderedSet} classes are just two different APIs against the
+   * Essentially, the OrderedMap and {@link ./orderedset#OrderedSet} classes are just two different APIs against the
    * same underlying balanced tree.  Since both OrderedSet and OrderedMap are immutable, they can both
    * share the same underlying tree without problems.
    */
@@ -443,8 +443,8 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * `mapValues` applies the function `f` to each value and key in the OrderedMap and returns a new OrderedMap
    * with the same keys but the values adjusted to the result of the function `f`.  This can be done efficiently because
    * the keys are unchanged the arrangement of the tree is unchanged.  If you wish to transform
-   * both the keys and the values, either use {@link OrderedMap#toAscLazySeq}, map the lazy sequence, and then convert the
-   * lazy sequence back to an OrderedMap or use {@link OrderedMap#adjust} to bulk-adjust keys.
+   * both the keys and the values, either use {@link OrderedMap.toAscLazySeq}, map the lazy sequence, and then convert the
+   * lazy sequence back to an OrderedMap or use {@link OrderedMap.adjust} to bulk-adjust keys.
    *
    * `mapValues` guarantees that if no values are changed, then the OrderedMap object instance is returned
    * unchanged.
@@ -468,8 +468,8 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * `collectValues` applies the function `f` to each value and key in the OrderedMap.  If `f` returns null or undefined,
    * the key and value is removed.  Otherwise, the returned value from `f` is used as the new value associated to the key k.
    * This can be done efficiently because the keys are unchanged the arrangement of the tree
-   * is unchanged.  If you wish to transform both the keys and the values, either use {@link OrderedMap#toAscLazySeq},
-   * map the lazy sequence, and then convert the lazy sequence back to an OrderedMap or use {@link OrderedMap#adjust} to change many keys
+   * is unchanged.  If you wish to transform both the keys and the values, either use {@link OrderedMap.toAscLazySeq},
+   * map the lazy sequence, and then convert the lazy sequence back to an OrderedMap or use {@link OrderedMap.adjust} to change many keys
    * in bulk.
    *
    * `collectValues` guarantees that if no values are changed, then the OrderedMap object instance is returned
@@ -652,7 +652,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    */
   union(
     other: OrderedMap<K, V>,
-    merge?: (vThis: V, vOther: V, k: K) => V
+    merge?: (vThis: V, vOther: V, k: K) => V,
   ): OrderedMap<K, V> {
     const newRoot = union(this.cfg, merge ?? ((_, s) => s), this.root, other.root);
     if (newRoot === this.root) {
@@ -667,7 +667,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * @category Bulk Modification
    *
    * @remarks
-   * `OrderedMap.union` is the static version of {@link OrderedMap#union} and allows unioning more than two OrderedMaps
+   * `OrderedMap.union` is the static version of {@link OrderedMap.union} and allows unioning more than two OrderedMaps
    * at once.  It produces a new OrderedMap which contains all the entries in all the OrderedMaps.  If a
    * key appears in only one of the maps, the value from that map is used.  If a key appears
    * in multiple maps, the provided merge function is used to determine the value.  The order of merging
@@ -713,7 +713,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    */
   intersection(
     other: OrderedMap<K, V>,
-    merge?: (vThis: V, vOther: V, k: K) => V
+    merge?: (vThis: V, vOther: V, k: K) => V,
   ): OrderedMap<K, V> {
     const newRoot = intersection(this.cfg, merge ?? ((_, s) => s), this.root, other.root);
     if (newRoot === this.root) {
@@ -728,7 +728,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * @category Bulk Modification
    *
    * @remarks
-   * `OrderedMap.intersection` is a static version of {@link OrderedMap#intersection}, and produces a new OrderedMap
+   * `OrderedMap.intersection` is a static version of {@link OrderedMap.intersection}, and produces a new OrderedMap
    * which contains the entries which have keys in all specified OrderedMaps.  For each such entry, the merge
    * function is used to determine the resulting value.
    *
@@ -835,7 +835,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    */
   adjust<V2>(
     keysToAdjust: OrderedMap<K, V2>,
-    adjustVal: (existingVal: V | undefined, helperVal: V2, k: K) => V | undefined
+    adjustVal: (existingVal: V | undefined, helperVal: V2, k: K) => V | undefined,
   ): OrderedMap<K, V> {
     const newRoot = adjust(this.cfg, adjustVal, this.root, keysToAdjust.root);
     if (newRoot === this.root) {

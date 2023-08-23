@@ -28,12 +28,12 @@ function constTrue() {
  *
  * @remarks
  * The `HashSet<T>` class stores numbers, strings, booleans, dates, or custom objects which implement the
- * {@link class_api!HashableObj} and {@link class_api!ComparableObj} interface. HashSet
+ * {@link ./classes#HashableObj} and {@link ./classes#ComparableObj} interface. HashSet
  * implements the typescript-builtin `ReadonlySet` interface (which consists of the read-only methods of
  * [the JS builtin Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set)).
  *
  * The HashSet is immutable, which means that no changes or mutations are allowed directly to the HashSet.
- * Instead, modification operations such as {@link HashSet#delete} return a new HashSet which contains the
+ * Instead, modification operations such as {@link HashSet.delete} return a new HashSet which contains the
  * result of the modification.  The original HashSet is unchanged and can continue to be accessed and used.
  * The HashSet implements this efficiently using structural sharing and does not require a full copy.
  */
@@ -43,13 +43,13 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    * @category Creating Hash Sets
    *
    * @remarks
-   * The item type must extend {@link class_api!HashKey}, which consists of strings, numbers, dates, booleans, or a custom
-   * user-defined object which implement the {@link class_api!HashableObj} and {@link class_api!ComparableObj} interfaces.
+   * The item type must extend {@link ./classes#HashKey}, which consists of strings, numbers, dates, booleans, or a custom
+   * user-defined object which implement the {@link ./classes#HashableObj} and {@link ./classes#ComparableObj} interfaces.
    * These interfaces allows you to create complex keys which are made up of multiple properties.
    *
-   * While you can start with an empty `HashSet` and then use {@link HashSet#add} to add entries, it
+   * While you can start with an empty `HashSet` and then use {@link HashSet.add} to add entries, it
    * is more efficient to create the HashSet in bulk using either the static {@link HashSet.from} or {@link HashSet.build}
-   * or using various methods on {@link LazySeq} to convert a `LazySeq` to a `HashSet`.
+   * or using various methods on {@link ./lazyseq#LazySeq} to convert a `LazySeq` to a `HashSet`.
    */
   public static empty<T extends HashKey>(): HashSet<T> {
     return new HashSet(mkHashConfig(), null, 0);
@@ -60,7 +60,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    * @category Creating Hash Sets
    *
    * @remarks
-   * Creates a HashSet consisting of all the keys in the given {@link HashMap}.
+   * Creates a HashSet consisting of all the keys in the given {@link ./hashmap#HashMap}.
    * This function is O(1) and very fast because the backing data structure is reused.
    */
   public static ofKeys<K extends HashKey, V>(map: HashMap<K, V>): HashSet<K> {
@@ -104,7 +104,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    */
   public static build<T extends HashKey, R>(
     items: Iterable<R>,
-    key: (v: R) => T
+    key: (v: R) => T,
   ): HashSet<T> {
     let root: MutableNode<T, boolean> | null = null;
     let size = 0;
@@ -204,7 +204,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
         return undefined;
       },
       undefined,
-      this.root
+      this.root,
     );
   }
 
@@ -280,7 +280,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    * @category Set Operations
    *
    * @remarks
-   * `HashSet.union` is the static version of {@link HashSet#union} and allows unioning more than two HashSets
+   * `HashSet.union` is the static version of {@link HashSet.union} and allows unioning more than two HashSets
    * at once.  It produces a new HashSet which contains all the entries in all the HashSets.
    * `union` guarantees that if the resulting HashSet is equal to the first non-empty HashSet in the sequence,
    * then the HashSet object instance is returned unchanged.
@@ -311,10 +311,10 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    * @category Set Operations
    *
    * @remarks
-   * `append` is just a shorthand for a combination of {@link HashSet.from} and {@link HashSet#union}.  `union`
+   * `append` is just a shorthand for a combination of {@link HashSet.from} and {@link HashSet.union}.  `union`
    * is very efficient at combining data structures, so the fastest way to bulk-add entries is to first create
    * a data structure of the entries to add and then union them into the existing data structure.  Thus, if you
-   * already have a HashSet, HashMap, or {@link HashSet.build} is more ergonomic, you should just directly use {@link HashSet#union}.
+   * already have a HashSet, HashMap, or {@link HashSet.build} is more ergonomic, you should just directly use {@link HashSet.union}.
    */
   append(items: Iterable<T>): HashSet<T> {
     return this.union(HashSet.from(items));
@@ -334,7 +334,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
       this.cfg,
       constTrue,
       this.root,
-      other.root
+      other.root,
     );
     if (newRoot === this.root) {
       return this;
@@ -348,7 +348,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    * @category Set Operations
    *
    * @remarks
-   * `HashSet.intersection` is a static version of {@link HashSet#intersection}, and produces a new HashSet
+   * `HashSet.intersection` is a static version of {@link HashSet.intersection}, and produces a new HashSet
    * which contains the items which appear in all specified HashSets.
    * `intersection` guarantees that if the resulting HashSet is equal to the first HashSet, then the HashSet object
    * instance is returned unchanged.
@@ -407,7 +407,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
     const [newRoot, newSize] = collectValues(
       (v, k) => (f(k) ? v : undefined),
       false,
-      this.root
+      this.root,
     );
     if (newRoot === this.root) {
       return this;

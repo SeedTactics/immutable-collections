@@ -12,7 +12,7 @@
  * There is no additional functionality available in this module, so if you are already using the OrderedMap or
  * OrderedSet classes, there is no reason to use this module.
  *
- * To use, import the functions from the hamt module:
+ * To use, import the functions from the tree module:
  *
  * ```ts
  * import * as tree from "@seedtactics/immutable-collections/tree";
@@ -57,7 +57,7 @@ library: https://github.com/haskell/containers/blob/master/containers/src/Data/M
 export function lookup<K, V>(
   { compare }: ComparisionConfig<K>,
   k: K,
-  root: TreeNode<K, V> | null
+  root: TreeNode<K, V> | null,
 ): V | undefined {
   let node = root;
   while (node) {
@@ -135,7 +135,7 @@ export function alter<K, V>(
   { compare }: ComparisionConfig<K>,
   k: K,
   f: (oldV: V | undefined) => V | undefined,
-  root: TreeNode<K, V> | null
+  root: TreeNode<K, V> | null,
 ): TreeNode<K, V> | null {
   function loop(node: TreeNode<K, V> | null): TreeNode<K, V> | null {
     if (node === null) {
@@ -203,7 +203,7 @@ export function mutateInsert<K, V, T>(
   k: K,
   t: T,
   getVal: (old: V | undefined, t: T) => V,
-  root: MutableTreeNode<K, V> | null
+  root: MutableTreeNode<K, V> | null,
 ): MutableTreeNode<K, V> {
   let newLeaf = true;
   function insertLoop(node: MutableTreeNode<K, V> | null): MutableTreeNode<K, V> {
@@ -254,7 +254,7 @@ export function mutateInsert<K, V, T>(
 export function from<K, V>(
   { compare }: ComparisionConfig<K>,
   items: Iterable<readonly [K, V]>,
-  merge?: (v1: V, v2: V) => V
+  merge?: (v1: V, v2: V) => V,
 ): TreeNode<K, V> | null {
   let k: K;
   let v: V;
@@ -307,10 +307,10 @@ export function from<K, V>(
 export function build<K, V>(
   { compare }: ComparisionConfig<K>,
   items: Iterable<V>,
-  key: (t: V) => K
+  key: (t: V) => K,
 ): TreeNode<K, V> | null;
 
-/** Efficently create a new HAMT
+/** Efficently create a new tree
  *
  * @category Initial Construction
  *
@@ -325,14 +325,14 @@ export function build<T, K, V>(
   { compare }: ComparisionConfig<K>,
   items: Iterable<T>,
   key: (t: T) => K,
-  val: (old: V | undefined, t: T) => V
+  val: (old: V | undefined, t: T) => V,
 ): TreeNode<K, V> | null;
 
 export function build<T, K, V>(
   { compare }: ComparisionConfig<K>,
   items: Iterable<T>,
   key: (t: T) => K,
-  val?: (old: V | undefined, t: T) => V
+  val?: (old: V | undefined, t: T) => V,
 ): TreeNode<K, V> | null {
   let k: K;
   let t: T;
@@ -389,11 +389,11 @@ export function build<T, K, V>(
  *
  * @remarks This function produces an [iterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterator_protocol)
  * that applies the function `f` to each key and value in ascending order of keys and yields the results.  This iterator can be used only once, you must
- * call `iterate` again if you want to iterate the tree again.
+ * call `iterateAsc` again if you want to iterate the tree again.
  */
 export function* iterateAsc<K, V, T>(
   f: (k: K, v: V) => T,
-  root: TreeNode<K, V> | null
+  root: TreeNode<K, V> | null,
 ): IterableIterator<T> {
   const nodes: Array<TreeNode<K, V>> = [];
   let node: TreeNode<K, V> | null = root;
@@ -416,11 +416,11 @@ export function* iterateAsc<K, V, T>(
  *
  * @remarks This function produces an [iterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterator_protocol)
  * that applies the function `f` to each key and value in descending order of keys and yields the results.  This iterator can be used only once, you must
- * call `iterate` again if you want to iterate the tree again.
+ * call `iterateDesc` again if you want to iterate the tree again.
  */
 export function* iterateDesc<K, V, T>(
   f: (k: K, v: V) => T,
-  root: TreeNode<K, V> | null
+  root: TreeNode<K, V> | null,
 ): IterableIterator<T> {
   const nodes: Array<TreeNode<K, V>> = [];
   let node: TreeNode<K, V> | null = root;
@@ -449,7 +449,7 @@ export function* iterateDesc<K, V, T>(
 export function foldl<K, V, T>(
   f: (acc: T, k: K, v: V) => T,
   zero: T,
-  root: TreeNode<K, V> | null
+  root: TreeNode<K, V> | null,
 ): T {
   const nodes: Array<TreeNode<K, V>> = [];
   let node: TreeNode<K, V> | null = root;
@@ -481,7 +481,7 @@ export function foldl<K, V, T>(
 export function foldr<K, V, T>(
   f: (k: K, v: V, acc: T) => T,
   zero: T,
-  root: TreeNode<K, V> | null
+  root: TreeNode<K, V> | null,
 ): T {
   const nodes: Array<TreeNode<K, V>> = [];
   let node: TreeNode<K, V> | null = root;
@@ -516,7 +516,7 @@ export function foldr<K, V, T>(
  */
 export function mapValues<K, V1, V2>(
   f: (v: V1, k: K) => V2,
-  root: TreeNode<K, V1> | null
+  root: TreeNode<K, V1> | null,
 ): TreeNode<K, V2> | null {
   function loop(n: TreeNode<K, V1> | null): TreeNode<K, V2> | null {
     if (!n) return null;
@@ -557,7 +557,7 @@ export function mapValues<K, V1, V2>(
 export function collectValues<K, V1, V2>(
   f: (v: V1, k: K) => V2 | undefined,
   filterNull: boolean,
-  root: TreeNode<K, V1> | null
+  root: TreeNode<K, V1> | null,
 ): TreeNode<K, V2> | null {
   function loop(n: TreeNode<K, V1> | null): TreeNode<K, V2> | null {
     if (!n) return null;
@@ -608,7 +608,7 @@ export type SplitResult<K, V> = {
 export function split<K, V>(
   { compare }: ComparisionConfig<K>,
   k: K,
-  root: TreeNode<K, V> | null
+  root: TreeNode<K, V> | null,
 ): SplitResult<K, V> {
   function loop(n: TreeNode<K, V> | null): SplitResult<K, V> {
     if (!n) return { below: null, val: undefined, above: null };
@@ -647,10 +647,10 @@ export function split<K, V>(
  */
 export function partition<K, V>(
   f: (k: K, v: V) => boolean,
-  root: TreeNode<K, V> | null
+  root: TreeNode<K, V> | null,
 ): readonly [TreeNode<K, V> | null, TreeNode<K, V> | null] {
   function loop(
-    node: TreeNode<K, V> | null
+    node: TreeNode<K, V> | null,
   ): readonly [TreeNode<K, V> | null, TreeNode<K, V> | null] {
     if (node === null) return [null, null];
     const [leftTrue, leftFalse] = loop(node.left);
@@ -725,11 +725,11 @@ export function union<K, V>(
   cfg: ComparisionConfig<K>,
   merge: (v1: V, v2: V, k: K) => V,
   root1: TreeNode<K, V> | null,
-  root2: TreeNode<K, V> | null
+  root2: TreeNode<K, V> | null,
 ): TreeNode<K, V> | null {
   function loop(
     n1: TreeNode<K, V> | null,
-    n2: TreeNode<K, V> | null
+    n2: TreeNode<K, V> | null,
   ): TreeNode<K, V> | null {
     if (!n1) return n2;
     if (!n2) return n1;
@@ -738,7 +738,7 @@ export function union<K, V>(
         cfg,
         n1.key,
         (oldVal) => (oldVal === undefined ? n1.val : merge(n1.val, oldVal, n1.key)),
-        n2
+        n2,
       );
     }
     if (!n2.left && !n2.right) {
@@ -746,7 +746,7 @@ export function union<K, V>(
         cfg,
         n2.key,
         (oldVal) => (oldVal === undefined ? n2.val : merge(oldVal, n2.val, n2.key)),
-        n1
+        n1,
       );
     }
 
@@ -764,7 +764,7 @@ export function union<K, V>(
         newLeft,
         n1.key,
         merge(n1.val, s.val, n1.key),
-        newRight
+        newRight,
       );
     } else {
       return combineDifferentSizes(newLeft, n1.key, n1.val, newRight);
@@ -790,11 +790,11 @@ export function intersection<K, V>(
   cfg: ComparisionConfig<K>,
   merge: (v1: V, v2: V, k: K) => V,
   root1: TreeNode<K, V> | null,
-  root2: TreeNode<K, V> | null
+  root2: TreeNode<K, V> | null,
 ): TreeNode<K, V> | null {
   function loop(
     n1: TreeNode<K, V> | null,
-    n2: TreeNode<K, V> | null
+    n2: TreeNode<K, V> | null,
   ): TreeNode<K, V> | null {
     if (!n1) return null;
     if (!n2) return null;
@@ -810,7 +810,7 @@ export function intersection<K, V>(
           newLeft,
           n1.key,
           merge(n1.val, s.val, n1.key),
-          newRight
+          newRight,
         );
       }
     } else {
@@ -838,11 +838,11 @@ export function intersection<K, V>(
 export function difference<K, V1, V2>(
   cfg: ComparisionConfig<K>,
   root1: TreeNode<K, V1> | null,
-  root2: TreeNode<K, V2> | null
+  root2: TreeNode<K, V2> | null,
 ): TreeNode<K, V1> | null {
   function loop(
     n1: TreeNode<K, V1> | null,
-    n2: TreeNode<K, V2> | null
+    n2: TreeNode<K, V2> | null,
   ): TreeNode<K, V1> | null {
     if (!n1) return null;
     if (!n2) return n1;
@@ -885,7 +885,7 @@ export function adjust<K, V1, V2>(
   cfg: ComparisionConfig<K>,
   f: (v1: V1 | undefined, v2: V2, k: K) => V1 | undefined,
   root1: TreeNode<K, V1> | null,
-  root2: TreeNode<K, V2> | null
+  root2: TreeNode<K, V2> | null,
 ): TreeNode<K, V1> | null {
   function fWithUndefined(v2: V2, k: K): V1 | undefined {
     return f(undefined, v2, k);
@@ -893,7 +893,7 @@ export function adjust<K, V1, V2>(
 
   function loop(
     n1: TreeNode<K, V1> | null,
-    n2: TreeNode<K, V2> | null
+    n2: TreeNode<K, V2> | null,
   ): TreeNode<K, V1> | null {
     if (!n2) return n1;
     if (!n1) return collectValues(fWithUndefined, false, n2);

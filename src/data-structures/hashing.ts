@@ -12,6 +12,8 @@ import {
 
 /** Interface allowing custom key objects in a HashMap
  *
+ * @category Hash Utils
+ *
  * @remarks
  * If you wish to use a custom object as a key in a HashMap, you must implement the `hash` function
  * defined in the HashableObj type and the `compare` function defined in the {@link ComparableObj} type.
@@ -48,9 +50,11 @@ export function isHashableObj(k: unknown): k is HashableObj {
 
 /** A function which converts or extracts a hashable value
  *
+ * @category Hash Utils
+ *
  * @remarks
- * This is used primarily by {@link LazySeq} to extract hashable values from an object for grouping.
- * For example, see {@link LazySeq.groupBy}.
+ * This is used primarily by {@link ../lazyseq#LazySeq} to extract hashable values from an object for grouping.
+ * For example, see {@link ../lazyseq#LazySeq.groupBy}.
  */
 export type ToHashable<T> =
   | ((t: T) => number | null)
@@ -59,7 +63,10 @@ export type ToHashable<T> =
   | ((t: T) => Date | null)
   | ((t: T) => (HashableObj & ComparableObj) | null);
 
-/** The possible types for a key in a {@link HashMap} */
+/** The possible types for a key in a HashMap
+ *
+ * @category Hash Utils
+ */
 export type HashKey = string | number | boolean | Date | (HashableObj & ComparableObj);
 
 /** The configuration for a HashMap
@@ -71,7 +78,7 @@ export type HashKey = string | number | boolean | Date | (HashableObj & Comparab
  *
  * A `HashConfig` is passed to most functions manipulating the HAMT data structure.  You only need one
  * `HashConfig` per key type so you can store a single `HashConfig` in a global variable per key type.
- * The {@link mkHashConfig} or {@link hashValues} functions can help implement the hash function if you do not have security
+ * The {@link hashValues} function can help implement the hash function if you do not have security
  * considerations.
  */
 export type HashConfig<K> = ComparisionConfig<K> & {
@@ -128,6 +135,8 @@ function dateHash(d: Date): number {
 
 /** Combine multiple hashable values into a single hash
  *
+ * @category Hash Utils
+ *
  * @remarks
  * Useful helper function to hash multiple values to a single hash.
  * This uses the [FNV-1 hash function](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function), which is
@@ -162,7 +171,10 @@ export function hashValues(
             hash = hash2Ints(hash, p.hash());
           } else {
             // typescript should prevent this from happening
-            hash = hash2Ints(hash, stringHash((p as unknown as object).toString()));
+            hash = hash2Ints(
+              hash,
+              stringHash((p as unknown as { toString: () => string }).toString()),
+            );
           }
           break;
       }

@@ -18,21 +18,22 @@
  * @module class_api
  */
 
+export { HashMap } from "./hashmap.js";
+export { HashSet } from "./hashset.js";
+export { OrderedMap } from "./orderedmap.js";
+export { OrderedSet } from "./orderedset.js";
+export { LazySeq } from "../lazyseq.js";
+
+export {
+  OrderedMapKey,
+  ComparableObj,
+  mkCompareByProperties,
+  ToComparableBase,
+  ToComparable,
+} from "../data-structures/comparison.js";
 export {
   HashKey,
   HashableObj,
   hashValues,
   ToHashable,
 } from "../data-structures/hashing.js";
-export {
-  mkCompareByProperties,
-  ToComparableBase,
-  ToComparable,
-  ComparableObj,
-  OrderedMapKey,
-} from "../data-structures/comparison.js";
-export { HashMap } from "./hashmap.js";
-export { HashSet } from "./hashset.js";
-export { OrderedMap } from "./orderedmap.js";
-export { OrderedSet } from "./orderedset.js";
-export { LazySeq } from "../lazyseq.js";

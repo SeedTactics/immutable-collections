@@ -23,15 +23,33 @@ type DocFile = {
 const allFiles: ReadonlyArray<DocFile> = [
   {
     sidebarLabel: "Class API",
-    docTitle: "A title",
+    docTitle: "Class-based API for Immutable TypeScript Collections",
     tsFile: "../src/api/classes.ts",
     singleClass: null,
   },
   {
     sidebarLabel: "HashMap",
-    docTitle: "A title",
+    docTitle: "Immutable HashMap in Typescript",
     tsFile: "../src/api/hashmap.ts",
     singleClass: "HashMap",
+  },
+  {
+    sidebarLabel: "HashSet",
+    docTitle: "Immutable HashSet in TypeScript",
+    tsFile: "../src/api/hashset.ts",
+    singleClass: "HashSet",
+  },
+  {
+    sidebarLabel: "OrderedMap",
+    docTitle: "Immutable Balanced OrderedMap in TypeScript",
+    tsFile: "../src/api/orderedmap.ts",
+    singleClass: "OrderedMap",
+  },
+  {
+    sidebarLabel: "OrderedSet",
+    docTitle: "Immutable Balanced OrderedSet in TypeScript",
+    tsFile: "../src/api/orderedset.ts",
+    singleClass: "OrderedSet",
   },
 ];
 

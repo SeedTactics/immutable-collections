@@ -41,15 +41,15 @@ function constUndefined() {
  *
  * @remarks
  * The `OrderedSet<T>` class stores numbers, strings, booleans, dates, or custom objects which implement the
- * {@link class_api!ComparableObj} interface. OrderedSet implements the typescript-builtin `ReadonlySet`
+ * {@link ./classes#ComparableObj} interface. OrderedSet implements the typescript-builtin `ReadonlySet`
  * interface (which consists of the read-only methods of
  * [the JS builtin Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set)).
  *
  * The OrderedSet is immutable, which means that no changes or mutations are allowed directly to the OrderedSet.
- * Instead, modification operations such as {@link OrderedSet#add} return a new OrderedSet which contains the
+ * Instead, modification operations such as {@link OrderedSet.add} return a new OrderedSet which contains the
  * result of the modification.  The original OrderedSet is unchanged and can continue to be accessed and used.
  * The OrderedSet implements this efficiently using structural sharing and does not require a full copy; indeed,
- * the {@link OrderedSet#delete} method will copy at most `O(log n)` entries.
+ * the {@link OrderedSet.delete} method will copy at most `O(log n)` entries.
  */
 export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
   /** Static method to create a new empty OrderedSet
@@ -57,12 +57,12 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    * @category Creating Ordered Sets
    *
    * @remarks
-   * The key type must extend {@link class_api!OrderedMapKey}, which consists of strings, numbers, dates, booleans, or a custom
-   * user-defined object which implements the {@link class_api!ComparableObj} interface.
+   * The key type must extend {@link ./classes#OrderedMapKey}, which consists of strings, numbers, dates, booleans, or a custom
+   * user-defined object which implements the {@link ./classes#ComparableObj} interface.
    *
-   * While you can start with an empty `OrderedSet` and then use {@link OrderedSet#add} to add entries, it
+   * While you can start with an empty `OrderedSet` and then use {@link OrderedSet.add} to add entries, it
    * is more efficient to create the OrderedSet in bulk using either the static {@link OrderedSet.from} or {@link OrderedSet.build}
-   * or using various methods on {@link LazySeq} to convert a `LazySeq` to an `OrderedSet`.
+   * or using various methods on {@link ./lazyseq#LazySeq} to convert a `LazySeq` to an `OrderedSet`.
    */
   public static empty<T extends OrderedMapKey>(): OrderedSet<T> {
     return new OrderedSet(mkComparisonConfig(), null);
@@ -73,7 +73,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    * @category Creating Ordered Sets
    *
    * @remarks
-   * Creates an OrderedSet consisting of all the keys in the given {@link OrderedMap}.
+   * Creates an OrderedSet consisting of all the keys in the given {@link ./orderedmap#OrderedMap}.
    * This function is O(1) and very fast because the backing data structure is reused.
    */
   public static ofKeys<K extends OrderedMapKey, V>(map: OrderedMap<K, V>): OrderedSet<K> {
@@ -96,7 +96,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
     const cfg = mkComparisonConfig();
     return new OrderedSet(
       cfg,
-      build(cfg, items, (x) => x, constTrue)
+      build(cfg, items, (x) => x, constTrue),
     );
   }
 
@@ -112,7 +112,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    */
   public static build<T extends OrderedMapKey, R>(
     things: Iterable<R>,
-    item: (v: R) => T
+    item: (v: R) => T,
   ): OrderedSet<T> {
     const cfg = mkComparisonConfig();
     return new OrderedSet(cfg, build(cfg, things, item, constTrue));
@@ -203,7 +203,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
         return undefined;
       },
       undefined,
-      this.root
+      this.root,
     );
   }
 
@@ -482,7 +482,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    * @category Set Operations
    *
    * @remarks
-   * `OrderedSet.union` is the static version of {@link OrderedSet#union} and allows unioning more than two sets
+   * `OrderedSet.union` is the static version of {@link OrderedSet.union} and allows unioning more than two sets
    * at once.  It produces a new OrderedSet which contains all the entries in all the OrderedSets.
    *
    * `union` guarantees that if the resulting OrderedSet is equal to the first non-empty OrderedSet in the sequence,
@@ -533,7 +533,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    * @category Set Operations
    *
    * @remarks
-   * `OrderedSet.intersection` is a static version of {@link OrderedSet#intersection}, and produces a new OrderedSet
+   * `OrderedSet.intersection` is a static version of {@link OrderedSet.intersection}, and produces a new OrderedSet
    * which contains the items which appear in all specified OrderedSet.
    *
    * `intersection` guarantees that if the resulting OrderedSet is equal to the first OrderedSet, then the OrderedSet object

@@ -2,6 +2,8 @@
 
 /** Interface allowing custom key objects in an OrderedMap
  *
+ * @category Comparison Utils
+ *
  * @remarks
  * If you wish to use a custom object as a key in a HashMap or OrderedMap, you must implement the `compare` function.
  * The `compare` function should return a negative number if `this < other`, return zero if `this` equals `other`, and
@@ -33,13 +35,18 @@ export function isComparableObj(o: unknown): o is ComparableObj {
   return o !== null && typeof o === "object" && "compare" in o;
 }
 
-/** The possible types for a key in an {@link OrderedMap} */
+/** The possible types for a key in an OrderedMap
+ *
+ * @category Comparison Utils
+ */
 export type OrderedMapKey = string | number | boolean | Date | ComparableObj;
 
 /** A function which converts or extracts a comparable value
  *
+ * @category Comparison Utils
+ *
  * @remarks
- * This is used primarily by {@link LazySeq} to extract comparable values from an object for grouping.
+ * This is used primarily by {@link ../lazyseq#LazySeq} to extract comparable values from an object for grouping.
  */
 export type ToComparableBase<T> =
   | ((t: T) => number | null)
@@ -50,10 +57,12 @@ export type ToComparableBase<T> =
 
 /** A function which converts or extracts a comparable value and a direction
  *
+ * @category Comparison Utils
+ *
  * @remarks
- * This is used primarily by {@link LazySeq} to extract comparable values from an object for grouping,
+ * This is used primarily by {@link ../lazyseq#LazySeq} to extract comparable values from an object for grouping,
  * while also allowing you to specify if the ordering should be in ascending or descending order.
- * For example, see {@link LazySeq#distinctAndSortBy}.
+ * For example, see {@link ../lazyseq#LazySeq.distinctAndSortBy}.
  */
 export type ToComparable<T> =
   | { asc: ToComparableBase<T> }
@@ -72,7 +81,7 @@ export type ReturnOfComparable<T, F extends ToComparable<T>> = F extends {
 
 export function evalComparable<T, F extends ToComparable<T>>(
   f: F,
-  t: T
+  t: T,
 ): ReturnOfComparable<T, F> {
   if ("asc" in f) {
     return (f as { asc: ToComparableBase<T> }).asc(t) as ReturnOfComparable<T, F>;
@@ -85,6 +94,8 @@ export function evalComparable<T, F extends ToComparable<T>>(
 
 /** Combine multiple comparable properties into a single comparison function
  *
+ * @category Comparison Utils
+ *
  * @remarks
  * `mkCompareByProperties` will return a comparison function for the type `T` which
  * compares multiple properties in order.  Each property is specified by an
@@ -95,7 +106,7 @@ export function evalComparable<T, F extends ToComparable<T>>(
  *
  * This function can optionally be used to implement {@link ComparableObj}, but typically
  * a direct implementation is shorter.  `mkCompareByProperties` is instead used primarily
- * by {@link LazySeq}.
+ * by {@link ../lazyseq#LazySeq}.
  *
  * @example
  * ```ts
