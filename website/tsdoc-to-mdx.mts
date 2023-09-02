@@ -147,7 +147,7 @@ function emitDocFile(doc: DocFile) {
       }
     });
   } else {
-    srcFile.forEachChild(renderNode);
+    renderModulePage(srcFile);
   }
   fs.closeSync(outHandle);
 
@@ -375,5 +375,29 @@ function emitDocFile(doc: DocFile) {
     const symb = program.getTypeChecker().getSymbolAtLocation(node.name);
     renderDocComment(symb);
     node.forEachChild(renderNode);
+  }
+
+  function renderJSDoc(d: ts.JSDoc | ts.JSDocTag): void {
+    if (ts.isJSDoc(d)) {
+      if (d.tags) {
+        d.tags.forEach(renderJSDoc);
+      }
+    } else {
+      if (
+        d.tagName.getText() === "remarks" &&
+        d.comment &&
+        typeof d.comment === "string"
+      ) {
+        write(d.comment);
+      }
+    }
+  }
+
+  function renderModulePage(node: ts.Node) {
+    const firstChild = node.getChildAt(0).getChildAt(0);
+    const jsdocs = ts.getJSDocCommentsAndTags(firstChild);
+    jsdocs.forEach(renderJSDoc);
+    write("\n\n");
+    srcFile.forEachChild(renderNode);
   }
 }

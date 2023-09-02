@@ -15,7 +15,7 @@
  * console.log(h.get(2)); // prints World
  * ```
  *
- * @module class_api
+ * @module classes
  */
 
 export { HashMap } from "./hashmap.js";
