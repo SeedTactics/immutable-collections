@@ -39,7 +39,7 @@ type TupleOfCmpProps<T, FS extends ToComparable<T>[]> = FS extends [ToComparable
  * The `LazySeq<T>` class stores an [iterable](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterable_protocol)
  * of type `T` and provides a number of methods to transform the iterable.
  * The general format for data manipulation is to start with some data in
- * a data structure such as an array, object, {@link HashMap}, etc. Create a new
+ * a data structure such as an array, object, {@link ./api/hashmap#HashMap}, etc. Create a new
  * LazySeq chain starting from the initial data, call various transformation
  * methods to map, group, filter, aggregate the data, and finally terminate the
  * chain by converting back to a data structure. Because most of the transformation
@@ -144,13 +144,13 @@ export class LazySeq<T> {
    * with the `combine` function.  Internally, this uses a javascript Map so the keys
    * must be strings or numbers.
    *
-   * For more complex keys, use instead {@link LazySeq#toHashMap}, {@link LazySeq#buildHashMap}, {@link LazySeq#toOrderedMap}, or
-   * {@link LazySeq#buildOrderedMap}.
+   * For more complex keys, use instead {@link LazySeq.toHashMap}, {@link LazySeq.buildHashMap}, {@link LazySeq.toOrderedMap}, or
+   * {@link LazySeq.buildOrderedMap}.
    */
   aggregate<K, S>(
     key: (x: T) => K & JsMapKey,
     val: (x: T) => S,
-    combine: (s1: S, s2: S) => S
+    combine: (s1: S, s2: S) => S,
   ): LazySeq<readonly [K, S]> {
     const m = new Map<K, S>();
     for (const x of this.iter) {
@@ -232,8 +232,8 @@ export class LazySeq<T> {
    *
    * @remarks
    * Internally, this uses a javascript Set so the entries must be strings or numbers.
-   * For more complex entries, use instead {@link LazySeq#distinctBy}, {@link LazySeq#toHashSet}
-   * or {@link LazySeq#toOrderedSet}.
+   * For more complex entries, use instead {@link LazySeq.distinctBy}, {@link LazySeq.toHashSet}
+   * or {@link LazySeq.toOrderedSet}.
    */
   distinct(this: LazySeq<T & JsMapKey>): LazySeq<T> {
     const iter = this.iter;
@@ -255,13 +255,13 @@ export class LazySeq<T> {
    * @remarks
    * This method is given one or more property-extraction functions.  `distinctBy` then
    * calculates the distinct entries in the LazySeq based on the tuple of those properties
-   * using a {@link HashMap} internally, so properties must be {@link class_api!ToHashable}.
+   * using a {@link ./api/hashmap#HashMap} internally, so properties must be {@link ./api/classes#ToHashable}.
    *
-   * `distinctBy` and {@link LazySeq#toHashMap} are very similar; the main difference is that when
+   * `distinctBy` and {@link LazySeq.toHashMap} are very similar; the main difference is that when
    * you have multiple properties you want to use, `distinctBy` internally handles creating a
    * custom key tuple.
    *
-   * See also {@link LazySeq#distinctAndSortBy} if you want to sort the entries by the properties.
+   * See also {@link LazySeq.distinctAndSortBy} if you want to sort the entries by the properties.
    */
   distinctBy(prop: ToHashable<T>, ...props: Array<ToHashable<T>>): LazySeq<T> {
     props.unshift(prop);
@@ -292,10 +292,10 @@ export class LazySeq<T> {
    *
    * @remarks
    * This method is given one or more property-extraction functions.  `distinctAndSortBy` then
-   * inserts them internally into a {@link OrderedMap} and yields them in ascending order.
-   * Thus, all properties must implement {@link class_api!ToComparable}.
+   * inserts them internally into a {@link ./api/orderedmap#OrderedMap} and yields them in ascending order.
+   * Thus, all properties must implement {@link ./api/classes#ToComparable}.
    *
-   * `distinctAndSortBy` and {@link LazySeq#toOrderedMap} are very similar; the main difference is that when
+   * `distinctAndSortBy` and {@link LazySeq.toOrderedMap} are very similar; the main difference is that when
    * you have multiple properties you want to use, `distinctAndSortBy` internally handles creating a
    * custom key tuple.
    */
@@ -419,11 +419,11 @@ export class LazySeq<T> {
    * @remarks
    * `groupBy` takes one or more property-extraction functions and groups the values by the
    * tuple of these properties.  For each tuple of properties, all values which have the same
-   * tuple are combined into an array.  Internally, this uses a {@link HashMap} so
+   * tuple are combined into an array.  Internally, this uses a {@link ./api/hashmap#HashMap} so
    * the resulting groups appear in any order and thus properties must be hashable.
-   * Use {@link LazySeq#orderedGroupBy} if the properties can only be compared but not hashed.
+   * Use {@link LazySeq.orderedGroupBy} if the properties can only be compared but not hashed.
    *
-   * This function is very similar to {@link LazySeq#toLookup}, but the main advantage of `groupBy`
+   * This function is very similar to {@link LazySeq.toLookup}, but the main advantage of `groupBy`
    * is that you do not need to create a custom key class for a tuple of multiple properties.
    *
    * The `TupleOfHashProps` type is a helper type which extracts the type of each property and creates
@@ -476,7 +476,7 @@ export class LazySeq<T> {
         } else {
           return [fs.map((f) => f(t)) as TupleOfHashProps<T, [PropFn, ...PropFns]>, ts];
         }
-      }, s)
+      }, s),
     );
   }
 
@@ -487,10 +487,10 @@ export class LazySeq<T> {
    * @remarks
    * `orderedGroupBy` takes one or more property-extraction functions and groups the values by the
    * tuple of these properties.  For each tuple of properties, all values which have the same
-   * tuple are combined into an array.  Internally, this uses an {@link OrderedMap} so
+   * tuple are combined into an array.  Internally, this uses an {@link ./api/orderedmap#OrderedMap} so
    * the resulting groups will appear in ascending order of key.
    *
-   * This function is very similar to {@link LazySeq#toOrderedLookup}, but the main advantage of `orderedGroupBy`
+   * This function is very similar to {@link LazySeq.toOrderedLookup}, but the main advantage of `orderedGroupBy`
    * is that you do not need to create a custom key class for a tuple of multiple properties.
    *
    * The `TupleOfCmpProps` type is a helper type which extracts the type of each property and creates
@@ -537,7 +537,7 @@ export class LazySeq<T> {
             ts,
           ];
         }
-      }, s)
+      }, s),
     );
   }
 
@@ -616,7 +616,7 @@ export class LazySeq<T> {
    * @remarks
    * This produces a new sorted LazySeq and thus is intended to be used in the middle of a chain of
    * transformations.  If you want to terminate the LazySeq into a sorted data structure, use
-   * {@link LazySeq#toSortedArray} or {@link LazySeq#toOrderedMap}.
+   * {@link LazySeq.toSortedArray} or {@link LazySeq.toOrderedMap}.
    */
   sortWith(compare: (v1: T, v2: T) => number): LazySeq<T> {
     return LazySeq.of(Array.from(this.iter).sort(compare));
@@ -631,7 +631,7 @@ export class LazySeq<T> {
    * function and then sorted by the tuple of resulting properties.
    * This produces a new sorted LazySeq and thus is intended to be used in the middle of a chain of
    * transformations.  If you want to terminate the LazySeq into a sorted data structure, use
-   * {@link LazySeq#toSortedArray} or {@link LazySeq#toOrderedMap}.
+   * {@link LazySeq.toSortedArray} or {@link LazySeq.toOrderedMap}.
    */
   sortBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): LazySeq<T> {
     return LazySeq.of(Array.from(this.iter).sort(mkCompareByProperties(prop, ...props)));
@@ -910,7 +910,7 @@ export class LazySeq<T> {
    * @category Conversion
    *
    * @remarks
-   * In the spirit of immutability, you should prefer {@link LazySeq#toRArray} which returns a readonly array.
+   * In the spirit of immutability, you should prefer {@link LazySeq.toRArray} which returns a readonly array.
    */
   toMutableArray(): Array<T> {
     return Array.from(this.iter);
@@ -935,15 +935,15 @@ export class LazySeq<T> {
    * @category Conversion
    *
    * @remarks
-   * This is a convenience function for {@link HashMap.from} which creates a HashMap from a function
+   * This is a convenience function for {@link ./api/hashmap#HashMap.from} which creates a HashMap from a function
    * which converts the entries in the LazySeq to a tuple of a key and a value.  When a duplicate key is
    * found, the provided merge function is used to determine the value; see the docs for
-   * {@link HashMap.from} for details.  If you don't wish to merge values, {@link LazySeq#toLookup} and
-   * {@link LazySeq#toLookupMap} keep all the duplicate values.
+   * {@link ./api/hashmap#HashMap.from} for details.  If you don't wish to merge values, {@link LazySeq.toLookup} and
+   * {@link LazySeq.toLookupMap} keep all the duplicate values.
    */
   toHashMap<K, S extends NotUndefined>(
     f: (x: T) => readonly [K & HashKey, S],
-    merge?: (v1: S, v2: S) => S
+    merge?: (v1: S, v2: S) => S,
   ): HashMap<K & HashKey, S> {
     return HashMap.from(this.map(f), merge);
   }
@@ -953,10 +953,10 @@ export class LazySeq<T> {
    * @category Conversion
    *
    * @remarks
-   * This is a convenience function for {@link HashMap.build} which creates a HashMap from a
-   * key extraction function. With duplicate keys, the later value is used.  See the docs for {@link HashMap.build} for details.
-   * If you don't wish to overwrite values, {@link LazySeq#toLookup} and
-   * {@link LazySeq#toLookupMap} keep all the duplicate values.
+   * This is a convenience function for {@link ./api/hashmap#HashMap.build} which creates a HashMap from a
+   * key extraction function. With duplicate keys, the later value is used.  See the docs for {@link ./api/hashmap#HashMap.build} for details.
+   * If you don't wish to overwrite values, {@link LazySeq.toLookup} and
+   * {@link LazySeq.toLookupMap} keep all the duplicate values.
    */
   buildHashMap<K>(key: (x: T) => K & HashKey): HashMap<K & HashKey, T>;
 
@@ -965,18 +965,18 @@ export class LazySeq<T> {
    * @category Conversion
    *
    * @remarks
-   * This is a convenience function for {@link HashMap.build} which creates a HashMap from a
+   * This is a convenience function for {@link ./api/hashmap#HashMap.build} which creates a HashMap from a
    * key extraction function and a value extraction function.  See the docs for
-   * {@link HashMap.build} for details.  If you don't wish to merge values, {@link LazySeq#toLookup} and
-   * {@link LazySeq#toLookupMap} keep all the duplicate values.
+   * {@link ./api/hashmap#HashMap.build} for details.  If you don't wish to merge values, {@link LazySeq.toLookup} and
+   * {@link LazySeq.toLookupMap} keep all the duplicate values.
    */
   buildHashMap<K, S extends NotUndefined>(
     key: (x: T) => K & HashKey,
-    val: (old: S | undefined, t: T) => S
+    val: (old: S | undefined, t: T) => S,
   ): HashMap<K & HashKey, S>;
   buildHashMap<K, S extends NotUndefined>(
     key: (x: T) => K & HashKey,
-    val?: (old: S | undefined, t: T) => S
+    val?: (old: S | undefined, t: T) => S,
   ): HashMap<K & HashKey, S> {
     return HashMap.build(this.iter, key, val as (old: S | undefined, t: T) => S);
   }
@@ -986,16 +986,16 @@ export class LazySeq<T> {
    * @category Conversion
    *
    * @remarks
-   * This is a convenience function for {@link OrderedMap.from} which creates an OrderedMap from a function
+   * This is a convenience function for {@link ./api/orderedmap#OrderedMap.from} which creates an OrderedMap from a function
    * which converts the entries in the LazySeq to a tuple of a key and a value.  When a duplicate key is
    * found, the provided merge function is used to determine the value; see the docs for
-   * {@link OrderedMap.from} for details.
-   * If you don't wish to overwrite values, {@link LazySeq#toOrderedLookup} and
-   * {@link LazySeq#toOrderedLookup} keep all the duplicate values.
+   * {@link ./api/orderedmap#OrderedMap.from} for details.
+   * If you don't wish to overwrite values, {@link LazySeq.toOrderedLookup} and
+   * {@link LazySeq.toOrderedLookup} keep all the duplicate values.
    */
   toOrderedMap<K, S extends NotUndefined>(
     f: (x: T) => readonly [K & OrderedMapKey, S],
-    merge?: (v1: S, v2: S) => S
+    merge?: (v1: S, v2: S) => S,
   ): OrderedMap<K & OrderedMapKey, S> {
     return OrderedMap.from(this.map(f), merge);
   }
@@ -1005,11 +1005,11 @@ export class LazySeq<T> {
    * @category Conversion
    *
    * @remarks
-   * This is a convenience function for {@link OrderedMap.build} which creates an OrderedMap from a
+   * This is a convenience function for {@link ./api/orderedmap#OrderedMap.build} which creates an OrderedMap from a
    * key extraction function.  When a duplicate key is found, the value is overwritten with the later value.
-   * See the docs for {@link OrderedMap.build} for details.
-   * If you don't wish to overwrite values, {@link LazySeq#toOrderedLookup} and
-   * {@link LazySeq#toLookupOrderedMap} keep all the duplicate values.
+   * See the docs for {@link ./api/orderedmap#OrderedMap.build} for details.
+   * If you don't wish to overwrite values, {@link LazySeq.toOrderedLookup} and
+   * {@link LazySeq.toLookupOrderedMap} keep all the duplicate values.
    */
   buildOrderedMap<K>(key: (x: T) => K & OrderedMapKey): OrderedMap<K & OrderedMapKey, T>;
 
@@ -1018,19 +1018,19 @@ export class LazySeq<T> {
    * @category Conversion
    *
    * @remarks
-   * This is a convenience function for {@link OrderedMap.build} which creates an OrderedMap from a
+   * This is a convenience function for {@link ./api/orderedmap#OrderedMap.build} which creates an OrderedMap from a
    * key extraction function and a value extraction function.  See the docs for
-   * {@link OrderedMap.build} for details.
-   * If you don't wish to merge values, {@link LazySeq#toOrderedLookup} and
-   * {@link LazySeq#toLookupOrderedMap} keep all the duplicate values.
+   * {@link ./api/orderedmap#OrderedMap.build} for details.
+   * If you don't wish to merge values, {@link LazySeq.toOrderedLookup} and
+   * {@link LazySeq.toLookupOrderedMap} keep all the duplicate values.
    */
   buildOrderedMap<K, S extends NotUndefined>(
     key: (x: T) => K & OrderedMapKey,
-    val: (old: S | undefined, t: T) => S
+    val: (old: S | undefined, t: T) => S,
   ): OrderedMap<K & OrderedMapKey, S>;
   buildOrderedMap<K, S extends NotUndefined>(
     key: (x: T) => K & OrderedMapKey,
-    val?: (old: S | undefined, t: T) => S
+    val?: (old: S | undefined, t: T) => S,
   ): OrderedMap<K & OrderedMapKey, S> {
     return OrderedMap.build(this.iter, key, val as (old: S | undefined, t: T) => S);
   }
@@ -1043,11 +1043,11 @@ export class LazySeq<T> {
    * This function builds a [JS Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) from the entries in the LazySeq.
    * Each entry in the LazySeq is convered to a tuple of key and value using the provided function.  If a duplicate key is found, the provided merge
    * function is called to determine the value for the key.  If no merge function is provided, the last value for the key is used.
-   * If you don't wish to merge values, {@link LazySeq#toRLookup} keeps all the duplicate values.
+   * If you don't wish to merge values, {@link LazySeq.toRLookup} keeps all the duplicate values.
    */
   toRMap<K, S>(
     f: (x: T) => readonly [K & JsMapKey, S],
-    merge?: (v1: S, v2: S) => S
+    merge?: (v1: S, v2: S) => S,
   ): ReadonlyMap<K, S> {
     return this.toMutableMap(f, merge);
   }
@@ -1061,11 +1061,11 @@ export class LazySeq<T> {
    * Each entry in the LazySeq is convered to a tuple of key and value using the provided function.  If a duplicate key is found, the provided merge
    * function is called to determine the value for the key.  If no merge function is provided, the last value for the key is used.
    *
-   * In the spirit of immutability, {@link LazySeq#toRMap} is preferred over this function unless neccisary.
+   * In the spirit of immutability, {@link LazySeq.toRMap} is preferred over this function unless neccisary.
    */
   toMutableMap<K, S>(
     f: (x: T) => readonly [K & JsMapKey, S],
-    merge?: (v1: S, v2: S) => S
+    merge?: (v1: S, v2: S) => S,
   ): Map<K, S> {
     const m = new Map<K, S>();
     for (const x of this.iter) {
@@ -1095,7 +1095,7 @@ export class LazySeq<T> {
    */
   toObject<S>(
     f: (x: T) => readonly [string, S],
-    merge?: (v1: S, v2: S) => S
+    merge?: (v1: S, v2: S) => S,
   ): { [key: string]: S };
 
   /** Converts the entries of the LazySeq to a JS Object
@@ -1109,12 +1109,12 @@ export class LazySeq<T> {
    */
   toObject<S>(
     f: (x: T) => readonly [number, S],
-    merge?: (v1: S, v2: S) => S
+    merge?: (v1: S, v2: S) => S,
   ): { [key: number]: S };
 
   toObject<S>(
     f: (x: T) => readonly [string | number, S],
-    merge?: (v1: S, v2: S) => S
+    merge?: (v1: S, v2: S) => S,
   ): { [key: string | number]: S } {
     const m: { [key: string | number]: S } = {};
     for (const x of this.iter) {
@@ -1138,7 +1138,7 @@ export class LazySeq<T> {
    * @category Conversion
    *
    * @remarks
-   * This is a convenience function for {@link HashSet.build} which creates a HashSet from a function
+   * This is a convenience function for {@link ./api/hashset#HashSet.build} which creates a HashSet from a function
    * which converts the entries in the LazySeq to a hashable value.
    */
   toHashSet<S>(converter: (x: T) => S & HashKey): HashSet<S & HashKey> {
@@ -1150,7 +1150,7 @@ export class LazySeq<T> {
    * @category Conversion
    *
    * @remarks
-   * This is a convenience function for {@link OrderedSet.build} which creates an OrderedSet from a function
+   * This is a convenience function for {@link ./api/orderedset#OrderedSet.build} which creates an OrderedSet from a function
    * which converts the entries in the LazySeq to an orderable value.
    */
   toOrderedSet<S>(converter: (x: T) => S & OrderedMapKey): OrderedSet<S & OrderedMapKey> {
@@ -1176,7 +1176,7 @@ export class LazySeq<T> {
    * @remarks
    * `toRSet` converts the entries in the LazySeq to a mutable
    * [JS Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set).
-   * In the spirit of immutability, {@link LazySeq#toRSet} is preferred over this function unless neccisary.
+   * In the spirit of immutability, {@link LazySeq.toRSet} is preferred over this function unless neccisary.
    */
   toMutableSet<S>(converter: (x: T) => S & JsMapKey): Set<S> {
     const s = new Set<S>();
@@ -1222,7 +1222,7 @@ export class LazySeq<T> {
    *
    * @remarks
    * The key function is used to extract a key for each entry and then entries are grouped by a key.  All the values that
-   * have the same key are collected into an array and returned in a {@link HashMap}.
+   * have the same key are collected into an array and returned in a {@link ./api/hashmap#HashMap}.
    */
   toLookup<K>(key: (x: T) => K & HashKey): HashMap<K & HashKey, ReadonlyArray<T>>;
 
@@ -1232,16 +1232,16 @@ export class LazySeq<T> {
    *
    * @remarks
    * Each element in the LazySeq is converted to a key and a value using the provided functions.
-   * The keys are used to group the values into an array and the result is returned in a {@link HashMap}.
+   * The keys are used to group the values into an array and the result is returned in a {@link ./api/hashmap#HashMap}.
    */
   toLookup<K, S>(
     key: (x: T) => K & HashKey,
-    val: (x: T) => S
+    val: (x: T) => S,
   ): HashMap<K & HashKey, ReadonlyArray<S>>;
 
   toLookup<K, S>(
     key: (x: T) => K & HashKey,
-    val?: (x: T) => S
+    val?: (x: T) => S,
   ): HashMap<K & HashKey, ReadonlyArray<S>> {
     let merge: (old: Array<S> | undefined, t: T) => Array<S>;
     if (val === undefined) {
@@ -1272,10 +1272,10 @@ export class LazySeq<T> {
    *
    * @remarks
    * The key function is used to extract a key for each entry and then entries are grouped by a key.  All the values that
-   * have the same key are collected into an array and returned in an {@link OrderedMap}.
+   * have the same key are collected into an array and returned in an {@link ./api/orderedmap#OrderedMap}.
    */
   toOrderedLookup<K>(
-    key: (x: T) => K & OrderedMapKey
+    key: (x: T) => K & OrderedMapKey,
   ): OrderedMap<K & OrderedMapKey, ReadonlyArray<T>>;
 
   /** Group entries in the LazySeq by a key, returning an OrderedMap with an array of values
@@ -1284,15 +1284,15 @@ export class LazySeq<T> {
    *
    * @remarks
    * Each element in the LazySeq is converted to a key and a value using the provided functions.
-   * The keys are used to group the values into an array and the result is returned in an {@link OrderedMap}.
+   * The keys are used to group the values into an array and the result is returned in an {@link ./api/orderedmap#OrderedMap}.
    */
   toOrderedLookup<K, S>(
     key: (x: T) => K & OrderedMapKey,
-    val: (x: T) => S
+    val: (x: T) => S,
   ): OrderedMap<K & OrderedMapKey, ReadonlyArray<S>>;
   toOrderedLookup<K, S>(
     key: (x: T) => K & OrderedMapKey,
-    val?: (x: T) => S
+    val?: (x: T) => S,
   ): OrderedMap<K & OrderedMapKey, ReadonlyArray<S>> {
     let merge: (old: Array<S> | undefined, t: T) => Array<S>;
     if (val === undefined) {
@@ -1324,12 +1324,12 @@ export class LazySeq<T> {
    * @remarks
    * All entries in the LazySeq are first grouped by `key1`.  For each `key1`, all the values that share the same `key1`
    * are then grouped by `key2`.  Entries with the same `key1` and `key2` overwrite previous entries with the same keys
-   * (see the more general `toLookupMap` for a version with a merge function).  The result is a {@link HashMap} of
-   * {@link HashMap}s.
+   * (see the more general `toLookupMap` for a version with a merge function).  The result is a {@link ./api/hashmap#HashMap} of
+   * {@link ./api/hashmap#HashMap}s.
    */
   toLookupMap<K1, K2>(
     key1: (x: T) => K1 & HashKey,
-    key2: (x: T) => K2 & HashKey
+    key2: (x: T) => K2 & HashKey,
   ): HashMap<K1 & HashKey, HashMap<K2 & HashKey, T>>;
 
   /** Group entries in the LazySeq by two keys, returning a HashMap of HashMaps
@@ -1341,23 +1341,23 @@ export class LazySeq<T> {
    * They are then first grouped by `key1`.  For each `key1`, all the values that share the same `key1`
    * are then grouped by `key2`.  Entries with the same `key1` and `key2` are either merged using the `mergeVals` function
    * if it is provided, otherwise values later in the LazySeq overwrite previous values with the same keys.
-   * The result is a {@link HashMap} of {@link HashMap}s.
+   * The result is a {@link ./api/hashmap#HashMap} of {@link ./api/hashmap#HashMap}s.
    */
   toLookupMap<K1, K2, S extends NotUndefined>(
     key1: (x: T) => K1 & HashKey,
     key2: (x: T) => K2 & HashKey,
     val: (x: T) => S,
-    mergeVals?: (v1: S, v2: S) => S
+    mergeVals?: (v1: S, v2: S) => S,
   ): HashMap<K1 & HashKey, HashMap<K2 & HashKey, S>>;
   toLookupMap<K1, K2, S extends NotUndefined>(
     key1: (x: T) => K1 & HashKey,
     key2: (x: T) => K2 & HashKey,
     val?: (x: T) => S,
-    mergeVals?: (v1: S, v2: S) => S
+    mergeVals?: (v1: S, v2: S) => S,
   ): HashMap<K1 & HashKey, HashMap<K2 & HashKey, S>> {
     let merge: (
       old: HashMap<K2 & HashKey, S> | undefined,
-      t: T
+      t: T,
     ) => HashMap<K2 & HashKey, S>;
     if (val === undefined) {
       merge = (old, t) => (old ?? HashMap.empty()).set(key2(t), t as unknown as S);
@@ -1366,7 +1366,7 @@ export class LazySeq<T> {
     } else {
       merge = (old, t) =>
         (old ?? HashMap.empty()).alter(key2(t), (oldV) =>
-          oldV === undefined ? val(t) : mergeVals(oldV as unknown as S, val(t))
+          oldV === undefined ? val(t) : mergeVals(oldV as unknown as S, val(t)),
         );
     }
 
@@ -1380,12 +1380,12 @@ export class LazySeq<T> {
    * @remarks
    * All entries in the LazySeq are first grouped by `key1`.  For each `key1`, all the values that share the same `key1`
    * are then grouped by `key2`.  Entries with the same `key1` and `key2` overwrite previous entries with the same keys
-   * (see the more general `toLookupOrderedMap` for a version with a merge function).  The result is an {@link OrderedMap} of
-   * {@link OrderedMap}s.
+   * (see the more general `toLookupOrderedMap` for a version with a merge function).  The result is an {@link ./api/orderedmap#OrderedMap} of
+   * {@link ./api/orderedmap#OrderedMap}s.
    */
   toLookupOrderedMap<K1, K2>(
     key1: (x: T) => K1 & OrderedMapKey,
-    key2: (x: T) => K2 & OrderedMapKey
+    key2: (x: T) => K2 & OrderedMapKey,
   ): OrderedMap<K1 & OrderedMapKey, OrderedMap<K2 & OrderedMapKey, T>>;
 
   /** Group entries in the LazySeq by two keys, returning an OrderedMap of OrderedMaps
@@ -1397,24 +1397,24 @@ export class LazySeq<T> {
    * They are then first grouped by `key1`.  For each `key1`, all the values that share the same `key1`
    * are then grouped by `key2`.  Entries with the same `key1` and `key2` are either merged using the `mergeVals` function
    * if it is provided, otherwise values later in the LazySeq overwrite previous values with the same keys.
-   * The result is a {@link OrderedMap} of {@link OrderedMap}s.
+   * The result is a {@link ./api/orderedmap#OrderedMap} of {@link ./api/orderedmap#OrderedMap}s.
    */
   toLookupOrderedMap<K1, K2, S>(
     key1: (x: T) => K1 & OrderedMapKey,
     key2: (x: T) => K2 & OrderedMapKey,
     val: (x: T) => S,
-    mergeVals?: (v1: S, v2: S) => S
+    mergeVals?: (v1: S, v2: S) => S,
   ): OrderedMap<K1 & OrderedMapKey, OrderedMap<K2 & OrderedMapKey, S>>;
 
   toLookupOrderedMap<K1, K2, S extends NotUndefined>(
     key1: (x: T) => K1 & OrderedMapKey,
     key2: (x: T) => K2 & OrderedMapKey,
     val?: (x: T) => S,
-    mergeVals?: (v1: S, v2: S) => S
+    mergeVals?: (v1: S, v2: S) => S,
   ): OrderedMap<K1 & OrderedMapKey, OrderedMap<K2 & OrderedMapKey, S>> {
     let merge: (
       old: OrderedMap<K2 & OrderedMapKey, S> | undefined,
-      t: T
+      t: T,
     ) => OrderedMap<K2 & OrderedMapKey, S>;
     if (val === undefined) {
       merge = (old, t) => (old ?? OrderedMap.empty()).set(key2(t), t as unknown as S);
@@ -1423,7 +1423,7 @@ export class LazySeq<T> {
     } else {
       merge = (old, t) =>
         (old ?? OrderedMap.empty()).alter(key2(t), (oldV) =>
-          oldV === undefined ? val(t) : mergeVals(oldV as unknown as S, val(t))
+          oldV === undefined ? val(t) : mergeVals(oldV as unknown as S, val(t)),
         );
     }
     return OrderedMap.build(this.iter, key1, merge);
@@ -1451,7 +1451,7 @@ export class LazySeq<T> {
   toRLookup<K, S>(key: (x: T) => K, val: (x: T) => S): ReadonlyMap<K, ReadonlyArray<S>>;
   toRLookup<K, S>(
     key: (x: T) => K,
-    val?: (x: T) => S
+    val?: (x: T) => S,
   ): ReadonlyMap<K, ReadonlyArray<T | S>> {
     const m = new Map<K, Array<T | S>>();
     for (const x of this.iter) {
