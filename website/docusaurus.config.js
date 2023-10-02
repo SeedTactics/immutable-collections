@@ -2,6 +2,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 // @ts-check
 
+const lightCodeTheme = require("prism-react-renderer/themes/vsLight");
+const darkCodeTheme = require("prism-react-renderer/themes/dracula");
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: "Immutable Collections for Typescript",
@@ -87,18 +90,16 @@ const config = {
               },
               {
                 label: "HashMap",
-                to: "/docs/api/HashMap",
+                to: "/docs/api/hashmap",
               },
-              /*
               {
                 label: "OrderedMap",
-                to: "/docs/api/OrderedMap",
+                to: "/docs/api/orderedmap",
               },
               {
                 label: "LazySeq",
-                to: "/docs/api/LazySeq",
+                to: "/docs/api/lazyseq",
               },
-              */
             ],
           },
           {
@@ -116,6 +117,10 @@ const config = {
           },
         ],
         copyright: `Copyright © ${new Date().getFullYear()} Black Maple Software, LLC. Built with Docusaurus.`,
+      },
+      prism: {
+        theme: lightCodeTheme,
+        darkTheme: darkCodeTheme,
       },
     }),
 };

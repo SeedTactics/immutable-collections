@@ -51,6 +51,24 @@ const allFiles: ReadonlyArray<DocFile> = [
     tsFile: "../src/api/orderedset.ts",
     singleClass: "OrderedSet",
   },
+  {
+    sidebarLabel: "LazySeq",
+    docTitle: "Utility Methods for Iterables",
+    tsFile: "../src/lazyseq.ts",
+    singleClass: "LazySeq",
+  },
+  {
+    sidebarLabel: "HAMT",
+    docTitle: "Function-based Immutable HashMap in Typescript",
+    tsFile: "../src/data-structures/hamt.ts",
+    singleClass: null,
+  },
+  {
+    sidebarLabel: "Tree",
+    docTitle: "Function-based Immutable Balanced Tree in Typescript",
+    tsFile: "../src/data-structures/tree.ts",
+    singleClass: null,
+  },
 ];
 
 // Calculate the git revision of the current commit
@@ -248,6 +266,10 @@ function emitDocFile(doc: DocFile) {
       write(")");
     }
     write(":");
+    if (!sig.type) {
+      console.log("No type for " + sig.name.getText());
+      exit(1);
+    }
     write(sig.type.getFullText());
     write("\n```\n\n");
     write("</Export>\n\n");
@@ -311,7 +333,10 @@ function emitDocFile(doc: DocFile) {
         const decl = node as ts.SignatureDeclaration;
         symb = symb ?? program.getTypeChecker().getSymbolAtLocation(decl.name);
         const modFlags = ts.getCombinedModifierFlags(decl);
-        if (!(modFlags & ts.ModifierFlags.Private)) {
+        const isNonExportFunction =
+          decl.kind === ts.SyntaxKind.FunctionDeclaration &&
+          !(modFlags & ts.ModifierFlags.Export);
+        if (!(modFlags & ts.ModifierFlags.Private) && !isNonExportFunction) {
           const prefix =
             node.kind === ts.SyntaxKind.FunctionDeclaration
               ? "function "
@@ -335,10 +360,6 @@ function emitDocFile(doc: DocFile) {
         renderDocComment(symb);
         break;
       }
-
-      case ts.SyntaxKind.InterfaceDeclaration:
-        console.log("TODO: interface");
-        break;
 
       case ts.SyntaxKind.ExportDeclaration: {
         const ex = node as ts.ExportDeclaration;
