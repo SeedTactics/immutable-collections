@@ -4,7 +4,7 @@
  *
  * @remarks
  * This module contains the implementation of a size-balanced binary tree,
- * which is the backing data structure for the {@link class_api!OrderedMap} and {@link class_api!OrderedSet} classes.
+ * which is the backing data structure for the {@link ../api/orderedmap#OrderedMap} and {@link ../api/orderedmap#OrderedSet} classes.
  *
  * The OrderedMap and OrderedSet classes are easier to use, but the downside is current bundlers such as
  * webpack, esbuild, swc, etc. do not tree-shake classes.  Thus, this module exposes the tree as
@@ -17,8 +17,6 @@
  * ```ts
  * import * as tree from "@seedtactics/immutable-collections/tree";
  * ```
- *
- * @module tree
  */
 
 import { ComparisionConfig } from "./comparison.js";
@@ -676,11 +674,11 @@ export function partition<K, V>(
  *
  * @category Lookup
  */
-export interface ViewResult<K, V> {
+export type ViewResult<K, V> = {
   k: K;
   v: V;
   rest: TreeNode<K, V> | null;
-}
+};
 
 /** Extract the minimum key and compute a balanced tree of all other values
  *

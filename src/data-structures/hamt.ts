@@ -5,7 +5,7 @@
  *
  * @remarks
  * This module contains the implementation of the [HAMT](https://en.wikipedia.org/wiki/Hash_array_mapped_trie) data structure,
- * which is the backing data structure for the {@link class_api!HashMap} and {@link class_api!HashSet} classes.
+ * which is the backing data structure for the {@link ../api/hashmap#HashMap} and {@link ../api/hashset#HashSet} classes.
  *
  * The HashMap and HashSet classes are easier to use, but the downside is current bundlers such as
  * webpack, esbuild, swc, etc. do not tree-shake classes.  Thus, this module exposes the HAMT data structure as
@@ -20,12 +20,11 @@
  * ```
  *
  * A note about size: the HAMT data structure nodes do not track the size of the tree.  Instead, each function
- * which modifies the tree returns a value to help track the size externally (for example, {@link hamt!intersection} returns
+ * which modifies the tree returns a value to help track the size externally (for example, {@link intersection} returns
  * the size of the intersection).  Thus, if you need to know the size, you will need to store it somewhere else and
- * keep it updated as you modify the tree.  Note that this module guarantees that `null` represents an empty tree,
+ * keep it updated as you modify the tree.  You can look at the source code for {@link ../api/hashmap#HashMap} to see
+ * how this is done.  Note that this module guarantees that `null` represents an empty tree,
  * so you can always check if the tree is empty or not by just comparing the root node to `null`.
- *
- * @module hamt
  */
 
 import { HashConfig } from "./hashing.js";
@@ -96,7 +95,7 @@ export type MutableLeafNode<K, V> = { readonly hash: number; readonly key: K; va
  * @category Data
  *
  * @remarks
- * The colliding nodes are stored in a {@link tree}.
+ * The colliding nodes are stored in a {@link ./tree}.
  *
  * Despite being exported to use if you wish, you don't need to access tree nodes directly,
  * the functions in this module manipulate the tree for you.  Thus it should be rare to need
@@ -211,7 +210,7 @@ function fullIndex(hash: number, shift: number): number {
   return (hash >>> shift) & subkeyMask;
 }
 
-function constUndefined() {
+function constUndefined(): undefined {
   return undefined;
 }
 
@@ -224,7 +223,7 @@ export function lookup<K, V>(
   k: K,
   rootNode: Node<K, V>,
   hash?: number,
-  shift?: number
+  shift?: number,
 ): V | undefined {
   if (hash === undefined) {
     hash = cfg.hash(k);
@@ -265,7 +264,7 @@ export function lookup<K, V>(
     }
   } while (node);
   throw new Error(
-    "Internal immutable-collections violation: node undefined during lookup"
+    "Internal immutable-collections violation: node undefined during lookup",
   );
 }
 
@@ -273,17 +272,17 @@ export function lookup<K, V>(
 function two<K, V>(
   shift: number,
   leaf1: MutableLeafNode<K, V> | MutableCollisionNode<K, V>,
-  leaf2: MutableLeafNode<K, V> | MutableCollisionNode<K, V>
+  leaf2: MutableLeafNode<K, V> | MutableCollisionNode<K, V>,
 ): MutableNode<K, V>;
 function two<K, V>(
   shift: number,
   leaf1: LeafNode<K, V> | CollisionNode<K, V>,
-  leaf2: LeafNode<K, V> | CollisionNode<K, V>
+  leaf2: LeafNode<K, V> | CollisionNode<K, V>,
 ): Node<K, V>;
 function two<K, V>(
   shift: number,
   leaf1: LeafNode<K, V> | CollisionNode<K, V>,
-  leaf2: LeafNode<K, V> | CollisionNode<K, V>
+  leaf2: LeafNode<K, V> | CollisionNode<K, V>,
 ): Node<K, V> {
   const hash1 = leaf1.hash;
   const hash2 = leaf2.hash;
@@ -347,7 +346,7 @@ export function insert<K, V>(
   cfg: HashConfig<K>,
   k: K,
   getVal: (v: V | undefined) => V,
-  rootNode: Node<K, V> | null
+  rootNode: Node<K, V> | null,
 ): readonly [Node<K, V>, boolean] {
   const hash = cfg.hash(k);
 
@@ -437,7 +436,7 @@ export function insert<K, V>(
               k,
               getVal(undefined),
               curNode.key,
-              curNode.val
+              curNode.val,
             ),
           };
         }
@@ -505,7 +504,7 @@ export function mutateInsert<K, T, V>(
   k: K,
   t: T,
   getVal: (old: V | undefined, t: T) => V,
-  rootNode: MutableNode<K, V> | null
+  rootNode: MutableNode<K, V> | null,
 ): MutableNode<K, V> {
   const hash = cfg.hash(k);
 
@@ -564,7 +563,7 @@ export function mutateInsert<K, T, V>(
               k,
               getVal(undefined, t),
               curNode.key,
-              curNode.val
+              curNode.val,
             ),
           };
         }
@@ -598,7 +597,7 @@ export function mutateInsert<K, T, V>(
     }
   } while (curNode);
   throw new Error(
-    "Internal immutable-collections violation: hamt mutate insert reached null"
+    "Internal immutable-collections violation: hamt mutate insert reached null",
   );
 }
 
@@ -619,7 +618,7 @@ export function mutateInsert<K, T, V>(
 export function from<K, V>(
   cfg: HashConfig<K>,
   items: Iterable<readonly [K, V]>,
-  merge?: (v1: V, v2: V) => V
+  merge?: (v1: V, v2: V) => V,
 ): [Node<K, V> | null, number] {
   let root: MutableNode<K, V> | null = null;
   let size = 0;
@@ -663,7 +662,7 @@ export function from<K, V>(
 export function build<K, V>(
   cfg: HashConfig<K>,
   items: Iterable<V>,
-  key: (v: V) => K
+  key: (v: V) => K,
 ): [Node<K, V> | null, number];
 
 /** Efficently create a new HAMT
@@ -683,14 +682,14 @@ export function build<T, K, V>(
   cfg: HashConfig<K>,
   items: Iterable<T>,
   key: (v: T) => K,
-  val: (old: V | undefined, t: T) => V
+  val: (old: V | undefined, t: T) => V,
 ): [Node<K, V> | null, number];
 
 export function build<T, K, V>(
   cfg: HashConfig<K>,
   items: Iterable<T>,
   key: (t: T) => K,
-  val?: (old: V | undefined, t: T) => V
+  val?: (old: V | undefined, t: T) => V,
 ): [Node<K, V> | null, number] {
   let root: MutableNode<K, V> | null = null;
   let size = 0;
@@ -721,7 +720,7 @@ export function build<T, K, V>(
 }
 
 function hasSingleLeafOrCollision<K, V>(
-  node: Node<K, V>
+  node: Node<K, V>,
 ): LeafNode<K, V> | CollisionNode<K, V> | null {
   // eslint-disable-next-line no-constant-condition
   while (true) {
@@ -741,7 +740,7 @@ function hasSingleLeafOrCollision<K, V>(
 function removeChildFromEndOfSpine<K, V>(
   spine: ReadonlyArray<MutableSpineNode<K, V>>,
   hash: number,
-  shift: number
+  shift: number,
 ): Node<K, V> {
   // remove the node pointed to by the last spine entry
   // there are three cases:
@@ -794,7 +793,7 @@ function removeChildFromEndOfSpine<K, V>(
 function addToSpine<K, V>(
   spine: Array<MutableSpineNode<K, V>>,
   node: MutableSpineInternalNode<K, V>,
-  childIdx: number
+  childIdx: number,
 ): void {
   if (spine.length > 0) {
     const n = spine[spine.length - 1];
@@ -817,7 +816,7 @@ export function remove<K, V>(
   k: K,
   rootNode: Node<K, V> | null,
   hash?: number,
-  shift?: number
+  shift?: number,
 ): Node<K, V> | null {
   if (rootNode === null) {
     return null;
@@ -923,7 +922,7 @@ export function alter<K, V>(
   cfg: HashConfig<K>,
   k: K,
   f: (oldV: V | undefined) => V | undefined,
-  rootNode: Node<K, V> | null
+  rootNode: Node<K, V> | null,
 ): [Node<K, V> | null, number] {
   if (rootNode === null) {
     const newVal = f(undefined);
@@ -1097,7 +1096,7 @@ export function alter<K, V>(
  */
 export function* iterate<K, V, R>(
   f: (k: K, v: V) => R,
-  root: Node<K, V> | null
+  root: Node<K, V> | null,
 ): IterableIterator<R> {
   if (root === null) return;
 
@@ -1124,7 +1123,7 @@ export function* iterate<K, V, R>(
 export function fold<K, V, T>(
   f: (acc: T, key: K, val: V) => T,
   zero: T,
-  root: Node<K, V> | null
+  root: Node<K, V> | null,
 ): T {
   let acc = zero;
   if (root === null) return acc;
@@ -1157,7 +1156,7 @@ export function fold<K, V, T>(
  */
 export function mapValues<K, V1, V2>(
   f: (v: V1, k: K) => V2,
-  root: Node<K, V1> | null
+  root: Node<K, V1> | null,
 ): Node<K, V2> | null {
   if (root === null) return null;
 
@@ -1226,7 +1225,7 @@ export function mapValues<K, V1, V2>(
 export function collectValues<K, V1, V2>(
   f: (v: V1, k: K) => V2 | undefined,
   filterNull: boolean,
-  root: Node<K, V1> | null
+  root: Node<K, V1> | null,
 ): [Node<K, V2> | null, number] {
   if (root === null) return [null, 0];
 
@@ -1347,7 +1346,7 @@ export function union<K, V>(
   cfg: HashConfig<K>,
   merge: (v1: V, v2: V, k: K) => V,
   root1: Node<K, V> | null,
-  root2: Node<K, V> | null
+  root2: Node<K, V> | null,
 ): [Node<K, V> | null, number] {
   if (root1 === null) return [root2, 0];
   if (root2 === null) return [root1, 0];
@@ -1393,7 +1392,7 @@ export function union<K, V>(
               return merge(node1.val, v2, node1.key);
             }
           },
-          node2.collision
+          node2.collision,
         )!;
         if (newRoot === node2.collision) {
           return node2;
@@ -1417,7 +1416,7 @@ export function union<K, V>(
               return merge(v1, node2.val, node2.key);
             }
           },
-          node1.collision
+          node1.collision,
         )!;
         if (newRoot === node1.collision) {
           return node1;
@@ -1465,7 +1464,7 @@ export function union<K, V>(
           const newNode = loop(
             shift + bitsPerSubkey,
             node1.children[node1Idx],
-            node2.children[node2Idx]
+            node2.children[node2Idx],
           );
           if (newArr) {
             // we already have a new array, so just add the new node
@@ -1592,7 +1591,7 @@ export function intersection<K, V>(
   cfg: HashConfig<K>,
   merge: (v1: V, v2: V, k: K) => V,
   root1: Node<K, V> | null,
-  root2: Node<K, V> | null
+  root2: Node<K, V> | null,
 ): [Node<K, V> | null, number] {
   if (root1 === null) return [null, 0];
   if (root2 === null) return [null, 0];
@@ -1669,7 +1668,7 @@ export function intersection<K, V>(
           const newNode = loop(
             shift + bitsPerSubkey,
             node1.children[node1Idx],
-            node2.children[node2Idx]
+            node2.children[node2Idx],
           );
           if (newArr) {
             // we already have a new array
@@ -1787,7 +1786,7 @@ export function intersection<K, V>(
 export function difference<K, V1, V2>(
   cfg: HashConfig<K>,
   root1: Node<K, V1> | null,
-  root2: Node<K, V2> | null
+  root2: Node<K, V2> | null,
 ): readonly [Node<K, V1> | null, number] {
   if (root2 === null) return [root1, 0];
   if (root1 === null) return [null, 0];
@@ -1797,7 +1796,7 @@ export function difference<K, V1, V2>(
   function loop(
     shift: number,
     node1: Node<K, V1>,
-    node2: Node<K, V2>
+    node2: Node<K, V2>,
   ): Node<K, V1> | null {
     if ("key" in node1) {
       const has = lookup(cfg, node1.key, node2, node1.hash, shift);
@@ -1837,7 +1836,7 @@ export function difference<K, V1, V2>(
           const newNode = loop(
             shift + bitsPerSubkey,
             node1.children[node1Idx],
-            node2.children[node2Idx]
+            node2.children[node2Idx],
           );
           if (newArr) {
             // we already have a new array
@@ -2001,7 +2000,7 @@ export function adjust<K, V1, V2>(
   cfg: HashConfig<K>,
   f: (v1: V1 | undefined, v2: V2, k: K) => V1 | undefined,
   root1: Node<K, V1> | null,
-  root2: Node<K, V2> | null
+  root2: Node<K, V2> | null,
 ): readonly [Node<K, V1> | null, number] {
   if (root2 === null) return [root1, 0];
   if (root1 === null) {
@@ -2017,7 +2016,7 @@ export function adjust<K, V1, V2>(
   function loop(
     shift: number,
     node1: Node<K, V1>,
-    node2: Node<K, V2>
+    node2: Node<K, V2>,
   ): Node<K, V1> | null {
     if ("key" in node1 && "key" in node2) {
       if (node1.hash === node2.hash) {
@@ -2066,7 +2065,7 @@ export function adjust<K, V1, V2>(
           cfg,
           node2.key,
           (oldV) => f(oldV, node2.val, node2.key),
-          node1.collision
+          node1.collision,
         )!;
         if (newCol1 === node1.collision) {
           return node1;
@@ -2092,7 +2091,7 @@ export function adjust<K, V1, V2>(
           cfg,
           f,
           { key: node1.key, val: node1.val, size: 1, left: null, right: null },
-          node2.collision
+          node2.collision,
         );
         if (newCol === null) {
           numRemoved += 1;
@@ -2173,7 +2172,7 @@ export function adjust<K, V1, V2>(
           const newNode = loop(
             shift + bitsPerSubkey,
             node1.children[node1Idx],
-            node2.children[node2Idx]
+            node2.children[node2Idx],
           );
 
           if (newArr) {
@@ -2206,7 +2205,7 @@ export function adjust<K, V1, V2>(
           const [newChild, newSize] = collectValues(
             fWithUndefined,
             false,
-            node2.children[node2Idx]
+            node2.children[node2Idx],
           );
           if (newChild !== null) {
             numRemoved -= newSize;
@@ -2324,7 +2323,7 @@ export function adjust<K, V1, V2>(
             [newChild, newSize] = collectValues(
               fWithUndefined,
               false,
-              node2int.children[node2Idx]
+              node2int.children[node2Idx],
             );
             numRemoved -= newSize;
           }
