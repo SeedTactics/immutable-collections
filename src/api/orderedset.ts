@@ -1,7 +1,7 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
 import {
-  ComparisionConfig,
+  ComparisonConfig,
   mkComparisonConfig,
   OrderedMapKey,
 } from "../data-structures/comparison.js";
@@ -79,7 +79,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
   public static ofKeys<K extends OrderedMapKey, V>(map: OrderedMap<K, V>): OrderedSet<K> {
     // access private properties of OrderedMap
     const prvMap = map as unknown as {
-      cfg: ComparisionConfig<K>;
+      cfg: ComparisonConfig<K>;
       root: TreeNode<K, V> | null;
     };
     return new OrderedSet(prvMap.cfg, prvMap.root);
@@ -579,10 +579,10 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
     }
   }
 
-  private cfg: ComparisionConfig<T>;
+  private cfg: ComparisonConfig<T>;
   private root: TreeNode<T, unknown> | null;
 
-  private constructor(cfg: ComparisionConfig<T>, root: TreeNode<T, unknown> | null) {
+  private constructor(cfg: ComparisonConfig<T>, root: TreeNode<T, unknown> | null) {
     this.cfg = cfg;
     this.root = root;
   }

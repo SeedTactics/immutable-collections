@@ -2,7 +2,7 @@
 
 import { LazySeq } from "../lazyseq.js";
 import {
-  ComparisionConfig,
+  ComparisonConfig,
   mkComparisonConfig,
   OrderedMapKey,
 } from "../data-structures/comparison.js";
@@ -845,10 +845,10 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     }
   }
 
-  private cfg: ComparisionConfig<K>;
+  private cfg: ComparisonConfig<K>;
   private root: TreeNode<K, V> | null;
 
-  private constructor(cfg: ComparisionConfig<K>, root: TreeNode<K, V> | null) {
+  private constructor(cfg: ComparisonConfig<K>, root: TreeNode<K, V> | null) {
     this.cfg = cfg;
     this.root = root;
   }

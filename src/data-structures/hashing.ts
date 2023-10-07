@@ -2,7 +2,7 @@
 
 import {
   ComparableObj,
-  ComparisionConfig,
+  ComparisonConfig,
   dateCompare,
   objCompare,
   numCompare,
@@ -74,14 +74,14 @@ export type HashKey = string | number | boolean | Date | (HashableObj & Comparab
  * @category Hashing
  *
  * @remarks
- * This combines a {@link ComparisonConfig} with a hash function for the key type.
+ * This combines a {@link ./tree#ComparisonConfig} with a hash function for the key type.
  *
  * A `HashConfig` is passed to most functions manipulating the HAMT data structure.  You only need one
  * `HashConfig` per key type so you can store a single `HashConfig` in a global variable per key type.
  * The {@link hashValues} function can help implement the hash function if you do not have security
  * considerations.
  */
-export type HashConfig<K> = ComparisionConfig<K> & {
+export type HashConfig<K> = ComparisonConfig<K> & {
   readonly hash: (v: K) => number;
 };
 

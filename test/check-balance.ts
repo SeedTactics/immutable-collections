@@ -2,13 +2,18 @@
 
 import { expect } from "chai";
 import { TreeNode } from "../src/data-structures/tree.js";
-import { ComparisionConfig, OrderedMapKey } from "../src/data-structures/comparison.js";
+import { ComparisonConfig, OrderedMapKey } from "../src/data-structures/comparison.js";
 import { OrderedMap } from "../src/api/orderedmap.js";
 import { OrderedSet } from "../src/api/orderedset.js";
 
-export function checkMapBalanceAndSize<K extends OrderedMapKey, V>(map: OrderedMap<K, V>) {
+export function checkMapBalanceAndSize<K extends OrderedMapKey, V>(
+  map: OrderedMap<K, V>,
+) {
   // access private properties
-  const privateMap = map as unknown as { root: TreeNode<K, V> | undefined; cfg: ComparisionConfig<K> };
+  const privateMap = map as unknown as {
+    root: TreeNode<K, V> | undefined;
+    cfg: ComparisonConfig<K>;
+  };
   if (privateMap.root) {
     return checkBalanceAndSize(privateMap.cfg, privateMap.root);
   }
@@ -16,13 +21,19 @@ export function checkMapBalanceAndSize<K extends OrderedMapKey, V>(map: OrderedM
 
 export function checkSetBalanceAndSize<K extends OrderedMapKey>(set: OrderedSet<K>) {
   // access private properties
-  const privateSet = set as unknown as { root: TreeNode<K, unknown> | undefined; cfg: ComparisionConfig<K> };
+  const privateSet = set as unknown as {
+    root: TreeNode<K, unknown> | undefined;
+    cfg: ComparisonConfig<K>;
+  };
   if (privateSet.root) {
     return checkBalanceAndSize(privateSet.cfg, privateSet.root);
   }
 }
 
-export function checkBalanceAndSize<K, V>({ compare }: ComparisionConfig<K>, root: TreeNode<K, V>) {
+export function checkBalanceAndSize<K, V>(
+  { compare }: ComparisonConfig<K>,
+  root: TreeNode<K, V>,
+) {
   function loop(node: TreeNode<K, V>, min: K | undefined, max: K | undefined) {
     if (min !== undefined) {
       expect(compare(node.key, min)).to.be.greaterThan(0);

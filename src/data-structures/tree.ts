@@ -19,7 +19,7 @@
  * ```
  */
 
-import { ComparisionConfig } from "./comparison.js";
+import { ComparisonConfig } from "./comparison.js";
 import {
   combineAfterInsertOrRemove,
   combineDifferentSizes,
@@ -35,7 +35,7 @@ import {
 export { TreeNode, MutableTreeNode } from "./rotations.js";
 
 export {
-  ComparisionConfig,
+  ComparisonConfig as ComparisionConfig,
   mkComparisonConfig,
   ComparableObj,
   mkCompareByProperties,
@@ -53,7 +53,7 @@ library: https://github.com/haskell/containers/blob/master/containers/src/Data/M
  * @category Lookup
  */
 export function lookup<K, V>(
-  { compare }: ComparisionConfig<K>,
+  { compare }: ComparisonConfig<K>,
   k: K,
   root: TreeNode<K, V> | null,
 ): V | undefined {
@@ -130,7 +130,7 @@ export function lookupMax<K, V>(root: TreeNode<K, V>): readonly [K, V] {
  * @category Modification
  */
 export function alter<K, V>(
-  { compare }: ComparisionConfig<K>,
+  { compare }: ComparisonConfig<K>,
   k: K,
   f: (oldV: V | undefined) => V | undefined,
   root: TreeNode<K, V> | null,
@@ -197,7 +197,7 @@ export function alter<K, V>(
  * @category Initial Construction
  */
 export function mutateInsert<K, V, T>(
-  { compare }: ComparisionConfig<K>,
+  { compare }: ComparisonConfig<K>,
   k: K,
   t: T,
   getVal: (old: V | undefined, t: T) => V,
@@ -250,7 +250,7 @@ export function mutateInsert<K, V, T>(
  * is used, overwriting the first value `v1`.
  */
 export function from<K, V>(
-  { compare }: ComparisionConfig<K>,
+  { compare }: ComparisonConfig<K>,
   items: Iterable<readonly [K, V]>,
   merge?: (v1: V, v2: V) => V,
 ): TreeNode<K, V> | null {
@@ -303,7 +303,7 @@ export function from<K, V>(
  * not desired, use the more generalized version of `build` which also provides a value extraction function.
  */
 export function build<K, V>(
-  { compare }: ComparisionConfig<K>,
+  { compare }: ComparisonConfig<K>,
   items: Iterable<V>,
   key: (t: V) => K,
 ): TreeNode<K, V> | null;
@@ -320,14 +320,14 @@ export function build<K, V>(
  * merge the new item `t` into the existing value `old`.
  */
 export function build<T, K, V>(
-  { compare }: ComparisionConfig<K>,
+  { compare }: ComparisonConfig<K>,
   items: Iterable<T>,
   key: (t: T) => K,
   val: (old: V | undefined, t: T) => V,
 ): TreeNode<K, V> | null;
 
 export function build<T, K, V>(
-  { compare }: ComparisionConfig<K>,
+  { compare }: ComparisonConfig<K>,
   items: Iterable<T>,
   key: (t: T) => K,
   val?: (old: V | undefined, t: T) => V,
@@ -604,7 +604,7 @@ export type SplitResult<K, V> = {
  * @category Lookup
  */
 export function split<K, V>(
-  { compare }: ComparisionConfig<K>,
+  { compare }: ComparisonConfig<K>,
   k: K,
   root: TreeNode<K, V> | null,
 ): SplitResult<K, V> {
@@ -724,7 +724,7 @@ export function maxView<K, V>(root: TreeNode<K, V>): ViewResult<K, V> {
  * Runs in time O(m log(n/m)) where m is the size of the smaller tree and n is the size of the larger tree.
  */
 export function union<K, V>(
-  cfg: ComparisionConfig<K>,
+  cfg: ComparisonConfig<K>,
   merge: (v1: V, v2: V, k: K) => V,
   root1: TreeNode<K, V> | null,
   root2: TreeNode<K, V> | null,
@@ -789,7 +789,7 @@ export function union<K, V>(
  * Runs in time O(m log(n/m)) where m is the size of the smaller tree and n is the size of the larger tree.
  */
 export function intersection<K, V>(
-  cfg: ComparisionConfig<K>,
+  cfg: ComparisonConfig<K>,
   merge: (v1: V, v2: V, k: K) => V,
   root1: TreeNode<K, V> | null,
   root2: TreeNode<K, V> | null,
@@ -838,7 +838,7 @@ export function intersection<K, V>(
  * Runs in time O(m log(n/m)) where m is the size of the smaller tree and n is the size of the larger tree.
  */
 export function difference<K, V1, V2>(
-  cfg: ComparisionConfig<K>,
+  cfg: ComparisonConfig<K>,
   root1: TreeNode<K, V1> | null,
   root2: TreeNode<K, V2> | null,
 ): TreeNode<K, V1> | null {
@@ -884,7 +884,7 @@ export function difference<K, V1, V2>(
  * Runs in time O(n + m) where n and m are the sizes of the two trees.
  */
 export function adjust<K, V1, V2>(
-  cfg: ComparisionConfig<K>,
+  cfg: ComparisonConfig<K>,
   f: (v1: V1 | undefined, v2: V2, k: K) => V1 | undefined,
   root1: TreeNode<K, V1> | null,
   root2: TreeNode<K, V2> | null,
