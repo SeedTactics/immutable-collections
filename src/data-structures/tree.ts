@@ -691,7 +691,9 @@ export type ViewResult<K, V> = {
  *
  * Runs in O(log n) time, so can be used to efficiently pop the minimum key.
  */
-export const minView: <K, V>(root: TreeNode<K, V>) => ViewResult<K, V> = removeMin;
+export function minView<K, V>(root: TreeNode<K, V>): ViewResult<K, V> {
+  return removeMin(root);
+}
 
 /** Extract the maximum key and compute a balanced tree of all other values
  *
@@ -704,7 +706,9 @@ export const minView: <K, V>(root: TreeNode<K, V>) => ViewResult<K, V> = removeM
  *
  * Runs in O(log n) time, so can be used to efficiently pop the maximum key.
  */
-export const maxView: <K, V>(root: TreeNode<K, V>) => ViewResult<K, V> = removeMax;
+export function maxView<K, V>(root: TreeNode<K, V>): ViewResult<K, V> {
+  return removeMax(root);
+}
 
 /** Returns a new tree which combines all entries in two trees
  *

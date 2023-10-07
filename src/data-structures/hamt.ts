@@ -20,7 +20,7 @@
  * ```
  *
  * A note about size: the HAMT data structure nodes do not track the size of the tree.  Instead, each function
- * which modifies the tree returns a value to help track the size externally (for example, {@link intersection} returns
+ * which modifies the tree returns a value to help track the size externally (for example, the intersection function returns
  * the size of the intersection).  Thus, if you need to know the size, you will need to store it somewhere else and
  * keep it updated as you modify the tree.  You can look at the source code for {@link ../api/hashmap#HashMap} to see
  * how this is done.  Note that this module guarantees that `null` represents an empty tree,

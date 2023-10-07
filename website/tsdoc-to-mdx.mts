@@ -165,7 +165,7 @@ function emitDocFile(doc: DocFile) {
       }
     });
   } else {
-    renderModulePage(srcFile);
+    renderModulePage(doc, srcFile);
   }
   fs.closeSync(outHandle);
 
@@ -176,7 +176,10 @@ function emitDocFile(doc: DocFile) {
     for (const part of parts) {
       if (part.kind === "link") {
         // text is something like '{@link' or '}' so just ignore
-      } else if (part.kind === "linkText") {
+      } else if (
+        part.kind === "linkText" ||
+        (part.kind as unknown) === ts.SyntaxKind.JSDocLink
+      ) {
         let link = part.text;
         const hashIdx = link.indexOf("#");
 
@@ -188,7 +191,10 @@ function emitDocFile(doc: DocFile) {
         const linkRefs = link.split(".");
         const hash = linkRefs[linkRefs.length - 1];
         write(`[${link}](${page ?? ""}${hash ? "#" : ""}${hash})`);
-      } else if (part.kind === "text") {
+      } else if (
+        part.kind === "text" ||
+        (part.kind as unknown) === ts.SyntaxKind.JSDocText
+      ) {
         if (onlyFirstParagraph && part.text.indexOf("\n\n") >= 0) {
           write(part.text.substring(0, part.text.indexOf("\n\n")));
           return;
@@ -354,10 +360,13 @@ function emitDocFile(doc: DocFile) {
 
       case ts.SyntaxKind.TypeAliasDeclaration: {
         const alias = node as ts.TypeAliasDeclaration;
-        symb = symb ?? program.getTypeChecker().getSymbolAtLocation(alias.name);
-        renderCategory(symb);
-        renderFull(alias);
-        renderDocComment(symb);
+        const modFlags = ts.getCombinedModifierFlags(alias);
+        if (modFlags & ts.ModifierFlags.Export) {
+          symb = symb ?? program.getTypeChecker().getSymbolAtLocation(alias.name);
+          renderCategory(symb);
+          renderFull(alias);
+          renderDocComment(symb);
+        }
         break;
       }
 
@@ -411,10 +420,13 @@ function emitDocFile(doc: DocFile) {
       ) {
         write(d.comment);
       }
+      if (d.tagName.getText() === "remarks" && d.comment && Array.isArray(d.comment)) {
+        renderDisplayParts(d.comment);
+      }
     }
   }
 
-  function renderModulePage(node: ts.Node) {
+  function renderModulePage(doc: DocFile, node: ts.Node) {
     const firstChild = node.getChildAt(0).getChildAt(0);
     const jsdocs = ts.getJSDocCommentsAndTags(firstChild);
     jsdocs.forEach(renderJSDoc);
