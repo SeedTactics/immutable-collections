@@ -35,7 +35,7 @@ import {
 export { TreeNode, MutableTreeNode } from "./rotations.js";
 
 export {
-  ComparisonConfig as ComparisionConfig,
+  ComparisonConfig,
   mkComparisonConfig,
   ComparableObj,
   mkCompareByProperties,

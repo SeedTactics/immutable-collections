@@ -71,7 +71,7 @@ export type HashKey = string | number | boolean | Date | (HashableObj & Comparab
 
 /** The configuration for a HashMap
  *
- * @category Hashing
+ * @category Hash Utils
  *
  * @remarks
  * This combines a {@link ./tree#ComparisonConfig} with a hash function for the key type.
@@ -195,7 +195,7 @@ export function hashValues(
 
 /** Create a HashConfig based on the key type
  *
- * @category Hashing
+ * @category Hash Utils
  *
  * @remarks
  * This function is used to create a {@link HashConfig} based on the type of key.  It supports

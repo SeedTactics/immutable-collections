@@ -198,6 +198,15 @@ export function mkCompareByProperties<T>(
   };
 }
 
+/** The configuration for a balanced tree
+ *
+ * @category Comparison Utils
+ *
+ * @remarks
+ * A `ComparisonConfig` is passed to most functions manipulating the balanced tree data structure.  You only need one
+ * `ComparisonConfig` per key type so you can store a single `ComparisonConfig` in a global variable per key type.
+ * The {@link mkCompareByProperties} function can help implement the compare function.
+ */
 export type ComparisonConfig<K> = {
   readonly compare: (a: K, b: K) => number;
 };
@@ -231,6 +240,14 @@ export function objCompare(a: ComparableObj, b: ComparableObj): number {
 // inserted.  Therefore, for the initial empty map, we use a map config
 // which checks the type of the key and then replace the configuration with the correct one.
 
+/** Create a ComparisonConfig based on the key type
+ *
+ * @category Comparison Utils
+ *
+ * @remarks
+ * This function is used to create a {@link ComparisonConfig} based on the type of key.  It supports
+ * numbers, strings, booleans, dates, and objects which implement the {@link ComparableObj} interface.
+ */
 export function mkComparisonConfig<K extends OrderedMapKey>(): ComparisonConfig<K> {
   // eslint-disable-next-line prefer-const
   let m: InternalComparisonConfig<K>;

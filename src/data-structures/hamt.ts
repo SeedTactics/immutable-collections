@@ -95,7 +95,7 @@ export type MutableLeafNode<K, V> = { readonly hash: number; readonly key: K; va
  * @category Data
  *
  * @remarks
- * The colliding nodes are stored in a {@link ./tree}.
+ * The colliding nodes are stored in a {@link ./tree#TreeNode}.
  *
  * Despite being exported to use if you wish, you don't need to access tree nodes directly,
  * the functions in this module manipulate the tree for you.  Thus it should be rare to need
