@@ -134,6 +134,10 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     val: (old: V | undefined, t: T) => V,
   ): OrderedMap<K, V>;
 
+  /** Efficiently create a new OrderedMap
+   *
+   * @internal
+   */
   public static build<T, K extends OrderedMapKey, V extends NotUndefined>(
     items: Iterable<T>,
     key: (t: T) => K,

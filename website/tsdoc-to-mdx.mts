@@ -170,17 +170,25 @@ function emitDocFile(doc: DocFile) {
   fs.closeSync(outHandle);
 
   function renderDisplayParts(
-    parts: ReadonlyArray<ts.SymbolDisplayPart>,
+    parts: string | ts.NodeArray<ts.JSDocComment> | undefined,
     onlyFirstParagraph: boolean = false,
   ): void {
+    if (!parts) {
+      return;
+    }
+    if (typeof parts === "string") {
+      write(parts);
+      return;
+    }
     for (const part of parts) {
-      if (part.kind === "link") {
-        // text is something like '{@link' or '}' so just ignore
-      } else if (
-        part.kind === "linkText" ||
-        (part.kind as unknown) === ts.SyntaxKind.JSDocLink
-      ) {
+      if (part.kind === ts.SyntaxKind.JSDocLink) {
         let link = part.text;
+        if (!link || link === "") {
+          link = part.name?.getText();
+        }
+        if (!link || link === "") {
+          console.log("INVALID Link in JSDoc");
+        }
         const hashIdx = link.indexOf("#");
 
         let page: string | undefined = undefined;
@@ -191,39 +199,70 @@ function emitDocFile(doc: DocFile) {
         const linkRefs = link.split(".");
         const hash = linkRefs[linkRefs.length - 1];
         write(`[${link}](${page ?? ""}${hash ? "#" : ""}${hash})`);
-      } else if (
-        part.kind === "text" ||
-        (part.kind as unknown) === ts.SyntaxKind.JSDocText
-      ) {
+      } else if (part.kind === ts.SyntaxKind.JSDocText) {
         if (onlyFirstParagraph && part.text.indexOf("\n\n") >= 0) {
           write(part.text.substring(0, part.text.indexOf("\n\n")));
           return;
         }
         write(part.text);
       } else {
-        console.log("UNKNWON Display Part: " + part.kind);
+        console.log("UNKNWON JSDoc Kind: " + part.kind);
       }
     }
   }
 
-  function renderDocComment(sig: ts.Symbol, onlyFirstParagraph: boolean = false): void {
+  function renderJSDoc(d: ts.JSDoc | ts.JSDocTag): void {
+    if (ts.isJSDoc(d)) {
+      if (d.tags) {
+        d.tags.forEach(renderJSDoc);
+      }
+    } else {
+      if (
+        d.tagName.getText() === "remarks" &&
+        d.comment &&
+        typeof d.comment === "string"
+      ) {
+        write(d.comment);
+      }
+      if (d.tagName.getText() === "remarks" && d.comment && Array.isArray(d.comment)) {
+        renderDisplayParts(d.comment);
+      }
+    }
+  }
+
+  function renderDocComment(
+    node: ts.NamedDeclaration,
+    onlyFirstParagraph: boolean = false,
+  ): void {
+    const jsdocs = ts.getJSDocCommentsAndTags(node);
+    const tags = ts.getJSDocTags(node);
+
+    if (jsdocs.length === 0) {
+      console.log("Missing documentation for " + node.name?.getText());
+      return;
+    }
+    if (jsdocs.length > 1) {
+      console.log("Invalid doc comment for " + node.name?.getText());
+      exit(1);
+    }
+    const jsdoc = jsdocs[0];
+
     write("<Summary>\n\n");
-    renderDisplayParts(sig.getDocumentationComment(program.getTypeChecker()));
+    renderDisplayParts(jsdoc.comment);
     write("\n\n</Summary>\n\n");
 
-    const docs = sig.getJsDocTags();
-    const remarks = docs.find((t) => t.name === "remarks");
+    const remarks = tags.find((t) => t.tagName.getText() === "remarks");
     if (remarks) {
       write("<Remarks>\n\n");
-      renderDisplayParts(remarks.text, onlyFirstParagraph);
+      renderDisplayParts(remarks.comment, onlyFirstParagraph);
       write("\n\n");
-      const example = docs.filter((b) => b.name === "example");
+      const example = tags.filter((b) => b.tagName.getText() === "example");
       if (example.length > 0) {
         write("<details>\n\n");
         for (const ex of example) {
           write("<summary>Example</summary>\n\n");
           write("<div>\n\n");
-          renderDisplayParts(ex.text);
+          renderDisplayParts(ex.comment);
           write("\n\n</div>\n\n");
         }
         write("</details>\n\n");
@@ -302,31 +341,43 @@ function emitDocFile(doc: DocFile) {
     write("</Export>\n\n");
   }
 
-  function renderCategory(symb: ts.Symbol): void {
-    const category = symb.getJsDocTags().find((n) => n.name === "category");
+  function renderCategory(node: ts.NamedDeclaration): void {
+    const category = ts.getJSDocTags(node).find((n) => n.tagName.getText() === "category")
+      ?.comment;
     if (!category) {
       return;
     }
-    if (category.text.length !== 1 || category.text[0].kind !== "text") {
-      console.log("Invalid category for " + symb.name);
+    if (typeof category === "string" && category.length > 0) {
+      if (category !== lastCategory) {
+        write("### " + category + "\n\n");
+        lastCategory = category;
+      }
+    } else {
+      console.log("Invalid category for " + node.name?.getText());
       exit(1);
-    }
-    if (category.text[0].text !== lastCategory) {
-      write("### " + category.text[0].text + "\n\n");
-      lastCategory = category.text[0].text;
     }
   }
 
-  function renderNode(node: ts.Node, symb?: ts.Symbol) {
+  function isInternal(node: ts.Node): boolean {
+    const internal = ts
+      .getJSDocTags(node)
+      .find((t) => t.tagName.getText() === "internal");
+    return !!internal;
+  }
+
+  function renderNode(node: ts.Node) {
+    if (isInternal(node)) return;
+
     switch (node.kind) {
       case ts.SyntaxKind.ClassDeclaration: {
         const cl = node as ts.ClassDeclaration;
-        symb = symb ?? program.getTypeChecker().getSymbolAtLocation(cl.name);
-        renderCategory(symb);
+        renderCategory(cl);
         renderClassExport(cl);
-        renderDocComment(symb);
+        renderDocComment(cl);
         write(
-          `[See full class details for ${symb.name}](./${symb.name.toLowerCase()})\n\n`,
+          `[See full class details for ${cl.name.getText()}](./${cl.name
+            .getText()
+            .toLowerCase()})\n\n`,
         );
         break;
       }
@@ -337,7 +388,6 @@ function emitDocFile(doc: DocFile) {
       case ts.SyntaxKind.GetAccessor:
       case ts.SyntaxKind.PropertyDeclaration: {
         const decl = node as ts.SignatureDeclaration;
-        symb = symb ?? program.getTypeChecker().getSymbolAtLocation(decl.name);
         const modFlags = ts.getCombinedModifierFlags(decl);
         const isNonExportFunction =
           decl.kind === ts.SyntaxKind.FunctionDeclaration &&
@@ -351,9 +401,9 @@ function emitDocFile(doc: DocFile) {
               : modFlags & ts.ModifierFlags.Static
               ? "static "
               : "𝑜𝑏𝑗.";
-          renderCategory(symb);
+          renderCategory(decl);
           renderSigExport(decl, prefix);
-          renderDocComment(symb);
+          renderDocComment(decl);
         }
         break;
       }
@@ -362,10 +412,9 @@ function emitDocFile(doc: DocFile) {
         const alias = node as ts.TypeAliasDeclaration;
         const modFlags = ts.getCombinedModifierFlags(alias);
         if (modFlags & ts.ModifierFlags.Export) {
-          symb = symb ?? program.getTypeChecker().getSymbolAtLocation(alias.name);
-          renderCategory(symb);
+          renderCategory(alias);
           renderFull(alias);
-          renderDocComment(symb);
+          renderDocComment(alias);
         }
         break;
       }
@@ -383,13 +432,10 @@ function emitDocFile(doc: DocFile) {
             .getTypeChecker()
             .getSymbolAtLocation(program.getSourceFile(refFile));
           const exp = refModule.exports.get(ts.escapeLeadingUnderscores(n.getText()));
-          renderNode(exp.declarations[0], exp);
+          renderNode(exp.declarations[0]);
         });
         break;
       }
-
-      default:
-        console.log("Unused Node " + node.kind);
     }
   }
 
@@ -402,28 +448,8 @@ function emitDocFile(doc: DocFile) {
       write(">");
     }
     write("\n```\n\n");
-    const symb = program.getTypeChecker().getSymbolAtLocation(node.name);
-    renderDocComment(symb);
+    renderDocComment(node);
     node.forEachChild(renderNode);
-  }
-
-  function renderJSDoc(d: ts.JSDoc | ts.JSDocTag): void {
-    if (ts.isJSDoc(d)) {
-      if (d.tags) {
-        d.tags.forEach(renderJSDoc);
-      }
-    } else {
-      if (
-        d.tagName.getText() === "remarks" &&
-        d.comment &&
-        typeof d.comment === "string"
-      ) {
-        write(d.comment);
-      }
-      if (d.tagName.getText() === "remarks" && d.comment && Array.isArray(d.comment)) {
-        renderDisplayParts(d.comment);
-      }
-    }
   }
 
   function renderModulePage(doc: DocFile, node: ts.Node) {

@@ -326,6 +326,10 @@ export function build<T, K, V>(
   val: (old: V | undefined, t: T) => V,
 ): TreeNode<K, V> | null;
 
+/** Efficently create a new tree
+ *
+ * @internal
+ */
 export function build<T, K, V>(
   { compare }: ComparisonConfig<K>,
   items: Iterable<T>,

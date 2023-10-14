@@ -222,6 +222,26 @@ export function lookup<K, V>(
   cfg: HashConfig<K>,
   k: K,
   rootNode: Node<K, V>,
+): V | undefined;
+
+/**
+ * @internal
+ */
+export function lookup<K, V>(
+  cfg: HashConfig<K>,
+  k: K,
+  rootNode: Node<K, V>,
+  hash?: number,
+  shift?: number,
+): V | undefined;
+
+/**
+ * @internal
+ */
+export function lookup<K, V>(
+  cfg: HashConfig<K>,
+  k: K,
+  rootNode: Node<K, V>,
   hash?: number,
   shift?: number,
 ): V | undefined {
@@ -685,6 +705,10 @@ export function build<T, K, V>(
   val: (old: V | undefined, t: T) => V,
 ): [Node<K, V> | null, number];
 
+/** Efficently create a new HAMT
+ *
+ * @internal
+ */
 export function build<T, K, V>(
   cfg: HashConfig<K>,
   items: Iterable<T>,
@@ -810,6 +834,26 @@ function addToSpine<K, V>(
  * If the key exists, `remove` returns a new tree with the entry removed.  Otherwise, `remove` returns the
  * tree root node unchanged.  This can be used to track the size if you wish, decrement the size if the new root
  * is not `===` to the old root.
+ */
+export function remove<K, V>(
+  cfg: HashConfig<K>,
+  k: K,
+  rootNode: Node<K, V> | null,
+): Node<K, V> | null;
+
+/**
+ * @internal
+ */
+export function remove<K, V>(
+  cfg: HashConfig<K>,
+  k: K,
+  rootNode: Node<K, V> | null,
+  hash?: number,
+  shift?: number,
+): Node<K, V> | null;
+
+/**
+ * @internal
  */
 export function remove<K, V>(
   cfg: HashConfig<K>,

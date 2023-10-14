@@ -110,7 +110,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    */
   public static from<K extends HashKey, V extends NotUndefined>(
     items: Iterable<readonly [K, V]>,
-    merge?: (v1: V, v2: V) => V
+    merge?: (v1: V, v2: V) => V,
   ): HashMap<K, V> {
     const cfg = mkHashConfig();
     const [root, size] = from(cfg, items, merge);
@@ -128,7 +128,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    */
   public static build<K extends HashKey, V extends NotUndefined>(
     items: Iterable<V>,
-    key: (v: V) => K
+    key: (v: V) => K,
   ): HashMap<K, V>;
 
   /** Efficently create a new HashMap
@@ -145,13 +145,17 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
   public static build<T, K extends HashKey, V extends NotUndefined>(
     items: Iterable<T>,
     key: (v: T) => K,
-    val: (old: V | undefined, t: T) => V
+    val: (old: V | undefined, t: T) => V,
   ): HashMap<K, V>;
 
+  /** Efficently create a new HashMap
+   *
+   * @internal
+   */
   public static build<T, K extends HashKey, V extends NotUndefined>(
     items: Iterable<T>,
     key: (t: T) => K,
-    val?: (old: V | undefined, t: T) => V
+    val?: (old: V | undefined, t: T) => V,
   ): HashMap<K, V> {
     const cfg = mkHashConfig();
     const [root, size] = build(cfg, items, key, val as (old: V | undefined, t: T) => V);
@@ -274,7 +278,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
         return undefined;
       },
       undefined,
-      this.root
+      this.root,
     );
   }
 
@@ -460,12 +464,12 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * unchanged.
    */
   collectValues<V2 extends NotUndefined>(
-    f: (v: V, k: K) => V2 | null | undefined
+    f: (v: V, k: K) => V2 | null | undefined,
   ): HashMap<K, V2> {
     const [newRoot, newSize] = collectValues(
       f as (v: V, k: K) => V2 | undefined,
       true,
-      this.root
+      this.root,
     );
     if (newRoot === this.root) {
       // if the roots didn't change, then the map is empty or  the values were === which
@@ -490,7 +494,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     const [newRoot, newSize] = collectValues(
       (v, k) => (f(v, k) ? v : undefined),
       false,
-      this.root
+      this.root,
     );
     if (newRoot === this.root) {
       return this;
@@ -533,7 +537,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
       this.cfg,
       merge ?? ((_, s) => s),
       this.root,
-      other.root
+      other.root,
     );
     if (newRoot === this.root) {
       return this;
@@ -609,13 +613,13 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    */
   intersection(
     other: HashMap<K, V>,
-    merge?: (vThis: V, vOther: V, k: K) => V
+    merge?: (vThis: V, vOther: V, k: K) => V,
   ): HashMap<K, V> {
     const [newRoot, size] = intersection(
       this.cfg,
       merge ?? ((_, s) => s),
       this.root,
-      other.root
+      other.root,
     );
     if (newRoot === this.root) {
       return this;
@@ -694,7 +698,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     const [newRoot, numRemoved] = difference(
       this.cfg,
       this.root,
-      (keys as unknown as { root: Node<K, unknown> }).root
+      (keys as unknown as { root: Node<K, unknown> }).root,
     );
     if (newRoot === this.root) {
       return this;
@@ -740,13 +744,13 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    */
   adjust<V2>(
     keysToAdjust: HashMap<K, V2>,
-    adjustVal: (existingVal: V | undefined, helperVal: V2, k: K) => V | undefined
+    adjustVal: (existingVal: V | undefined, helperVal: V2, k: K) => V | undefined,
   ): HashMap<K, V> {
     const [newRoot, numRemoved] = adjust(
       this.cfg,
       adjustVal,
       this.root,
-      keysToAdjust.root
+      keysToAdjust.root,
     );
     if (newRoot === this.root) {
       return this;
