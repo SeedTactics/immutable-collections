@@ -373,7 +373,7 @@ function emitDocFile(doc: DocFile) {
         const cl = node as ts.ClassDeclaration;
         renderCategory(cl);
         renderClassExport(cl);
-        renderDocComment(cl);
+        renderDocComment(cl, true);
         write(
           `[See full class details for ${cl.name.getText()}](./${cl.name
             .getText()
