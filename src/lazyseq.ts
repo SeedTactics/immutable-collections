@@ -388,6 +388,8 @@ export class LazySeq<T> {
    * @category Transformation
    */
   filter(f: (x: T) => boolean): LazySeq<T>;
+
+  /** @internal */
   filter(f: (x: T) => boolean): LazySeq<T> {
     const iter = this.iter;
     return LazySeq.ofIterator(function* () {
@@ -974,6 +976,8 @@ export class LazySeq<T> {
     key: (x: T) => K & HashKey,
     val: (old: S | undefined, t: T) => S,
   ): HashMap<K & HashKey, S>;
+
+  /** @internal */
   buildHashMap<K, S extends NotUndefined>(
     key: (x: T) => K & HashKey,
     val?: (old: S | undefined, t: T) => S,
@@ -1028,6 +1032,8 @@ export class LazySeq<T> {
     key: (x: T) => K & OrderedMapKey,
     val: (old: S | undefined, t: T) => S,
   ): OrderedMap<K & OrderedMapKey, S>;
+
+  /** @internal */
   buildOrderedMap<K, S extends NotUndefined>(
     key: (x: T) => K & OrderedMapKey,
     val?: (old: S | undefined, t: T) => S,
@@ -1112,6 +1118,7 @@ export class LazySeq<T> {
     merge?: (v1: S, v2: S) => S,
   ): { [key: number]: S };
 
+  /** @internal */
   toObject<S>(
     f: (x: T) => readonly [string | number, S],
     merge?: (v1: S, v2: S) => S,
@@ -1239,6 +1246,7 @@ export class LazySeq<T> {
     val: (x: T) => S,
   ): HashMap<K & HashKey, ReadonlyArray<S>>;
 
+  /** @internal */
   toLookup<K, S>(
     key: (x: T) => K & HashKey,
     val?: (x: T) => S,
@@ -1290,6 +1298,8 @@ export class LazySeq<T> {
     key: (x: T) => K & OrderedMapKey,
     val: (x: T) => S,
   ): OrderedMap<K & OrderedMapKey, ReadonlyArray<S>>;
+
+  /** @internal */
   toOrderedLookup<K, S>(
     key: (x: T) => K & OrderedMapKey,
     val?: (x: T) => S,
@@ -1349,6 +1359,8 @@ export class LazySeq<T> {
     val: (x: T) => S,
     mergeVals?: (v1: S, v2: S) => S,
   ): HashMap<K1 & HashKey, HashMap<K2 & HashKey, S>>;
+
+  /** @internal */
   toLookupMap<K1, K2, S extends NotUndefined>(
     key1: (x: T) => K1 & HashKey,
     key2: (x: T) => K2 & HashKey,
@@ -1406,6 +1418,7 @@ export class LazySeq<T> {
     mergeVals?: (v1: S, v2: S) => S,
   ): OrderedMap<K1 & OrderedMapKey, OrderedMap<K2 & OrderedMapKey, S>>;
 
+  /** @internal */
   toLookupOrderedMap<K1, K2, S extends NotUndefined>(
     key1: (x: T) => K1 & OrderedMapKey,
     key2: (x: T) => K2 & OrderedMapKey,
@@ -1449,6 +1462,8 @@ export class LazySeq<T> {
    * [JS Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map).
    */
   toRLookup<K, S>(key: (x: T) => K, val: (x: T) => S): ReadonlyMap<K, ReadonlyArray<S>>;
+
+  /** @internal */
   toRLookup<K, S>(
     key: (x: T) => K,
     val?: (x: T) => S,
