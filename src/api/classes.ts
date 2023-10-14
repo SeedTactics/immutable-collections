@@ -10,9 +10,14 @@
  *
  * ```ts
  * import { HashMap } from "@seedtactics/immutable-collections";
+ *
  * const h = HashMap.from([ [1, "Hello"], [2, "World"] ]);
  * console.log(h.get(1)); // prints Hello
  * console.log(h.get(2)); // prints World
+ *
+ * const h2 = h.set(1, "Goodbye");
+ * console.log(h2.get(1)); // prints Goodbye
+ * console.log(h.get(1)); // prints Hello
  * ```
  *
  * @module classes
