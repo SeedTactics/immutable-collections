@@ -67,3 +67,7 @@ div.seedtactics-api-summary {
 div.seedtactics-api-remarks {
   margin-left: 1em;
 }
+
+div.language-ts.theme-code-block, div.language-typescript.theme-code-block {
+  box-shadow: none;
+}
