@@ -40,7 +40,7 @@ is, when two keys have the same hash, the HAMT will store the colliding keys and
 values in a balanced tree using functions from the tree submodule. This is
 internal to the module and you don't need to interact with or even know about this to
 use the library, but it does impact the bundle size. For example, if you import
-the [HAMT.union](api/hamt#union) function, the tree union function will also be
+the [HAMT.union](api/hamt#union) function, the [tree union](api/tree#union) function will also be
 included in the bundle since it is used internally by `HAMT.union`. This is fully
 exposed to the bundler tree-shaking, so if you don't use `HAMT.union` but only use
 for example [HAMT.alter](api/hamt#alter), then the tree union function will not appear
