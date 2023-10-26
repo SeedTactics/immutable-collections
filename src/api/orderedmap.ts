@@ -666,7 +666,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     }
   }
 
-  /** Create a new HashMap which combines all entries in a sequence of HashMaps
+  /** Create a new OrderedMap which combines all entries in a sequence of OrderedMaps
    *
    * @category Bulk Modification
    *
@@ -701,13 +701,13 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
     }
   }
 
-  /** Returns a new HashMap which contains only entries whose keys are in both OrderedMaps
+  /** Returns a new OrderedMap which contains only entries whose keys are in both OrderedMaps
    *
    * @category Bulk Modification
    *
    * @remarks
    * `intersection` produces a new OrderedMap which contains all the entries which have keys in
-   * both HashMaps.  For each such entry, the merge function is used to determine the resulting value.
+   * both OrderedMaps.  For each such entry, the merge function is used to determine the resulting value.
    * If the merge function is not specified, the value from the `other` is used.
    *
    * `intersection` guarantees that if the resulting OrderedMap is equal to `this`, then the OrderedMap object
