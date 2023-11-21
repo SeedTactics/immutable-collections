@@ -32,9 +32,9 @@ or [HashMap](api/HashMap), these objects have several methods which create a Laz
 [HashMap.toLazySeq](api/HashMap#toLazySeq) or [OrderedMap.toDescLazySeq](api/OrderedMap#toDescLazySeq).
 
 If the data is in a javascript array or anything else that supports the
-[Iterater protocol](), use [LazySeq.of](api/LazySeq.of). If the data is in a
-javascript object, use [LazySeq.ofObject](api/LazySeq.ofObject) which will
-iterate the [own]() properties of the object. Finally, there is a
+Iterater protocol, use [LazySeq.of](api/LazySeq#of). If the data is in a
+javascript object, use [LazySeq.ofObject](api/LazySeq#ofObject) which will
+iterate the own properties of the object. Finally, there is a
 [LazySeq.range](api/LazySeq#range) which allows creating LazySeqs of integer
 ranges.
 

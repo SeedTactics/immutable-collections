@@ -588,7 +588,7 @@ export function collectValues<K, V1, V2>(
 
 /** The result of splitting a tree into keys above and below a given key
  *
- * @category Lookup
+ * @category Views
  */
 export type SplitResult<K, V> = {
   readonly below: TreeNode<K, V> | null;
@@ -605,7 +605,7 @@ export type SplitResult<K, V> = {
  *
  * Runs in O(log n) time.
  *
- * @category Lookup
+ * @category Views
  */
 export function split<K, V>(
   { compare }: ComparisonConfig<K>,
@@ -645,7 +645,7 @@ export function split<K, V>(
  *
  * This runs in O(n) time.
  *
- * @category Lookup
+ * @category Views
  */
 export function partition<K, V>(
   f: (k: K, v: V) => boolean,
@@ -676,7 +676,7 @@ export function partition<K, V>(
 
 /** The combination of a single key-value and a balanced tree of all remaining values
  *
- * @category Lookup
+ * @category Views
  */
 export type ViewResult<K, V> = {
   k: K;
@@ -686,7 +686,7 @@ export type ViewResult<K, V> = {
 
 /** Extract the minimum key and compute a balanced tree of all other values
  *
- * @category Lookup
+ * @category Views
  *
  * @remarks
  * `minView` finds the minimum key and then removes it, producing a new balanced
@@ -701,7 +701,7 @@ export function minView<K, V>(root: TreeNode<K, V>): ViewResult<K, V> {
 
 /** Extract the maximum key and compute a balanced tree of all other values
  *
- * @category Lookup
+ * @category Views
  *
  * @remarks
  * `maxView` finds the maximum key and then removes it, producing a new balanced
