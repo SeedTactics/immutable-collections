@@ -16,7 +16,7 @@ faster performance by implementing specialized operations.
 To use the class-based API, import from the `@seedtactics/immutable-collections` module directly; the [main API docs](api/classes) show all exports.
 
 ```ts
-import { HashMap } from "@seedtactics/immutable-collections";
+import { OrderedMap } from "@seedtactics/immutable-collections";
 ```
 
 ## Functions
@@ -42,9 +42,8 @@ internal to the module and you don't need to interact with or even know about th
 use the library, but it does impact the bundle size. For example, if you import
 the [HAMT.union](api/hamt#union) function, the [tree union](api/tree#union) function will also be
 included in the bundle since it is used internally by `HAMT.union`. This is fully
-exposed to the bundler tree-shaking, so if you don't use `HAMT.union` but only use
-for example [HAMT.alter](api/hamt#alter), then the tree union function will not appear
-in the resulting bundle.
+exposed to the bundler tree-shaking, so if you don't use `HAMT.union` then the tree
+union function will not appear in the resulting bundle.
 
 Because the HAMT uses the tree submodule internally, the smallest possible bundle
 is to not import HAMT at all and just use the balanced binary tree only.

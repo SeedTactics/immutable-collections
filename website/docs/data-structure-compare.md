@@ -41,17 +41,19 @@ Comparing the performance:
 
 - Less than about 50 entries, all three approaches perform basically the same. Using the builtin Map is
   probably the easiest to use with immer, but the builtin Map does not have things like [bulk operations](bulk-operations)
-  or other conveniences.
+  or other conveniences. These bulk operations increase code clarity by more direclty expressing the intent of the code,
+  so even ignoring performance there is a preference for OrderedMap or HashMap.
 
 - Less than about 10,000 entries, the HashMap and OrderedMap perform about the same; benchmarks of the two are
   within the margin of error of each other. For lookup and initial construction, the builtin Map is about 4x
   faster than the HashMap or OrderedMap. For any modification, both the HashMap and OrderedMap are much, much
   faster. Both OrderedMap and HashMap will only modify a few nodes in the tree using structural sharing while
-  immer will make a full copy which is very slow.
+  immer will make a full copy which is slow.
 
 - Between 10,000 and 50,000 entries, the HashMap starts to perform better than the OrderedMap (as long as there
-  are only a few key hash collisions), although the performance benifit is only about 20% or so at 50,000 entries.
-  If you are doing any modification at all, the builtin Map should not even be considered.
+  are only a few key hash collisions), although the performance benifit is only about 20% or so at 50,000 entries
+  and OrderedMap still performs very well. If you are doing any modification at all, the builtin Map should
+  not even be considered.
 
 - Above 50,000 entries the HashMap is a clear winner in performance as long as you can keep hash collisions
   to a minimum, although the OrderedMap still performs well so if you need the extra features of OrderedMap,

@@ -27,8 +27,8 @@ import { HashMap, OrderedMap } from "@seedtactics/immutable-collections";
 ```
 
 For smaller bundler size but slightly less ergonomic to use, import the [hamt](api/hamt) or [tree](api/tree) submodules.
-See the [bundle size docs](bundle-size) for full details comparing the two APIs. You should only use one of the two APIs;
-they export equivalent functionality.
+See the [bundle size docs](bundle-size) for full details comparing the two APIs. You should only use either the class based API
+or the function API; they export equivalent functionality.
 
 ```ts
 import * as HAMT from "@seedtactics/immutable-collections/hamt";

@@ -206,7 +206,7 @@ function rotateLeft<K, V>(
   k: K,
   v: V,
   left: TreeNode<K, V>,
-  right: TreeNode<K, V>
+  right: TreeNode<K, V>,
 ): TreeNode<K, V> {
   const rl = right.left!;
   const rr = right.right!;
@@ -253,7 +253,7 @@ function rotateRight<K, V>(
   k: K,
   v: V,
   left: TreeNode<K, V>,
-  right: TreeNode<K, V>
+  right: TreeNode<K, V>,
 ): TreeNode<K, V> {
   const ll = left.left!;
   const lr = left.right!;
@@ -301,7 +301,7 @@ function combineAfterLeftIncrease<K, V>(
   left: TreeNode<K, V> | null,
   k: K,
   v: V,
-  right: TreeNode<K, V> | null
+  right: TreeNode<K, V> | null,
 ): TreeNode<K, V> {
   if (right === null) {
     if (left === null) {
@@ -331,7 +331,7 @@ function combineAfterRightIncrease<K, V>(
   left: TreeNode<K, V> | null,
   k: K,
   v: V,
-  right: TreeNode<K, V> | null
+  right: TreeNode<K, V> | null,
 ): TreeNode<K, V> {
   if (left === null) {
     if (right === null) {
@@ -361,7 +361,7 @@ export function combineAfterInsertOrRemove<K, V>(
   left: TreeNode<K, V> | null,
   k: K,
   v: V,
-  right: TreeNode<K, V> | null
+  right: TreeNode<K, V> | null,
 ): TreeNode<K, V> {
   if (left === null) {
     if (right === null) {
@@ -401,7 +401,7 @@ export function combineDifferentSizes<K, V>(
   left: TreeNode<K, V> | null,
   k: K,
   v: V,
-  right: TreeNode<K, V> | null
+  right: TreeNode<K, V> | null,
 ): TreeNode<K, V> {
   if (left === null) return insertMin(k, v, right);
   if (right === null) return insertMax(k, v, left);
@@ -410,7 +410,7 @@ export function combineDifferentSizes<K, V>(
       combineDifferentSizes(left, k, v, right.left),
       right.key,
       right.val,
-      right.right
+      right.right,
     );
   }
   if (left.size > delta * right.size) {
@@ -418,14 +418,14 @@ export function combineDifferentSizes<K, V>(
       left.left,
       left.key,
       left.val,
-      combineDifferentSizes(left.right, k, v, right)
+      combineDifferentSizes(left.right, k, v, right),
     );
   }
   return { key: k, val: v, size: 1 + left.size + right.size, left, right };
 }
 
 export function removeMin<K, V>(
-  node: TreeNode<K, V>
+  node: TreeNode<K, V>,
 ): { k: K; v: V; rest: TreeNode<K, V> | null } {
   const left = node.left;
   if (left === null) {
@@ -438,7 +438,7 @@ export function removeMin<K, V>(
 }
 
 export function removeMax<K, V>(
-  node: TreeNode<K, V>
+  node: TreeNode<K, V>,
 ): { k: K; v: V; rest: TreeNode<K, V> | null } {
   const right = node.right;
   if (right === null) {
@@ -453,7 +453,7 @@ export function removeMax<K, V>(
 // combines two trees that are individually balanced and also the size is balanced between left and right
 export function glueSizeBalanced<K, V>(
   left: TreeNode<K, V> | null,
-  right: TreeNode<K, V> | null
+  right: TreeNode<K, V> | null,
 ): TreeNode<K, V> | null {
   if (left === null) return right;
   if (right === null) return left;
@@ -469,7 +469,7 @@ export function glueSizeBalanced<K, V>(
 // combines two trees that are individually balanced but the size of left compared to right might be unbalanced
 export function glueDifferentSizes<K, V>(
   left: TreeNode<K, V> | null,
-  right: TreeNode<K, V> | null
+  right: TreeNode<K, V> | null,
 ): TreeNode<K, V> | null {
   if (left === null) return right;
   if (right === null) return left;
@@ -478,7 +478,7 @@ export function glueDifferentSizes<K, V>(
       glueDifferentSizes(left, right.left),
       right.key,
       right.val,
-      right.right
+      right.right,
     );
   }
   if (left.size > delta * right.size) {
@@ -486,12 +486,13 @@ export function glueDifferentSizes<K, V>(
       left.left,
       left.key,
       left.val,
-      glueDifferentSizes(left.right, right)
+      glueDifferentSizes(left.right, right),
     );
   }
   return glueSizeBalanced(left, right);
 }
 
+// create a tree with two entries
 export function two<K, V>(cmp: number, k1: K, v1: V, k2: K, v2: V): TreeNode<K, V> {
   if (cmp < 0) {
     return {
@@ -555,7 +556,7 @@ function mutateRotateRight<K, V>(node: MutableTreeNode<K, V>): MutableTreeNode<K
 }
 
 export function mutateBalanceAfterLeftIncrease<K, V>(
-  node: MutableTreeNode<K, V>
+  node: MutableTreeNode<K, V>,
 ): MutableTreeNode<K, V> {
   // mutate is only used to insert (not remove), so after left increase we know left is not null
   const leftSize = node.left!.size;
@@ -577,7 +578,7 @@ export function mutateBalanceAfterLeftIncrease<K, V>(
 }
 
 export function mutateBalanceAfterRightIncrease<K, V>(
-  node: MutableTreeNode<K, V>
+  node: MutableTreeNode<K, V>,
 ): MutableTreeNode<K, V> {
   const leftSize = node.left?.size ?? 0;
   // mutate is only used to insert (not remove), so after right increase we know right is not null

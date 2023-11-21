@@ -1,8 +1,8 @@
 # Bulk Operations
 
 Both [HashMap](api/hashmap) and [OrderedMap](api/orderedmap) support bulk modification operations,
-which are methods which allow changing many keys at once. While you can avoid the bluk modification
-operations and just use [set](api/hashmap#set), the bulk modification operations have two advantages.
+which are methods which allow changing many keys at once. While you can forgo the bluk modification
+operations and just use [set](api/hashmap#set), the bulk modification operations have several advantages.
 First, they provide clarity, can simplify the code, and more directly express the intent of the code.
 Second, for large data structures, the bulk modification operations are more efficient than modifying
 each key individually.
@@ -44,10 +44,10 @@ extraction functions. These extraction functions are called for every single ent
 many keys and values at once. Consider you have an existing map and you want to add several more keys
 and values while also performing some logic on each existing value.
 
-The first step is to create a new map with the entires to add using a method
+The first step is to create a new map with the entires to add using a bulk creation method
 described above. The reason that union requires the new entries as a map
-instead of say an `Iterable` is that union can be very efficient when say the
-new entries are already hashed and organized by hash, or when the new entries
+instead of say an `Iterable` is that union can be very efficient when the
+new entries are already hashed and organized by hash or when the new entries
 are already balanced by key.
 
 Once the entries to add are in a map, then call `union`. The `union` method accepts
@@ -79,8 +79,8 @@ a map or a set depending on which is more convenient.
 
 #### Adjust
 
-[HashMap.adjust](api/hashmap#adjust) and [OrderedMap.adjust](api/orderedmap#adjust) is the most general
-bulk operation. It allows adding, modifying, and deleting many keys and values at once. Adjust accepts
+[HashMap.adjust](api/hashmap#adjust) and [OrderedMap.adjust](api/orderedmap#adjust) are the most general
+bulk operations. Adjust allows adding, modifying, and deleting many keys and values at once. Adjust accepts
 two parameters:
 
 - First, a map of keys to adjust with arbitrary helper values. As before, the map of keys to adjust
@@ -90,3 +90,17 @@ two parameters:
 - Second, a function `adjustVal` which is called for each key to adjust along with the existing value (or undefined)
   and the helper value. This `adjustVal` function returns either the updated value to put into the map or undefined
   to remove the key and value.
+
+Adjust is more general than union/intersection/difference because you can
+provide custom logic in the `adjustVal` which is executed for each key and
+entry, and importantly the `adjustVal` custom logic gets access to the values
+from both maps. Union is instead provided a merge function but the merge
+function is called only for duplicate keys, so you don't get to provide custom
+logic when a key is missing in one of the maps.
+
+This distinction should guide your choice between union and adjust; the main
+benefit of the bulk operations is code clarity so if there is some logic which
+is needed which requires both (possibly undefined) values from both maps, put
+the logic into the `adjustVal` function and use adjust. (As a secondary
+consideration, union/intersection/difference are slightly faster than adjust so
+if you don't need the extra features, use union/intersection/difference.)
