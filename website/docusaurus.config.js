@@ -8,7 +8,7 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: "Immutable Collections for Typescript",
-  tagline: "Dinosaurs are cool",
+  tagline: "Efficient immutable balanced tree and hash array mapped tree",
   url: "https://seedtactics.github.io",
   baseUrl: "/immutable-collections/",
   onBrokenLinks: "throw",
@@ -46,8 +46,8 @@ const config = {
       navbar: {
         title: "immutable-collections",
         logo: {
-          alt: "My Site Logo",
-          src: "img/logo.svg",
+          alt: "Project Logo",
+          src: "img/logo-small.jpg",
         },
         items: [
           {
@@ -78,6 +78,14 @@ const config = {
               {
                 label: "Introduction",
                 to: "/docs/intro",
+              },
+              {
+                label: "Comparison",
+                to: "/docs/data-structure-compare",
+              },
+              {
+                label: "Bulk Operations",
+                to: "/docs/bulk-operations",
               },
             ],
           },

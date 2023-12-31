@@ -35,7 +35,7 @@ div.seedtactics-api-export {
   display: flex;
   gap: 0.2em;
   background-color: var(--seedtactics-export-color);
-  border-top: 1px solid black;
+  border-top: 2px solid black;
   align-items: center;
   margin-top: 1.5em;
   scroll-margin-top: calc(var(--ifm-navbar-height) + 1rem);
