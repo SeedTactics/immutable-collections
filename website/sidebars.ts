@@ -1,7 +1,5 @@
-// @ts-check
-
-/** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
-const sidebars = {
+import { SidebarsConfig } from "@docusaurus/plugin-content-docs";
+const sidebars: SidebarsConfig = {
   docsSidebar: [
     { type: "doc", id: "intro", label: "Introduction" },
     {
@@ -18,5 +16,4 @@ const sidebars = {
   ],
 };
 
-// eslint-disable-next-line no-undef
-module.exports = sidebars;
+export default sidebars;
