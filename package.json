@@ -3,6 +3,7 @@
   "version": "0.9.3",
   "author": "John Lenz",
   "license": "BSD-3-Clause",
+  "homepage": "https://immutable-collections.seedtactics.com/immutable-collections",
   "type": "module",
   "exports": {
     ".": "./dist/api/classes.js",

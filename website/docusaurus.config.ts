@@ -7,7 +7,7 @@ const darkCodeTheme = themes.dracula;
 const config: Config = {
   title: "Immutable Collections for Typescript",
   tagline: "Efficient immutable balanced tree and hash array mapped tree",
-  url: "https://seedtactics.github.io",
+  url: "https://immutable-collections.seedtactics.com",
   baseUrl: "/immutable-collections/",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
