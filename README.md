@@ -19,8 +19,8 @@ Zero dependency library for immutable collections in typescript.
 
 ## Docs
 
-See the [website](https://immutable-collections.seedtactics.com/immutable-collections) for full
-[API docs](https://immutable-collections.seedtactics.com/immutable-collections/docs/api/classes).
+See the [website](https://immutable-collections.seedtactics.com) for full
+[API docs](https://immutable-collections.seedtactics.com/docs/api/classes).
 
 ## Install
 
@@ -29,7 +29,7 @@ Install with npm/yarn/pnpm from the [npm registry](https://www.npmjs.com/package
 ## Use
 
 To use the class-based API, import from the `@seedtactics/immutable-collections` module directly.
-See the [comparison docs](https://immutable-collections.seedtactics.com/immutable-collections/docs/data-structure-compare)
+See the [comparison docs](https://immutable-collections.seedtactics.com/docs/data-structure-compare)
 to decide between a HashMap or an OrderedMap.
 
 ```ts

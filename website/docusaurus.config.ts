@@ -8,7 +8,7 @@ const config: Config = {
   title: "Immutable Collections for Typescript",
   tagline: "Efficient immutable balanced tree and hash array mapped tree",
   url: "https://immutable-collections.seedtactics.com",
-  baseUrl: "/immutable-collections/",
+  baseUrl: "/",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
   favicon: "img/favicon.ico",
