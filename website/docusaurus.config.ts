@@ -13,10 +13,6 @@ const config: Config = {
   onBrokenMarkdownLinks: "warn",
   favicon: "img/favicon.ico",
 
-  // GitHub pages deployment config.
-  organizationName: "SeedTactics",
-  projectName: "immutable-collections",
-
   i18n: {
     defaultLocale: "en",
     locales: ["en"],
