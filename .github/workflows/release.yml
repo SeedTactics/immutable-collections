@@ -91,15 +91,14 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Push changes to repository
+        run: git push origin && git push --tags
+
       - name: Publish
         run: pnpm publish --access public --tag ${{ env.RELEASE_TAG }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPMJS_ACCESS_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
-
-      - name: Push changes to repository
-        run: |
-          git push origin && git push --tags
 
       - id: get-changelog
         name: Get version changelog
