@@ -2,7 +2,10 @@ name: Deploy docusaurus website
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - "main"
+    paths:
+      - "website/**"
 
 concurrency:
   group: "pages"
@@ -41,9 +44,6 @@ jobs:
 
       - name: Install website deps
         run: pnpm --dir website install --frozen-lockfile
-
-      - name: Build doc files
-        run: pnpm --dir website run generate
 
       - name: Build site
         run: pnpm --dir website run build
