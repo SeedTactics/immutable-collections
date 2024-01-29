@@ -57,3 +57,13 @@ Instead of using typedoc, we have a custom script which converts the tsdoc comme
 into markdown: [website/tsdoc-to-mdx.mts](website/tsdoc-to-mdx.mts). This only supports a subset of
 tsdoc at the moment. Run `pnpm run generate` in the website subdirectory to generate the markdown files
 and then `pnpm run start` to start the docuasurus dev server.
+
+## Related Projects
+
+- [hamt_plus](https://github.com/mattbierner/hamt_plus) - A javascript hash array mapped trie. immutable-collections was
+  initially motivated by converting hamt_plus to typescript so as to add in additional operations.
+- [Haskell unordered containers](https://github.com/haskell-unordered-containers/unordered-containers) - An implementation
+  of a hash array mapped trie in Haskell. The operations and algorithms in the Haskell version influenced the implementation in this library.
+- [Haskell containers](https://github.com/haskell/containers) - An implementation of many immutable data structures in Haskell.
+  In particular the implementation of the balanced tree influenced the algorithms and implementation in this library.
+- [funkia/list](https://github.com/funkia/list) - A high-quality immutable list library.
