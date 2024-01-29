@@ -46,18 +46,18 @@ const features: FeatureItem[] = [
       <p>
         This library contains an implementation of an efficient immutable balanced binary
         tree. It supports O(log n) insert and delete, along with many more bulk
-        modification operations. Keys are kept in sorted order, allowing interation in
+        modification operations. Keys are kept in sorted order, allowing iteration in
         ascending and descending order of keys.
       </p>
     ),
   },
   {
     img: <Hashtag fontSize="x-large" color="var(--ifm-color-primary-dark)" />,
-    title: "Hash Array Mapped Tree",
+    title: "Hash Array Mapped Trie",
     description: (
       <p>
         This library contains an implementation of an efficient immutable hash array
-        mapped tree for O(1) operations, along with efficient bulk modification
+        mapped trie for O(1) operations, along with efficient bulk modification
         operations.
       </p>
     ),
