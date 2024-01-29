@@ -36,7 +36,7 @@ The HashSet implements this efficiently using structural sharing and does not re
 
 ### Creating Hash Sets
 
-<Export anchor="empty" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L54">
+<Export anchor="empty" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L54">
 
 ```typescript
 static empty<T extends HashKey>(): HashSet<T>
@@ -63,7 +63,7 @@ or using various methods on [LazySeq](lazyseq#LazySeq) to convert a `LazySeq` to
 
 </Remarks>
 
-<Export anchor="ofKeys" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L66">
+<Export anchor="ofKeys" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L66">
 
 ```typescript
 static ofKeys<K extends HashKey, V>(map: HashMap<K, V>): HashSet<K>
@@ -85,7 +85,7 @@ This function is O(1) and very fast because the backing data structure is reused
 
 </Remarks>
 
-<Export anchor="from" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L80">
+<Export anchor="from" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L80">
 
 ```typescript
 static from<T extends HashKey>(items: Iterable<T>): HashSet<T>
@@ -100,7 +100,7 @@ Efficiently create a new HashSet from a collection of items
 </Summary>
 
 
-<Export anchor="build" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L105">
+<Export anchor="build" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L105">
 
 ```typescript
 static build<T extends HashKey, R>(
@@ -126,7 +126,7 @@ Efficiently create a new HashSet from a collection of items and a key extraction
 
 ### IReadOnlySet interface
 
-<Export anchor="size" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L131">
+<Export anchor="size" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L131">
 
 ```typescript
 𝑜𝑏𝑗.size: number
@@ -141,7 +141,7 @@ size is a readonly property containing the number of entries in the HashSet.
 </Summary>
 
 
-<Export anchor="has" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L137">
+<Export anchor="has" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L137">
 
 ```typescript
 𝑜𝑏𝑗.has(t: T): boolean
@@ -156,7 +156,7 @@ Returns true if the item is in the HashSet
 </Summary>
 
 
-<Export anchor="Symbol_iterator" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L150">
+<Export anchor="Symbol_iterator" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L150">
 
 ```typescript
 𝑜𝑏𝑗.[Symbol.iterator](): IterableIterator<T>
@@ -178,7 +178,7 @@ all the items, but the order of iteration is an implementation detail and cannot
 
 </Remarks>
 
-<Export anchor="entries" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L163">
+<Export anchor="entries" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L163">
 
 ```typescript
 𝑜𝑏𝑗.entries(): IterableIterator<[T, T]>
@@ -201,7 +201,7 @@ method.)  The order of iteration is an implementation detail and cannot be relie
 
 </Remarks>
 
-<Export anchor="keys" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L175">
+<Export anchor="keys" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L175">
 
 ```typescript
 𝑜𝑏𝑗.keys(): IterableIterator<T>
@@ -223,7 +223,7 @@ Both `keys` and `values` are equivalent for a `HashSet`.
 
 </Remarks>
 
-<Export anchor="values" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L187">
+<Export anchor="values" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L187">
 
 ```typescript
 𝑜𝑏𝑗.values(): IterableIterator<T>
@@ -245,7 +245,7 @@ Both `keys` and `values` are equivalent for a `HashSet`.
 
 </Remarks>
 
-<Export anchor="forEach" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L200">
+<Export anchor="forEach" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L200">
 
 ```typescript
 𝑜𝑏𝑗.forEach(f: (val: T, val2: T, set: HashSet<T>) => void): void
@@ -270,7 +270,7 @@ The order of iteration implementation detail and cannot be relied upon.
 
 ### Iteration
 
-<Export anchor="fold" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L215">
+<Export anchor="fold" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L215">
 
 ```typescript
 𝑜𝑏𝑗.fold<R>(f: (acc: R, val: T) => R, zero: R): R
@@ -285,7 +285,7 @@ Reduce all the items in the HashSet to a single value
 </Summary>
 
 
-<Export anchor="toLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L223">
+<Export anchor="toLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L223">
 
 ```typescript
 𝑜𝑏𝑗.toLazySeq(): LazySeq<T>
@@ -302,7 +302,7 @@ Creates a LazySeq which iterates all the items in the HashSet
 
 ### Add and Delete
 
-<Export anchor="add" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L235">
+<Export anchor="add" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L235">
 
 ```typescript
 𝑜𝑏𝑗.add(t: T): HashSet<T>
@@ -323,7 +323,7 @@ If the item already exists, then the HashSet object instance is returned unchang
 
 </Remarks>
 
-<Export anchor="delete" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L251">
+<Export anchor="delete" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L251">
 
 ```typescript
 𝑜𝑏𝑗.delete(t: T): HashSet<T>
@@ -346,7 +346,7 @@ If the item does not exist, then the HashSet object instance is returned unchang
 
 ### Set Operations
 
-<Export anchor="union" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L269">
+<Export anchor="union" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L269">
 
 ```typescript
 𝑜𝑏𝑗.union(other: HashSet<T>): HashSet<T>
@@ -369,7 +369,7 @@ instance is returned unchanged.
 
 </Remarks>
 
-<Export anchor="union2" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L288">
+<Export anchor="union2" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L288">
 
 ```typescript
 static union<T extends HashKey>(...sets: readonly HashSet<T>[]): HashSet<T>
@@ -393,7 +393,7 @@ then the HashSet object instance is returned unchanged.
 
 </Remarks>
 
-<Export anchor="append" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L319">
+<Export anchor="append" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L319">
 
 ```typescript
 𝑜𝑏𝑗.append(items: Iterable<T>): HashSet<T>
@@ -417,7 +417,7 @@ already have a HashSet, HashMap, or [HashSet.build](#build) is more ergonomic, y
 
 </Remarks>
 
-<Export anchor="intersection" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L332">
+<Export anchor="intersection" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L332">
 
 ```typescript
 𝑜𝑏𝑗.intersection(other: HashSet<T>): HashSet<T>
@@ -440,7 +440,7 @@ instance is returned unchanged.
 
 </Remarks>
 
-<Export anchor="intersection2" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L356">
+<Export anchor="intersection2" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L356">
 
 ```typescript
 static intersection<T extends HashKey>(
@@ -466,7 +466,7 @@ instance is returned unchanged.
 
 </Remarks>
 
-<Export anchor="difference" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L388">
+<Export anchor="difference" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L388">
 
 ```typescript
 𝑜𝑏𝑗.difference(other: HashSet<T>): HashSet<T>
@@ -492,7 +492,7 @@ instance is returned unchanged.
 
 ### Transformation
 
-<Export anchor="filter" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L406">
+<Export anchor="filter" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L406">
 
 ```typescript
 𝑜𝑏𝑗.filter(f: (k: T) => boolean): HashSet<T>
@@ -515,7 +515,7 @@ unchanged.
 
 </Remarks>
 
-<Export anchor="transform" src="https://github.com/SeedTactics/immutable-collections/blob/ba23f336591d96d6e54c6e5c1f74d61cb42c53fe/src/api/hashset.ts#L428">
+<Export anchor="transform" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L428">
 
 ```typescript
 𝑜𝑏𝑗.transform<U>(f: (s: HashSet<T>) => U): U
