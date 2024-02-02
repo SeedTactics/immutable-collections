@@ -13,6 +13,8 @@ import {
   foldl,
   foldr,
   intersection,
+  isDisjoint,
+  isKeySubset,
   iterateAsc,
   iterateDesc,
   lookup,
@@ -22,6 +24,7 @@ import {
   minView,
   partition,
   split,
+  symmetricDifference,
   TreeNode,
   union,
 } from "../data-structures/tree.js";
@@ -577,6 +580,67 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
     } else {
       return new OrderedSet(this.cfg, newRoot);
     }
+  }
+
+  /** Returns an OrderedSet which contains only items which appear in exactly one of the two sets
+   *
+   * @category Set Operations
+   *
+   * @remarks
+   * symmetricDifference produces a new set which contains all the items
+   * appear in exactly one of this and other. If this or other are empty, the non-empty
+   * set is returned unchanged.
+   *
+   * Runs in time O(m log(n/m)) where m is the size of the smaller set and n is the size of the larger set.
+   */
+  symmetricDifference(other: OrderedSet<T>): OrderedSet<T> {
+    const newRoot = symmetricDifference(this.cfg, this.root, other.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedSet(this.cfg, newRoot);
+    }
+  }
+
+  /** Returns true if each item of this exists in largerSet
+   *
+   * @category Set Operations
+   *
+   * @remarks
+   * isSubsetOf checks if this is a subset of largerSet, that is, if every item in this is also in largerSet.
+   *
+   * Runs in time O(m log(n/m)) where m is the size of this and n is the size of largerSet.
+   */
+  isSubsetOf(largerSet: OrderedSet<T>): boolean {
+    return isKeySubset(this.cfg, this.root, largerSet.root);
+  }
+
+  /** Returns true if each item of smallerSet exists in this
+   *
+   * @category Set Operations
+   *
+   * @remarks
+   * isSupersetOf checks if this is a superset of smallerSet, that is, if every item in
+   * smallerSet also exists in largerSet.
+   *
+   * Runs in time O(m log(n/m)) where m is the size of this and n is the size of largerSet.
+   */
+  isSupersetOf(smallerSet: OrderedSet<T>): boolean {
+    return isKeySubset(this.cfg, smallerSet.root, this.root);
+  }
+
+  /** Returns true if each item exists in exactly one of the two sets
+   *
+   * @category Set Operations
+   *
+   * @remarks
+   * isDisjointFrom checks if this is disjoint from other, that is,
+   * the intersection is empty.
+   *
+   * Runs in time O(m log(n/m)) where m is the size of this and n is the size of largerSet.
+   */
+  isDisjointFrom(other: OrderedSet<T>): boolean {
+    return isDisjoint(this.cfg, this.root, other.root);
   }
 
   private cfg: ComparisonConfig<T>;

@@ -28,6 +28,7 @@ import {
   lookupMin,
   lookupMax,
   partition,
+  symmetricDifference,
 } from "../data-structures/tree.js";
 import { OrderedSet } from "./orderedset.js";
 
@@ -776,6 +777,26 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    */
   difference<V2>(other: OrderedMap<K, V2>): OrderedMap<K, V> {
     const newRoot = difference(this.cfg, this.root, other.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedMap(this.cfg, newRoot);
+    }
+  }
+
+  /** Returns an OrderedMap which contains only entries whose key appear in exactly one of the two maps
+   *
+   * @category Bulk Modification
+   *
+   * @remarks
+   * symmetricDifference produces a new OrderedMap which contains all the entries whose keys
+   * appear in exactly one of this and other. If this or other are empty, the non-empty
+   * tree is returned unchanged.
+   *
+   * Runs in time O(m log(n/m)) where m is the size of the smaller map and n is the size of the larger map.
+   */
+  symmetricDifference(other: OrderedMap<K, V>): OrderedMap<K, V> {
+    const newRoot = symmetricDifference(this.cfg, this.root, other.root);
     if (newRoot === this.root) {
       return this;
     } else {
