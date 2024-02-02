@@ -16,6 +16,7 @@ import {
   mutateInsert,
   remove,
   union,
+  adjust,
 } from "../data-structures/hamt.js";
 import type { HashMap } from "./hashmap.js";
 
@@ -394,6 +395,20 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
     }
   }
 
+  symmetricDifference(other: HashSet<T>): HashSet<T> {
+    const [newRoot, numRemoved] = adjust(
+      this.cfg,
+      (old) => (old === undefined ? true : undefined),
+      this.root,
+      other.root,
+    );
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new HashSet(this.cfg, newRoot, this.size - numRemoved);
+    }
+  }
+
   /** Remove items from the HashSet that return false from a predicate
    *
    * @category Transformation
@@ -427,6 +442,31 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    */
   transform<U>(f: (s: HashSet<T>) => U): U {
     return f(this);
+  }
+
+  isSubsetOf(other: HashSet<T>): boolean {
+    if (this.size > other.size) return false;
+    for (const k of this) {
+      if (!other.has(k)) return false;
+    }
+    return true;
+  }
+
+  isSupersetOf(other: HashSet<T>): boolean {
+    return other.isSubsetOf(this);
+  }
+
+  isDisjointFrom(other: HashSet<T>): boolean {
+    if (this.size <= other.size) {
+      for (const k of this) {
+        if (other.has(k)) return false;
+      }
+    } else {
+      for (const k of other) {
+        if (this.has(k)) return false;
+      }
+    }
+    return true;
   }
 
   // Creating new sets
