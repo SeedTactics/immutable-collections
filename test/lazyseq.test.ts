@@ -75,7 +75,7 @@ describe("LazySeq", () => {
     const agg = seq.aggregate(
       (i) => Math.floor(i / 2),
       (i) => i + 40,
-      (i, j) => i + j
+      (i, j) => i + j,
     );
 
     expect(agg.toRArray()).to.deep.equal([
@@ -91,21 +91,21 @@ describe("LazySeq", () => {
   it("checks if all values match", () => {
     const seq = LazySeq.ofRange(1, 5);
 
-    expect(seq.allMatch((i) => i > 0)).to.be.true;
-    expect(seq.allMatch((i) => i % 2 === 0)).to.be.false;
+    expect(seq.every((i) => i > 0)).to.be.true;
+    expect(seq.every((i) => i % 2 === 0)).to.be.false;
 
     const empty = LazySeq.of([]);
-    expect(empty.allMatch(() => false)).to.be.true;
+    expect(empty.every(() => false)).to.be.true;
   });
 
   it("checks if any values match", () => {
     const seq = LazySeq.ofRange(1, 5);
 
-    expect(seq.anyMatch((i) => i > 2)).to.be.true;
-    expect(seq.anyMatch((i) => i < 0)).to.be.false;
+    expect(seq.some((i) => i > 2)).to.be.true;
+    expect(seq.some((i) => i < 0)).to.be.false;
 
     const empty = LazySeq.of([]);
-    expect(empty.anyMatch(() => true)).to.be.false;
+    expect(empty.some(() => true)).to.be.false;
   });
 
   it("appends to a seq", () => {
@@ -159,9 +159,9 @@ describe("LazySeq", () => {
       seq
         .distinctBy(
           (x) => x.foo,
-          (x) => x.bar
+          (x) => x.bar,
         )
-        .toRArray()
+        .toRArray(),
     ).to.deep.equal([
       { foo: 1, bar: "a", baz: 60 },
       { foo: 1, bar: "b", baz: 70 },
@@ -193,9 +193,9 @@ describe("LazySeq", () => {
       seq
         .distinctAndSortBy(
           (x) => x.foo,
-          (x) => x.bar
+          (x) => x.bar,
         )
-        .toRArray()
+        .toRArray(),
     ).to.deep.equal([
       { foo: 1, bar: "a", baz: 60 },
       { foo: 1, bar: "b", baz: 70 },
@@ -285,10 +285,29 @@ describe("LazySeq", () => {
     expect(val).to.equal(45);
   });
 
+  it("reduces a sequence using an initial value", () => {
+    const seq = LazySeq.ofRange(1, 10);
+    const val = seq.reduce((acc, i) => acc + i, 5);
+
+    expect(seq.toRArray()).to.deep.equal([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(val).to.equal(45 + 5);
+  });
+
+  it("errors on reduce on an empty sequence", () => {
+    const seq = LazySeq.of<string>([]);
+    assert.throws(() => seq.reduce((acc, i) => acc + i));
+  });
+
+  it("reduces a sequence without an initial value", () => {
+    const seq = LazySeq.of([2, 3, 4]);
+    const val = seq.reduce((acc, i) => acc * i);
+    expect(val).to.equal(24);
+  });
+
   it("groups a sequence", () => {
     const seq = LazySeq.ofRange(10, 0, -1);
     const seq2: LazySeq<[number, ReadonlyArray<number>]> = seq.groupBy((i) =>
-      Math.floor(i / 2)
+      Math.floor(i / 2),
     );
 
     expect(seq.toRArray()).to.deep.equal([10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
@@ -328,14 +347,14 @@ describe("LazySeq", () => {
       [[number, string], ReadonlyArray<{ foo: number; bar: string; baz: number }>]
     > = seq.groupBy(
       (x) => x.foo,
-      (x) => x.bar
+      (x) => x.bar,
     );
 
     expect(
       grouped.toSortedArray(
         ([[n]]) => n,
-        ([[, s]]) => s
-      )
+        ([[, s]]) => s,
+      ),
     ).to.deep.equal([
       [
         [1, "a"],
@@ -366,7 +385,7 @@ describe("LazySeq", () => {
   it("groups and sorts a sequence", () => {
     const seq = LazySeq.ofRange(10, 0, -1);
     const seq2: LazySeq<[number, ReadonlyArray<number>]> = seq.orderedGroupBy((i) =>
-      Math.floor(i / 2)
+      Math.floor(i / 2),
     );
 
     expect(seq.toRArray()).to.deep.equal([10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
@@ -536,9 +555,9 @@ describe("LazySeq", () => {
       seq
         .sortBy(
           (x) => x.foo,
-          (x) => x.bar
+          (x) => x.bar,
         )
-        .toRArray()
+        .toRArray(),
     ).to.deep.equal([
       { foo: 1, bar: "z" },
       { foo: 2, bar: "yA" },
@@ -721,7 +740,7 @@ describe("LazySeq", () => {
 
     const m = seq.toHashMap(
       (x) => [x.foo, x.bar],
-      (x, y) => x + y
+      (x, y) => x + y,
     );
 
     expect(Array.from(m).sort(([k1], [k2]) => k1 - k2)).to.deep.equal([
@@ -770,7 +789,7 @@ describe("LazySeq", () => {
     // now with a value function
     const m2 = seq.buildHashMap<number, string>(
       (x) => x.foo,
-      (old, x) => (old ?? "") + x.bar + "_" + x.foo.toString()
+      (old, x) => (old ?? "") + x.bar + "_" + x.foo.toString(),
     );
 
     expect(Array.from(m2).sort(([k1], [k2]) => k1 - k2)).to.deep.equal([
@@ -802,7 +821,7 @@ describe("LazySeq", () => {
 
     const m = seq.toOrderedMap(
       (x) => [x.foo, x.bar],
-      (x, y) => x + y
+      (x, y) => x + y,
     );
 
     expect(Array.from(m).sort(([k1], [k2]) => k1 - k2)).to.deep.equal([
@@ -851,7 +870,7 @@ describe("LazySeq", () => {
     // now with a value function
     const m2 = seq.buildOrderedMap<number, string>(
       (x) => x.foo,
-      (old, x) => (old ?? "") + x.bar + "_" + x.foo.toString()
+      (old, x) => (old ?? "") + x.bar + "_" + x.foo.toString(),
     );
 
     expect(Array.from(m2).sort(([k1], [k2]) => k1 - k2)).to.deep.equal([
@@ -883,7 +902,7 @@ describe("LazySeq", () => {
 
     const m = seq.toRMap(
       (x) => [x.foo, x.bar],
-      (x, y) => x + y
+      (x, y) => x + y,
     );
 
     expect(m).to.deep.equal(
@@ -891,12 +910,12 @@ describe("LazySeq", () => {
         [1, "helloworld"],
         [2, "!!!"],
         [3, "??!?"],
-      ])
+      ]),
     );
 
     const mm = seq.toMutableMap(
       (x) => [x.foo, x.bar],
-      (x, y) => x + y
+      (x, y) => x + y,
     );
     mm.set(4, "new");
     expect(mm).to.deep.equal(
@@ -905,7 +924,7 @@ describe("LazySeq", () => {
         [2, "!!!"],
         [3, "??!?"],
         [4, "new"],
-      ])
+      ]),
     );
 
     // try without a merge function
@@ -915,7 +934,7 @@ describe("LazySeq", () => {
         [1, "world"],
         [2, "!!!"],
         [3, "??!?"],
-      ])
+      ]),
     );
   });
 
@@ -941,7 +960,7 @@ describe("LazySeq", () => {
 
     const o = seq.toObject(
       (x) => [x.foo, x.bar],
-      (x, y) => x + y
+      (x, y) => x + y,
     );
 
     expect(o).to.deep.equal({
@@ -997,7 +1016,7 @@ describe("LazySeq", () => {
 
     const lookup = seq.toLookup(
       (x) => x.foo,
-      (x) => x.bar
+      (x) => x.bar,
     );
 
     expect(Array.from(lookup).sort(([k1], [k2]) => k1 - k2)).to.deep.equal([
@@ -1038,7 +1057,7 @@ describe("LazySeq", () => {
 
     const lookup = seq.toOrderedLookup(
       (x) => x.foo,
-      (x) => x.bar
+      (x) => x.bar,
     );
 
     expect(Array.from(lookup)).to.deep.equal([
@@ -1079,13 +1098,13 @@ describe("LazySeq", () => {
 
     const lookup = seq.toLookupMap(
       (x) => x.foo,
-      (x) => x.bar
+      (x) => x.bar,
     );
 
     expect(
       Array.from(lookup)
         .sort(([k1], [k2]) => k1 - k2)
-        .map(([k, vs]) => [k, Array.from(vs).sort(([k1], [k2]) => k1.localeCompare(k2))])
+        .map(([k, vs]) => [k, Array.from(vs).sort(([k1], [k2]) => k1.localeCompare(k2))]),
     ).to.deep.equal([
       [
         1,
@@ -1117,13 +1136,13 @@ describe("LazySeq", () => {
     const lookup = seq.toLookupMap(
       (x) => x.foo,
       (x) => x.bar,
-      (x) => x.foo + x.bar.length
+      (x) => x.foo + x.bar.length,
     );
 
     expect(
       Array.from(lookup)
         .sort(([k1], [k2]) => k1 - k2)
-        .map(([k, vs]) => [k, Array.from(vs).sort(([k1], [k2]) => k1.localeCompare(k2))])
+        .map(([k, vs]) => [k, Array.from(vs).sort(([k1], [k2]) => k1.localeCompare(k2))]),
     ).to.deep.equal([
       [
         1,
@@ -1157,13 +1176,13 @@ describe("LazySeq", () => {
       (x) => x.foo,
       (x) => x.bar,
       (x) => x.foo + x.bar.length,
-      (x, y) => x + y + 1000
+      (x, y) => x + y + 1000,
     );
 
     expect(
       Array.from(lookup)
         .sort(([k1], [k2]) => k1 - k2)
-        .map(([k, vs]) => [k, Array.from(vs).sort(([k1], [k2]) => k1.localeCompare(k2))])
+        .map(([k, vs]) => [k, Array.from(vs).sort(([k1], [k2]) => k1.localeCompare(k2))]),
     ).to.deep.equal([
       [
         1,
@@ -1194,7 +1213,7 @@ describe("LazySeq", () => {
 
     const lookup = seq.toLookupOrderedMap(
       (x) => x.foo,
-      (x) => x.bar
+      (x) => x.bar,
     );
 
     expect(Array.from(lookup).map(([k, m]) => [k, Array.from(m)])).to.deep.equal([
@@ -1228,7 +1247,7 @@ describe("LazySeq", () => {
     const lookup = seq.toLookupOrderedMap(
       (x) => x.foo,
       (x) => x.bar,
-      (x) => x.foo + x.bar.length
+      (x) => x.foo + x.bar.length,
     );
 
     expect(Array.from(lookup).map(([k, m]) => [k, Array.from(m)])).to.deep.equal([
@@ -1264,7 +1283,7 @@ describe("LazySeq", () => {
       (x) => x.foo,
       (x) => x.bar,
       (x) => x.foo + x.bar.length,
-      (x, y) => x + y + 1000
+      (x, y) => x + y + 1000,
     );
 
     expect(Array.from(lookup).map(([k, m]) => [k, Array.from(m)])).to.deep.equal([
@@ -1321,12 +1340,12 @@ describe("LazySeq", () => {
         ],
         [2, [{ foo: 2, bar: "!!!" }]],
         [3, [{ foo: 3, bar: "??!?" }]],
-      ])
+      ]),
     );
 
     const look2 = seq.toRLookup(
       (s) => s.foo,
-      (s) => s.bar
+      (s) => s.bar,
     );
     assert.deepEqual(
       look2,
@@ -1334,7 +1353,7 @@ describe("LazySeq", () => {
         [1, ["hello", "world"]],
         [2, ["!!!"]],
         [3, ["??!?"]],
-      ])
+      ]),
     );
   });
 

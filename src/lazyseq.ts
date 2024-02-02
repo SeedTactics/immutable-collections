@@ -761,7 +761,7 @@ export class LazySeq<T> {
    * @remarks
    * If the LazySeq is empty, this function returns true.
    */
-  allMatch(f: (x: T) => boolean): boolean {
+  every(f: (x: T) => boolean): boolean {
     for (const x of this.iter) {
       if (!f(x)) {
         return false;
@@ -777,7 +777,7 @@ export class LazySeq<T> {
    * @remarks
    * If the LazySeq is empty, this function returns false.
    */
-  anyMatch(f: (x: T) => boolean): boolean {
+  some(f: (x: T) => boolean): boolean {
     for (const x of this.iter) {
       if (f(x)) {
         return true;
@@ -1208,6 +1208,51 @@ export class LazySeq<T> {
       soFar = f(soFar, x);
     }
     return soFar;
+  }
+
+  /** Reduce all the entries in the LazySeq to a single value
+   *
+   * @category Conversion
+   *
+   * @remarks
+   * `reduce` works the same as [Array.reduce](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce).
+   * When given with no initial value, the accumulator is initialized to the first element of the LazySeq and the combining function
+   * is called starting with the second value.  An error is thrown if the LazySeq is empty.
+   */
+  reduce(f: (soFar: T, cur: T) => T): T;
+
+  /** Reduce all the entries in the LazySeq to a single value
+   *
+   * @category Conversion
+   *
+   * @remarks
+   * `reduce` works the same as [Array.reduce](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce)
+   * and when givin an initial value is the same as {@link LazySeq.fold}.  The initial value is combined with the first element, the result
+   * of that combination is combined with the second element, and so on.
+   */
+  reduce<S>(f: (soFar: S, cur: T) => S, initialValue: S): S;
+
+  /** @internal */
+  reduce<S>(f: (soFar: S, cur: T) => S, initialValue?: S): S {
+    if (initialValue === undefined) {
+      let first = true;
+      let soFar: S | undefined = undefined;
+      for (const x of this.iter) {
+        if (first) {
+          first = false;
+          soFar = x as unknown as S;
+        } else {
+          soFar = f(soFar as S, x);
+        }
+      }
+      if (first) {
+        throw new Error("Empty sequence");
+      } else {
+        return soFar as S;
+      }
+    } else {
+      return this.fold(initialValue, f);
+    }
   }
 
   /** Apply a function to the LazySeq
