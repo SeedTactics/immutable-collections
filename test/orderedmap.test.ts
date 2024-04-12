@@ -1,5 +1,6 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-base-to-string */
 
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
@@ -16,7 +17,7 @@ interface OrderedMapAndJsMap<K extends OrderedMapKey, V> {
 }
 
 function sortEntries<K extends OrderedMapKey, V>(
-  e: Iterable<readonly [K, V]>
+  e: Iterable<readonly [K, V]>,
 ): Array<readonly [K, V]> {
   const cfg = mkComparisonConfig<K>();
   const entries = Array.from(e);
@@ -80,7 +81,7 @@ export function mkNumKeyGenerator(size: number, offset?: number): () => number {
 
 export function createMap<K extends OrderedMapKey>(
   size: number,
-  key: () => K
+  key: () => K,
 ): OrderedMapAndJsMap<K, string> {
   let ordMap = OrderedMap.empty<K, string>();
   const jsMap = new Map<string, [K, string]>();
@@ -106,7 +107,7 @@ export function createMap<K extends OrderedMapKey>(
 
 function expectEqual<K extends OrderedMapKey, V>(
   ordMap: OrderedMap<K, V>,
-  jsMap: Map<string, [K, V]>
+  jsMap: Map<string, [K, V]>,
 ): void {
   const entries = sortEntries(jsMap.values());
   const revEntries = [...entries].reverse();
@@ -199,7 +200,7 @@ describe("Ordered Map", () => {
       new Map([
         ["true", [true, "aaa"]],
         ["false", [false, "bbb"]],
-      ])
+      ]),
     );
   });
 
@@ -380,7 +381,7 @@ describe("Ordered Map", () => {
     }
     const imMap = OrderedMap.from(entries);
     const jsMap = new Map<string, [number, string]>(
-      entries.map(([k, v]) => [k.toString(), [k, v]])
+      entries.map(([k, v]) => [k.toString(), [k, v]]),
     );
 
     checkMapBalanceAndSize(imMap);
@@ -396,7 +397,7 @@ describe("Ordered Map", () => {
     }
     const imMap = OrderedMap.from(entries);
     const jsMap = new Map<string, [number, string]>(
-      entries.map(([k, v]) => [k.toString(), [k, v]])
+      entries.map(([k, v]) => [k.toString(), [k, v]]),
     );
 
     checkMapBalanceAndSize(imMap);
@@ -412,7 +413,7 @@ describe("Ordered Map", () => {
     }
     const imMap = OrderedMap.from(entries);
     const jsMap = new Map<string, [number, string]>(
-      entries.map(([k, v]) => [k.toString(), [k, v]])
+      entries.map(([k, v]) => [k.toString(), [k, v]]),
     );
 
     checkMapBalanceAndSize(imMap);
@@ -448,7 +449,7 @@ describe("Ordered Map", () => {
 
     const imMap = OrderedMap.build(values, (v) => v + 40_000);
     const jsMap = new Map<string, [number, number]>(
-      values.map((v) => [(v + 40_000).toString(), [v + 40_000, v]])
+      values.map((v) => [(v + 40_000).toString(), [v + 40_000, v]]),
     );
 
     checkMapBalanceAndSize(imMap);
@@ -465,7 +466,7 @@ describe("Ordered Map", () => {
     const imMap = OrderedMap.build<number, string, string>(
       ts,
       (t) => "key " + (t + 40_000).toString(),
-      (old, t) => (old ?? "") + t.toString()
+      (old, t) => (old ?? "") + t.toString(),
     );
     const jsMap = new Map<string, [string, string]>();
     for (const t of ts) {
@@ -711,7 +712,7 @@ describe("Ordered Map", () => {
       m.transform((t) => {
         expect(t).to.equal(m);
         return n;
-      })
+      }),
     ).to.equal(n);
   });
 
@@ -735,7 +736,7 @@ describe("Ordered Map", () => {
         for (let i = 99; i >= 0; i--) {
           yield [i, i.toString()];
         }
-      })()
+      })(),
     );
 
     checkMapBalanceAndSize(m);
@@ -773,7 +774,7 @@ describe("Ordered Map", () => {
         for (let i = 0; i < 100; i++) {
           yield [i, i.toString()];
         }
-      })()
+      })(),
     );
 
     checkMapBalanceAndSize(m);
@@ -942,14 +943,14 @@ describe("Ordered Map", () => {
     let empty = OrderedMap.intersection(
       (a, b) => a + b,
       ordMap,
-      OrderedMap.empty<number, string>()
+      OrderedMap.empty<number, string>(),
     );
     expectEqual(empty, new Map());
 
     empty = OrderedMap.intersection(
       (a, b) => a + b,
       OrderedMap.empty<number, string>(),
-      ordMap
+      ordMap,
     );
     expectEqual(empty, new Map());
   });
@@ -1146,6 +1147,63 @@ describe("Ordered Map", () => {
     expect(diff).to.equal(ordMap);
   });
 
+  it("computes symmetric difference", () => {
+    function* diffValues(): Generator<
+      | { both: number; val: string | null }
+      | { map1K: number; map1V: string | null }
+      | { map2K: number; map2V: string | null }
+    > {
+      // want a bunch of keys in both maps
+      const keygen = mkNumKeyGenerator(10_000);
+      for (let i = 0; i < 2000; i++) {
+        // keys are multiple of three
+        const k = keygen() * 3;
+        yield { both: k, val: randomNullableStr() };
+      }
+
+      // want a bunch of keys in distinct in each map
+      for (let i = 0; i < 2000; i++) {
+        // to keep distinct, use keys congruent to 1 mod 3 and 2 mod 3
+        const k = keygen();
+        yield { map1K: k * 3 + 1, map1V: randomNullableStr() };
+        yield { map2K: k * 3 + 2, map2V: randomNullableStr() };
+      }
+    }
+
+    // create the maps
+    let imMap1 = OrderedMap.empty<number, string | null>();
+    let imMap2 = OrderedMap.empty<number, string | null>();
+    const jsSymDiff = new Map<string, [number, string | null]>();
+    for (const x of diffValues()) {
+      if ("both" in x) {
+        imMap1 = imMap1.set(x.both, x.val);
+        imMap2 = imMap2.set(x.both, x.val);
+      } else if ("map1K" in x) {
+        imMap1 = imMap1.set(x.map1K, x.map1V);
+        jsSymDiff.set(x.map1K.toString(), [x.map1K, x.map1V]);
+      } else {
+        imMap2 = imMap2.set(x.map2K, x.map2V);
+        jsSymDiff.set(x.map2K.toString(), [x.map2K, x.map2V]);
+      }
+    }
+
+    deepFreeze(imMap1);
+    deepFreeze(imMap2);
+    checkMapBalanceAndSize(imMap1);
+    checkMapBalanceAndSize(imMap2);
+
+    const diff = imMap1.symmetricDifference(imMap2);
+    expectEqual(diff, jsSymDiff);
+
+    const diff2 = imMap2.symmetricDifference(imMap1);
+    expectEqual(diff2, jsSymDiff);
+  });
+
+  it("doesn't change when symmetric diff with the empty set", () => {
+    const map = createMap(500, mkNumKeyGenerator(1000)).ordMap;
+    expect(map.symmetricDifference(OrderedMap.empty())).to.equal(map);
+  });
+
   it("withoutKeys with the empty set is unchanged", () => {
     const { ordMap } = createMap(500, mkNumKeyGenerator(1000));
 
@@ -1264,7 +1322,7 @@ describe("Ordered Map", () => {
     const toAdjust = OrderedMap.build(
       keys,
       (k) => k,
-      (_, k) => k.toString()
+      (_, k) => k.toString(),
     );
 
     const m = ordMap.adjust(toAdjust, (existingVal, helperVal, k) => {
