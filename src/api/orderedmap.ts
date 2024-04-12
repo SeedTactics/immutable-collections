@@ -790,8 +790,8 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    *
    * @remarks
    * symmetricDifference produces a new OrderedMap which contains all the entries whose keys
-   * appear in exactly one of this and other. If this or other are empty, the non-empty
-   * tree is returned unchanged.
+   * appear in exactly one of this and other. If other is empty, this
+   * is returned unchanged.
    *
    * Runs in time O(m log(n/m)) where m is the size of the smaller map and n is the size of the larger map.
    */

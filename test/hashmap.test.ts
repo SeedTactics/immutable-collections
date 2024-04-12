@@ -1,5 +1,6 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
+/* eslint-disable @typescript-eslint/no-base-to-string */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
@@ -20,7 +21,7 @@ export interface HashMapAndJsMap<K extends HashKey, V> {
 }
 
 function sortEntries<K extends HashKey, V>(
-  e: Iterable<readonly [K, V]>
+  e: Iterable<readonly [K, V]>,
 ): Array<readonly [K, V]> {
   const entries = Array.from(e);
   return entries.sort(mkCompareByProperties(([k]) => k.toString()));
@@ -49,7 +50,7 @@ export function combineNullableStr(a: string | null, b: string | null): string |
 
 export function createMap<K extends HashKey>(
   size: number,
-  key: () => K
+  key: () => K,
 ): HashMapAndJsMap<K, string> {
   let imMap = HashMap.empty<K, string>();
   const jsMap = new Map<string, [K, string]>();
@@ -94,7 +95,7 @@ function checkBitmap<K extends HashKey, V>(imMap: HashMap<K, V>): void {
 
 export function expectEqual<K extends HashKey, V>(
   imMap: HashMap<K, V>,
-  jsMap: Map<string, [K, V]>
+  jsMap: Map<string, [K, V]>,
 ): void {
   checkBitmap(imMap);
 
@@ -112,10 +113,10 @@ export function expectEqual<K extends HashKey, V>(
   expect(sortKeys(imMap.keys())).to.deep.equal(entries.map(([k]) => k));
   expect(sortKeys(imMap.keysToLazySeq())).to.deep.equal(entries.map(([k]) => k));
   expect(sortValues(imMap.values())).to.deep.equal(
-    sortValues(entries.map(([_, v]) => v))
+    sortValues(entries.map(([_, v]) => v)),
   );
   expect(sortValues(imMap.valuesToLazySeq())).to.deep.equal(
-    sortValues(entries.map(([_, v]) => v))
+    sortValues(entries.map(([_, v]) => v)),
   );
 
   const forEachEntries = new Array<[K, V]>();
@@ -172,7 +173,7 @@ describe("HashMap", () => {
 
   it("creates a number key map", () => {
     const { imMap, jsMap } = createMap(10000, () =>
-      faker.number.int({ min: 0, max: 50000 })
+      faker.number.int({ min: 0, max: 50000 }),
     );
     expectEqual(imMap, jsMap);
   });
@@ -192,7 +193,7 @@ describe("HashMap", () => {
       new Map([
         ["true", [true, "aaa"]],
         ["false", [false, "bbb"]],
-      ])
+      ]),
     );
   });
 
@@ -384,7 +385,7 @@ describe("HashMap", () => {
     }
     const imMap = HashMap.from(entries);
     const jsMap = new Map<string, [number, string]>(
-      entries.map(([k, v]) => [k.toString(), [k, v]])
+      entries.map(([k, v]) => [k.toString(), [k, v]]),
     );
 
     expectEqual(imMap, jsMap);
@@ -439,7 +440,7 @@ describe("HashMap", () => {
 
     const imMap = HashMap.build(values, (v) => v + 40_000);
     const jsMap = new Map<string, [number, number]>(
-      values.map((v) => [(v + 40_000).toString(), [v + 40_000, v]])
+      values.map((v) => [(v + 40_000).toString(), [v + 40_000, v]]),
     );
 
     expectEqual(imMap, jsMap);
@@ -455,7 +456,7 @@ describe("HashMap", () => {
     const imMap = HashMap.build<number, CollidingKey, string>(
       ts,
       (t) => new CollidingKey(t % 100, t + 40_000),
-      (old, t) => (old ?? "") + t.toString()
+      (old, t) => (old ?? "") + t.toString(),
     );
     const jsMap = new Map<string, [CollidingKey, string]>();
     for (const t of ts) {
@@ -475,10 +476,7 @@ describe("HashMap", () => {
 
     const newEntries = new Array<[number, string]>(500);
     for (let i = 0; i < 500; i++) {
-      newEntries[i] = [
-        faker.number.int({ min: 0, max: 5000 }),
-        faker.string.sample(),
-      ];
+      newEntries[i] = [faker.number.int({ min: 0, max: 5000 }), faker.string.sample()];
     }
     const newImMap = initial.imMap.append(newEntries);
 
@@ -535,7 +533,7 @@ describe("HashMap", () => {
     const m = createMap(5000, () => randomCollisionKey());
 
     const newImMap = m.imMap.mapValues(
-      (v, k) => v + "!!!" + k.hash.toString() + "$$$" + k.x.toString()
+      (v, k) => v + "!!!" + k.hash.toString() + "$$$" + k.x.toString(),
     );
     const newJsMap = new Map<string, [CollidingKey, string]>();
     for (const [kS, [k, v]] of m.jsMap) {
@@ -592,7 +590,7 @@ describe("HashMap", () => {
     const m = createMap(5000, () => randomCollisionKey());
 
     const newImMap = m.imMap.collectValues(
-      (v, k) => v + "!!!" + k.hash.toString() + "$$$" + k.x.toString()
+      (v, k) => v + "!!!" + k.hash.toString() + "$$$" + k.x.toString(),
     );
     const newJsMap = new Map<string, [CollidingKey, string]>();
     for (const [kS, [k, v]] of m.jsMap) {
@@ -673,7 +671,7 @@ describe("HashMap", () => {
       m.transform((t) => {
         expect(t).to.equal(m);
         return n;
-      })
+      }),
     ).to.equal(n);
   });
 
