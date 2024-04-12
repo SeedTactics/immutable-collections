@@ -733,8 +733,9 @@ export function isKeySubset<K, V1, V2>(
   if (root1.size > root2.size) return false;
 
   function loop(n1: TreeNode<K, V1> | null, n2: TreeNode<K, V2> | null): boolean {
-    if (!n2) return false;
     if (!n1) return true;
+    //no need to check n2 null, the size checks before the recursion will catch that
+    //if (!n2) return false;
 
     const s = split(cfg, n1.key, n2);
     if (s.val === undefined) return false;
