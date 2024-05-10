@@ -36,7 +36,7 @@ transformed data in one pass.
 
 ### Static Creation Methods
 
-<Export anchor="of" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L54">
+<Export anchor="of" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L54">
 
 ```typescript
 static of<T>(iter: Iterable<T>): LazySeq<T>
@@ -51,7 +51,7 @@ Creates a new LazySeq from any Iterable
 </Summary>
 
 
-<Export anchor="ofIterator" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L76">
+<Export anchor="ofIterator" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L76">
 
 ```typescript
 static ofIterator<T>(f: () => Iterator<T>): LazySeq<T>
@@ -92,7 +92,7 @@ const oddNums = LazySeq.ofIterator(function* () {
 
 </Remarks>
 
-<Export anchor="ofObject" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L91">
+<Export anchor="ofObject" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L91">
 
 ```typescript
 static ofObject<V>(obj: { [k: string]: V }): LazySeq<readonly [string, V]>
@@ -113,7 +113,7 @@ Only the [own properties](https://developer.mozilla.org/en-US/docs/Web/JavaScrip
 
 </Remarks>
 
-<Export anchor="ofRange" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L109">
+<Export anchor="ofRange" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L109">
 
 ```typescript
 static ofRange(start: number, end: number, step?: number): LazySeq<number>
@@ -137,7 +137,7 @@ Note there is no infinite loop prevention, so make sure the step is not zero.
 
 ### Transformation
 
-<Export anchor="Symbol_iterator" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L133">
+<Export anchor="Symbol_iterator" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L133">
 
 ```typescript
 𝑜𝑏𝑗.[Symbol.iterator](): Iterator<T>
@@ -158,7 +158,7 @@ This is the default iteration when using `for .. of` directly on the `LazySeq`.
 
 </Remarks>
 
-<Export anchor="aggregate" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L150">
+<Export anchor="aggregate" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L150">
 
 ```typescript
 𝑜𝑏𝑗.aggregate<K, S>(
@@ -189,7 +189,7 @@ For more complex keys, use instead [LazySeq.toHashMap](#toHashMap), [LazySeq.bui
 
 </Remarks>
 
-<Export anchor="append" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L172">
+<Export anchor="append" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L172">
 
 ```typescript
 𝑜𝑏𝑗.append(x: T): LazySeq<T>
@@ -204,7 +204,7 @@ Lazily appends the given value to the end of the LazySeq
 </Summary>
 
 
-<Export anchor="chunk" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L187">
+<Export anchor="chunk" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L187">
 
 ```typescript
 𝑜𝑏𝑗.chunk(size: number): LazySeq<ReadonlyArray<T>>
@@ -225,7 +225,7 @@ Each chunk except the final chunk will have exactly `size` entries.
 
 </Remarks>
 
-<Export anchor="concat" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L221">
+<Export anchor="concat" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L221">
 
 ```typescript
 𝑜𝑏𝑗.concat(i: Iterable<T>): LazySeq<T>
@@ -265,7 +265,7 @@ for (const x of nums) {
 
 </Remarks>
 
-<Export anchor="distinct" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L238">
+<Export anchor="distinct" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L238">
 
 ```typescript
 𝑜𝑏𝑗.distinct(this: LazySeq<T & JsMapKey>): LazySeq<T>
@@ -288,7 +288,7 @@ or [LazySeq.toOrderedSet](#toOrderedSet).
 
 </Remarks>
 
-<Export anchor="distinctBy" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L266">
+<Export anchor="distinctBy" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L266">
 
 ```typescript
 𝑜𝑏𝑗.distinctBy(prop: ToHashable<T>, ...props: Array<ToHashable<T>>): LazySeq<T>
@@ -317,7 +317,7 @@ See also [LazySeq.distinctAndSortBy](#distinctAndSortBy) if you want to sort the
 
 </Remarks>
 
-<Export anchor="distinctAndSortBy" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L302">
+<Export anchor="distinctAndSortBy" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L302">
 
 ```typescript
 𝑜𝑏𝑗.distinctAndSortBy(prop: ToComparable<T>, ...props: Array<ToComparable<T>>): LazySeq<T>
@@ -344,7 +344,7 @@ custom key tuple.
 
 </Remarks>
 
-<Export anchor="drop" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L325">
+<Export anchor="drop" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L325">
 
 ```typescript
 𝑜𝑏𝑗.drop(n: number): LazySeq<T>
@@ -366,7 +366,7 @@ larger than the total number of entries, the resulting LazySeq will be empty.
 
 </Remarks>
 
-<Export anchor="dropWhile" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L349">
+<Export anchor="dropWhile" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L349">
 
 ```typescript
 𝑜𝑏𝑗.dropWhile(f: (x: T) => boolean): LazySeq<T>
@@ -390,7 +390,7 @@ Thus, only the initial prefix of entries for which the predicate returns true ar
 
 </Remarks>
 
-<Export anchor="filter" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L384">
+<Export anchor="filter" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L384">
 
 ```typescript
 𝑜𝑏𝑗.filter<S extends T>(f: (x: T) => x is S): LazySeq<S>
@@ -431,7 +431,7 @@ const fish = animals.filter(isFish); // the type will be correctly inferred to b
 
 </Remarks>
 
-<Export anchor="filter2" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L390">
+<Export anchor="filter2" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L390">
 
 ```typescript
 𝑜𝑏𝑗.filter(f: (x: T) => boolean): LazySeq<T>
@@ -446,7 +446,7 @@ Lazily filters the entries in the LazySeq to be only those returning true from a
 </Summary>
 
 
-<Export anchor="flatMap" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L408">
+<Export anchor="flatMap" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L408">
 
 ```typescript
 𝑜𝑏𝑗.flatMap<S>(f: (x: T) => Iterable<S>): LazySeq<S>
@@ -461,7 +461,7 @@ Lazily map each entry to multiple values and flatten all the resulting values in
 </Summary>
 
 
-<Export anchor="groupBy" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L448">
+<Export anchor="groupBy" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L448">
 
 ```typescript
 𝑜𝑏𝑗.groupBy<PropFn extends ToHashable<T>, PropFns extends ToHashable<T>[]>(
@@ -518,7 +518,7 @@ const groups = seq.groupBy(x => x % 2, x => x % 3);
 
 </Remarks>
 
-<Export anchor="orderedGroupBy" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L501">
+<Export anchor="orderedGroupBy" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L501">
 
 ```typescript
 𝑜𝑏𝑗.orderedGroupBy<PropFn extends ToComparable<T>, PropFns extends ToComparable<T>[]>(
@@ -551,7 +551,7 @@ a tuple of those types.
 
 </Remarks>
 
-<Export anchor="map" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L554">
+<Export anchor="map" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L554">
 
 ```typescript
 𝑜𝑏𝑗.map<S>(f: (x: T, idx: number) => S): LazySeq<S>
@@ -573,7 +573,7 @@ the zero-based index of the element.
 
 </Remarks>
 
-<Export anchor="collect" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L573">
+<Export anchor="collect" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L573">
 
 ```typescript
 𝑜𝑏𝑗.collect<S>(f: (x: T) => S | null | undefined): LazySeq<S>
@@ -595,7 +595,7 @@ undefined, it is included in the resulting LazySeq.
 
 </Remarks>
 
-<Export anchor="prepend" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L589">
+<Export anchor="prepend" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L589">
 
 ```typescript
 𝑜𝑏𝑗.prepend(x: T): LazySeq<T>
@@ -610,7 +610,7 @@ Lazily prepend the given value to the beginning of the LazySeq
 </Summary>
 
 
-<Export anchor="prependAll" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L606">
+<Export anchor="prependAll" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L606">
 
 ```typescript
 𝑜𝑏𝑗.prependAll(i: Iterable<T>): LazySeq<T>
@@ -633,7 +633,7 @@ entries in the LazySeq.
 
 </Remarks>
 
-<Export anchor="sortWith" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L623">
+<Export anchor="sortWith" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L623">
 
 ```typescript
 𝑜𝑏𝑗.sortWith(compare: (v1: T, v2: T) => number): LazySeq<T>
@@ -656,7 +656,7 @@ transformations.  If you want to terminate the LazySeq into a sorted data struct
 
 </Remarks>
 
-<Export anchor="sortBy" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L638">
+<Export anchor="sortBy" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L638">
 
 ```typescript
 𝑜𝑏𝑗.sortBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): LazySeq<T>
@@ -681,7 +681,7 @@ transformations.  If you want to terminate the LazySeq into a sorted data struct
 
 </Remarks>
 
-<Export anchor="tail" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L659">
+<Export anchor="tail" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L659">
 
 ```typescript
 𝑜𝑏𝑗.tail(): LazySeq<T>
@@ -721,7 +721,7 @@ for (const x of s.tail()) {
 
 </Remarks>
 
-<Export anchor="take" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L682">
+<Export anchor="take" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L682">
 
 ```typescript
 𝑜𝑏𝑗.take(n: number): LazySeq<T>
@@ -744,7 +744,7 @@ beyond the first `n` will be ignored.
 
 </Remarks>
 
-<Export anchor="takeWhile" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L705">
+<Export anchor="takeWhile" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L705">
 
 ```typescript
 𝑜𝑏𝑗.takeWhile(f: (x: T) => boolean): LazySeq<T>
@@ -767,7 +767,7 @@ is not yielded and no more entries are processed.
 
 </Remarks>
 
-<Export anchor="zip" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L741">
+<Export anchor="zip" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L741">
 
 ```typescript
 𝑜𝑏𝑗.zip<S>(other: Iterable<S>): LazySeq<readonly [T, S]>
@@ -815,10 +815,10 @@ for (const [x, y] of s3) {
 
 ### Query
 
-<Export anchor="allMatch" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L764">
+<Export anchor="every" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L764">
 
 ```typescript
-𝑜𝑏𝑗.allMatch(f: (x: T) => boolean): boolean
+𝑜𝑏𝑗.every(f: (x: T) => boolean): boolean
 ```
 
 </Export>
@@ -836,10 +836,10 @@ If the LazySeq is empty, this function returns true.
 
 </Remarks>
 
-<Export anchor="anyMatch" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L780">
+<Export anchor="some" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L780">
 
 ```typescript
-𝑜𝑏𝑗.anyMatch(f: (x: T) => boolean): boolean
+𝑜𝑏𝑗.some(f: (x: T) => boolean): boolean
 ```
 
 </Export>
@@ -857,7 +857,7 @@ If the LazySeq is empty, this function returns false.
 
 </Remarks>
 
-<Export anchor="isEmpty" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L793">
+<Export anchor="isEmpty" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L793">
 
 ```typescript
 𝑜𝑏𝑗.isEmpty(): boolean
@@ -872,7 +872,7 @@ Returns true if the LazySeq is empty
 </Summary>
 
 
-<Export anchor="find" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L805">
+<Export anchor="find" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L805">
 
 ```typescript
 𝑜𝑏𝑗.find(f: (v: T) => boolean): T | undefined
@@ -893,7 +893,7 @@ If found, the element is returned.  Otherwise, `undefined` is returned.
 
 </Remarks>
 
-<Export anchor="head" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L818">
+<Export anchor="head" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L818">
 
 ```typescript
 𝑜𝑏𝑗.head(): T | undefined
@@ -908,7 +908,7 @@ Returns the first entry of the LazySeq or undefined if the LazySeq is empty.
 </Summary>
 
 
-<Export anchor="length" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L831">
+<Export anchor="length" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L831">
 
 ```typescript
 𝑜𝑏𝑗.length(): number
@@ -923,7 +923,7 @@ Returns the length of the LazySeq
 </Summary>
 
 
-<Export anchor="maxBy" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L848">
+<Export anchor="maxBy" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L848">
 
 ```typescript
 𝑜𝑏𝑗.maxBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): T | undefined
@@ -945,7 +945,7 @@ is applied to each entry in the LazySeq and the entry with the maximum value is 
 
 </Remarks>
 
-<Export anchor="minBy" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L871">
+<Export anchor="minBy" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L871">
 
 ```typescript
 𝑜𝑏𝑗.minBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): T | undefined
@@ -967,7 +967,7 @@ is applied to each entry in the LazySeq and the entry with the minimum value is 
 
 </Remarks>
 
-<Export anchor="sumBy" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L894">
+<Export anchor="sumBy" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L894">
 
 ```typescript
 𝑜𝑏𝑗.sumBy(getNumber: (v: T) => number): number
@@ -991,7 +991,7 @@ If the LazySeq is empty, 0 is returned.
 
 ### Conversion
 
-<Export anchor="toRArray" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L906">
+<Export anchor="toRArray" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L906">
 
 ```typescript
 𝑜𝑏𝑗.toRArray(): ReadonlyArray<T>
@@ -1006,7 +1006,7 @@ Converts the LazySeq to a readonly array
 </Summary>
 
 
-<Export anchor="toMutableArray" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L917">
+<Export anchor="toMutableArray" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L917">
 
 ```typescript
 𝑜𝑏𝑗.toMutableArray(): Array<T>
@@ -1027,7 +1027,7 @@ In the spirit of immutability, you should prefer [LazySeq.toRArray](#toRArray) w
 
 </Remarks>
 
-<Export anchor="toSortedArray" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L928">
+<Export anchor="toSortedArray" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L928">
 
 ```typescript
 𝑜𝑏𝑗.toSortedArray(
@@ -1051,7 +1051,7 @@ The entries are sorted by the properties returned by the passed functions.
 
 </Remarks>
 
-<Export anchor="toHashMap" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L946">
+<Export anchor="toHashMap" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L946">
 
 ```typescript
 𝑜𝑏𝑗.toHashMap<K, S extends NotUndefined>(
@@ -1079,7 +1079,7 @@ found, the provided merge function is used to determine the value; see the docs 
 
 </Remarks>
 
-<Export anchor="buildHashMap" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L963">
+<Export anchor="buildHashMap" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L963">
 
 ```typescript
 𝑜𝑏𝑗.buildHashMap<K>(key: (x: T) => K & HashKey): HashMap<K & HashKey, T>
@@ -1103,7 +1103,7 @@ If you don't wish to overwrite values, [LazySeq.toLookup](#toLookup) and
 
 </Remarks>
 
-<Export anchor="buildHashMap2" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L975">
+<Export anchor="buildHashMap2" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L975">
 
 ```typescript
 𝑜𝑏𝑗.buildHashMap<K, S extends NotUndefined>(
@@ -1130,7 +1130,7 @@ key extraction function and a value extraction function.  See the docs for
 
 </Remarks>
 
-<Export anchor="toOrderedMap" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1000">
+<Export anchor="toOrderedMap" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1000">
 
 ```typescript
 𝑜𝑏𝑗.toOrderedMap<K, S extends NotUndefined>(
@@ -1159,7 +1159,7 @@ If you don't wish to overwrite values, [LazySeq.toOrderedLookup](#toOrderedLooku
 
 </Remarks>
 
-<Export anchor="buildOrderedMap" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1018">
+<Export anchor="buildOrderedMap" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1018">
 
 ```typescript
 𝑜𝑏𝑗.buildOrderedMap<K>(key: (x: T) => K & OrderedMapKey): OrderedMap<K & OrderedMapKey, T>
@@ -1184,7 +1184,7 @@ If you don't wish to overwrite values, [LazySeq.toOrderedLookup](#toOrderedLooku
 
 </Remarks>
 
-<Export anchor="buildOrderedMap2" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1031">
+<Export anchor="buildOrderedMap2" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1031">
 
 ```typescript
 𝑜𝑏𝑗.buildOrderedMap<K, S extends NotUndefined>(
@@ -1212,7 +1212,7 @@ If you don't wish to merge values, [LazySeq.toOrderedLookup](#toOrderedLookup) a
 
 </Remarks>
 
-<Export anchor="toRMap" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1054">
+<Export anchor="toRMap" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1054">
 
 ```typescript
 𝑜𝑏𝑗.toRMap<K, S>(
@@ -1239,7 +1239,7 @@ If you don't wish to merge values, [LazySeq.toRLookup](#toRLookup) keeps all the
 
 </Remarks>
 
-<Export anchor="toMutableMap" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1072">
+<Export anchor="toMutableMap" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1072">
 
 ```typescript
 𝑜𝑏𝑗.toMutableMap<K, S>(
@@ -1267,7 +1267,7 @@ In the spirit of immutability, [LazySeq.toRMap](#toRMap) is preferred over this 
 
 </Remarks>
 
-<Export anchor="toObject" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1102">
+<Export anchor="toObject" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1102">
 
 ```typescript
 𝑜𝑏𝑗.toObject<S>(
@@ -1293,7 +1293,7 @@ function is called to determine the value for the key.  If no merge function is 
 
 </Remarks>
 
-<Export anchor="toObject2" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1116">
+<Export anchor="toObject2" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1116">
 
 ```typescript
 𝑜𝑏𝑗.toObject<S>(
@@ -1319,7 +1319,7 @@ function is called to determine the value for the key.  If no merge function is 
 
 </Remarks>
 
-<Export anchor="toHashSet" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1151">
+<Export anchor="toHashSet" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1151">
 
 ```typescript
 𝑜𝑏𝑗.toHashSet<S>(converter: (x: T) => S & HashKey): HashSet<S & HashKey>
@@ -1341,7 +1341,7 @@ which converts the entries in the LazySeq to a hashable value.
 
 </Remarks>
 
-<Export anchor="toOrderedSet" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1163">
+<Export anchor="toOrderedSet" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1163">
 
 ```typescript
 𝑜𝑏𝑗.toOrderedSet<S>(converter: (x: T) => S & OrderedMapKey): OrderedSet<S & OrderedMapKey>
@@ -1363,7 +1363,7 @@ which converts the entries in the LazySeq to an orderable value.
 
 </Remarks>
 
-<Export anchor="toRSet" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1175">
+<Export anchor="toRSet" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1175">
 
 ```typescript
 𝑜𝑏𝑗.toRSet<S>(converter: (x: T) => S & JsMapKey): ReadonlySet<S>
@@ -1385,7 +1385,7 @@ Converts the entries in the LazySeq to a JS Set
 
 </Remarks>
 
-<Export anchor="toMutableSet" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1188">
+<Export anchor="toMutableSet" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1188">
 
 ```typescript
 𝑜𝑏𝑗.toMutableSet<S>(converter: (x: T) => S & JsMapKey): Set<S>
@@ -1408,7 +1408,7 @@ In the spirit of immutability, [LazySeq.toRSet](#toRSet) is preferred over this 
 
 </Remarks>
 
-<Export anchor="fold" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1205">
+<Export anchor="fold" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1205">
 
 ```typescript
 𝑜𝑏𝑗.fold<S>(zero: S, f: (soFar: S, cur: T) => S): S
@@ -1431,7 +1431,53 @@ then the result of that combination is combined with the second element, and so 
 
 </Remarks>
 
-<Export anchor="transform" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1222">
+<Export anchor="reduce" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1222">
+
+```typescript
+𝑜𝑏𝑗.reduce(f: (soFar: T, cur: T) => T): T
+```
+
+</Export>
+
+<Summary>
+
+Reduce all the entries in the LazySeq to a single value
+
+</Summary>
+
+<Remarks>
+
+`reduce` works the same as [Array.reduce](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce).
+When given with no initial value, the accumulator is initialized to the first element of the LazySeq and the combining function
+is called starting with the second value.  An error is thrown if the LazySeq is empty.
+
+
+</Remarks>
+
+<Export anchor="reduce2" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1233">
+
+```typescript
+𝑜𝑏𝑗.reduce<S>(f: (soFar: S, cur: T) => S, initialValue: S): S
+```
+
+</Export>
+
+<Summary>
+
+Reduce all the entries in the LazySeq to a single value
+
+</Summary>
+
+<Remarks>
+
+`reduce` works the same as [Array.reduce](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce)
+and when givin an initial value is the same as [LazySeq.fold](#fold).  The initial value is combined with the first element, the result
+of that combination is combined with the second element, and so on.
+
+
+</Remarks>
+
+<Export anchor="transform" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1267">
 
 ```typescript
 𝑜𝑏𝑗.transform<U>(f: (s: LazySeq<T>) => U): U
@@ -1456,7 +1502,7 @@ temporary variable.
 
 ### Grouping
 
-<Export anchor="toLookup" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1234">
+<Export anchor="toLookup" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1279">
 
 ```typescript
 𝑜𝑏𝑗.toLookup<K>(key: (x: T) => K & HashKey): HashMap<K & HashKey, ReadonlyArray<T>>
@@ -1478,7 +1524,7 @@ have the same key are collected into an array and returned in a [HashMap](hashma
 
 </Remarks>
 
-<Export anchor="toLookup2" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1244">
+<Export anchor="toLookup2" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1289">
 
 ```typescript
 𝑜𝑏𝑗.toLookup<K, S>(
@@ -1503,7 +1549,7 @@ The keys are used to group the values into an array and the result is returned i
 
 </Remarks>
 
-<Export anchor="toOrderedLookup" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1285">
+<Export anchor="toOrderedLookup" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1330">
 
 ```typescript
 𝑜𝑏𝑗.toOrderedLookup<K>(
@@ -1527,7 +1573,7 @@ have the same key are collected into an array and returned in an [OrderedMap](or
 
 </Remarks>
 
-<Export anchor="toOrderedLookup2" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1297">
+<Export anchor="toOrderedLookup2" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1342">
 
 ```typescript
 𝑜𝑏𝑗.toOrderedLookup<K, S>(
@@ -1552,7 +1598,7 @@ The keys are used to group the values into an array and the result is returned i
 
 </Remarks>
 
-<Export anchor="toLookupMap" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1340">
+<Export anchor="toLookupMap" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1385">
 
 ```typescript
 𝑜𝑏𝑗.toLookupMap<K1, K2>(
@@ -1579,7 +1625,7 @@ are then grouped by `key2`.  Entries with the same `key1` and `key2` overwrite p
 
 </Remarks>
 
-<Export anchor="toLookupMap2" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1356">
+<Export anchor="toLookupMap2" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1401">
 
 ```typescript
 𝑜𝑏𝑗.toLookupMap<K1, K2, S extends NotUndefined>(
@@ -1609,7 +1655,7 @@ The result is a [HashMap](hashmap#HashMap) of [HashMap](hashmap#HashMap)s.
 
 </Remarks>
 
-<Export anchor="toLookupOrderedMap" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1398">
+<Export anchor="toLookupOrderedMap" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1443">
 
 ```typescript
 𝑜𝑏𝑗.toLookupOrderedMap<K1, K2>(
@@ -1636,7 +1682,7 @@ are then grouped by `key2`.  Entries with the same `key1` and `key2` overwrite p
 
 </Remarks>
 
-<Export anchor="toLookupOrderedMap2" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1414">
+<Export anchor="toLookupOrderedMap2" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1459">
 
 ```typescript
 𝑜𝑏𝑗.toLookupOrderedMap<K1, K2, S>(
@@ -1666,7 +1712,7 @@ The result is a [OrderedMap](orderedmap#OrderedMap) of [OrderedMap](orderedmap#O
 
 </Remarks>
 
-<Export anchor="toRLookup" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1453">
+<Export anchor="toRLookup" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1498">
 
 ```typescript
 𝑜𝑏𝑗.toRLookup<K>(key: (x: T) => K): ReadonlyMap<K, ReadonlyArray<T>>
@@ -1688,7 +1734,7 @@ have the same key are collected into an array and returned in an [JS Map](https:
 
 </Remarks>
 
-<Export anchor="toRLookup2" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L1464">
+<Export anchor="toRLookup2" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L1509">
 
 ```typescript
 𝑜𝑏𝑗.toRLookup<K, S>(key: (x: T) => K, val: (x: T) => S): ReadonlyMap<K, ReadonlyArray<S>>

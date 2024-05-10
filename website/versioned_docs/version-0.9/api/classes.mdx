@@ -25,7 +25,7 @@ console.log(h2.get(1)); // prints Goodbye
 console.log(h.get(1)); // prints Hello
 ```
 
-<Export anchor="HashMap" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L45">
+<Export anchor="HashMap" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L45">
 
 ```typescript
 class HashMap<K extends HashKey, V>
@@ -53,7 +53,7 @@ Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Ob
 
 [See full class details for HashMap](./hashmap)
 
-<Export anchor="HashSet" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashset.ts#L40">
+<Export anchor="HashSet" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashset.ts#L41">
 
 ```typescript
 class HashSet<T extends HashKey>
@@ -79,7 +79,7 @@ implements the typescript-builtin `ReadonlySet` interface (which consists of the
 
 [See full class details for HashSet](./hashset)
 
-<Export anchor="OrderedMap" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/orderedmap.ts#L57">
+<Export anchor="OrderedMap" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/orderedmap.ts#L58">
 
 ```typescript
 class OrderedMap<K extends OrderedMapKey, V>
@@ -106,7 +106,7 @@ consists of the read-only methods of [the JS builtin Map](https://developer.mozi
 
 [See full class details for OrderedMap](./orderedmap)
 
-<Export anchor="OrderedSet" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/orderedset.ts#L54">
+<Export anchor="OrderedSet" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/orderedset.ts#L57">
 
 ```typescript
 class OrderedSet<T extends OrderedMapKey>
@@ -132,7 +132,7 @@ interface (which consists of the read-only methods of
 
 [See full class details for OrderedSet](./orderedset)
 
-<Export anchor="LazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/lazyseq.ts#L49">
+<Export anchor="LazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/lazyseq.ts#L49">
 
 ```typescript
 class LazySeq<T>
@@ -165,7 +165,7 @@ transformed data in one pass.
 
 ### Comparison Utils
 
-<Export anchor="OrderedMapKey" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/comparison.ts#L42">
+<Export anchor="OrderedMapKey" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/comparison.ts#L42">
 
 ```typescript
 export type OrderedMapKey = string | number | boolean | Date | ComparableObj;
@@ -180,7 +180,7 @@ The possible types for a key in an OrderedMap
 </Summary>
 
 
-<Export anchor="ComparableObj" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/comparison.ts#L30">
+<Export anchor="ComparableObj" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/comparison.ts#L30">
 
 ```typescript
 export type ComparableObj = {
@@ -232,7 +232,7 @@ class SomeKey {
 
 </Remarks>
 
-<Export anchor="mkCompareByProperties" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/comparison.ts#L133">
+<Export anchor="mkCompareByProperties" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/comparison.ts#L133">
 
 ```typescript
 function mkCompareByProperties<T>(
@@ -295,7 +295,7 @@ console.log(compareFoo(
 
 </Remarks>
 
-<Export anchor="ToComparableBase" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/comparison.ts#L51">
+<Export anchor="ToComparableBase" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/comparison.ts#L51">
 
 ```typescript
 export type ToComparableBase<T> =
@@ -321,7 +321,7 @@ This is used primarily by [LazySeq](lazyseq#LazySeq) to extract comparable value
 
 </Remarks>
 
-<Export anchor="ToComparable" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/comparison.ts#L67">
+<Export anchor="ToComparable" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/comparison.ts#L67">
 
 ```typescript
 export type ToComparable<T> =
@@ -349,7 +349,7 @@ For example, see [LazySeq.distinctAndSortBy](lazyseq#distinctAndSortBy).
 
 ### Hash Utils
 
-<Export anchor="HashKey" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hashing.ts#L70">
+<Export anchor="HashKey" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hashing.ts#L70">
 
 ```typescript
 export type HashKey = string | number | boolean | Date | (HashableObj & ComparableObj);
@@ -364,7 +364,7 @@ The possible types for a key in a HashMap
 </Summary>
 
 
-<Export anchor="HashableObj" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hashing.ts#L43">
+<Export anchor="HashableObj" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hashing.ts#L43">
 
 ```typescript
 export type HashableObj = {
@@ -419,7 +419,7 @@ class SomeKey {
 
 </Remarks>
 
-<Export anchor="hashValues" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hashing.ts#L146">
+<Export anchor="hashValues" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hashing.ts#L146">
 
 ```typescript
 function hashValues(
@@ -447,7 +447,7 @@ and implement a custom [HashableObj](#HashableObj) interface.
 
 </Remarks>
 
-<Export anchor="ToHashable" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hashing.ts#L59">
+<Export anchor="ToHashable" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hashing.ts#L59">
 
 ```typescript
 export type ToHashable<T> =

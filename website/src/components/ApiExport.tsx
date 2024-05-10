@@ -1,3 +1,4 @@
+import useBrokenLinks from "@docusaurus/useBrokenLinks";
 import React from "react";
 
 interface ExportProps {
@@ -7,6 +8,7 @@ interface ExportProps {
 }
 
 export default function ApiExport(props: ExportProps): JSX.Element {
+  useBrokenLinks().collectAnchor(props.anchor);
   return (
     <div id={props.anchor} className="seedtactics-api-export">
       <div className="seedtactics-signature">{props.children}</div>

@@ -30,7 +30,7 @@ Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Ob
 
 The HashMap is immutable, which means that no changes or mutations are
 allowed directly to the HashMap.  Instead, modification operations such as
-[HashMap.delete](#delete) return a new HashMap which contains the result of the
+[delete](#delete) return a new HashMap which contains the result of the
 modification.  The original HashMap is unchanged and can continue to be
 accessed and used.  The HashMap implements this efficiently using structural
 sharing and does not require a full copy.
@@ -40,7 +40,7 @@ sharing and does not require a full copy.
 
 ### Creating Hash Maps
 
-<Export anchor="empty" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L72">
+<Export anchor="empty" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L72">
 
 ```typescript
 static empty<K extends HashKey, V extends NotUndefined>(): HashMap<K, V>
@@ -90,7 +90,7 @@ for (const [k, v] of h) {
 
 </Remarks>
 
-<Export anchor="from" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L111">
+<Export anchor="from" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L111">
 
 ```typescript
 static from<K extends HashKey, V extends NotUndefined>(
@@ -156,7 +156,7 @@ console.log(h.get("two")); // prints 2
 
 </Remarks>
 
-<Export anchor="build" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L129">
+<Export anchor="build" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L129">
 
 ```typescript
 static build<K extends HashKey, V extends NotUndefined>(
@@ -182,7 +182,7 @@ not desired, use the more generalized version of `build` which also provides a v
 
 </Remarks>
 
-<Export anchor="build2" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L145">
+<Export anchor="build2" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L145">
 
 ```typescript
 static build<T, K extends HashKey, V extends NotUndefined>(
@@ -213,7 +213,7 @@ merge the new item `t` into the existing value `old`.
 
 ### IReadOnlyMap interface
 
-<Export anchor="size" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L169">
+<Export anchor="size" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L169">
 
 ```typescript
 𝑜𝑏𝑗.size: number
@@ -228,7 +228,7 @@ size is a readonly property containing the number of entries in the HashMap.
 </Summary>
 
 
-<Export anchor="get" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L176">
+<Export anchor="get" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L176">
 
 ```typescript
 𝑜𝑏𝑗.get(k: K): V | undefined
@@ -243,7 +243,7 @@ Looks up the value associated to the given key.  Returns undefined if the key is
 </Summary>
 
 
-<Export anchor="has" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L186">
+<Export anchor="has" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L186">
 
 ```typescript
 𝑜𝑏𝑗.has(k: K): boolean
@@ -258,7 +258,7 @@ Checks if the key exists in the HashMap.  Returns true if found, otherwise false
 </Summary>
 
 
-<Export anchor="Symbol_iterator" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L213">
+<Export anchor="Symbol_iterator" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L213">
 
 ```typescript
 𝑜𝑏𝑗.[Symbol.iterator](): IterableIterator<[K, V]>
@@ -304,7 +304,7 @@ for (const [k, v] of h) {
 
 </Remarks>
 
-<Export anchor="entries" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L229">
+<Export anchor="entries" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L229">
 
 ```typescript
 𝑜𝑏𝑗.entries(): IterableIterator<[K, V]>
@@ -329,7 +329,7 @@ iterated more than once.
 
 </Remarks>
 
-<Export anchor="keys" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L245">
+<Export anchor="keys" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L245">
 
 ```typescript
 𝑜𝑏𝑗.keys(): IterableIterator<K>
@@ -354,7 +354,7 @@ iterated more than once.
 
 </Remarks>
 
-<Export anchor="values" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L261">
+<Export anchor="values" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L261">
 
 ```typescript
 𝑜𝑏𝑗.values(): IterableIterator<V>
@@ -379,7 +379,7 @@ iterated more than once.
 
 </Remarks>
 
-<Export anchor="forEach" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L274">
+<Export anchor="forEach" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L274">
 
 ```typescript
 𝑜𝑏𝑗.forEach(f: (val: V, k: K, map: HashMap<K, V>) => void): void
@@ -404,7 +404,7 @@ data is organized.
 
 ### Other Read Methods
 
-<Export anchor="fold" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L289">
+<Export anchor="fold" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L289">
 
 ```typescript
 𝑜𝑏𝑗.fold<T>(f: (acc: T, key: K, val: V) => T, zero: T): T
@@ -419,7 +419,7 @@ Reduce all the entries in the HashMap to a single value
 </Summary>
 
 
-<Export anchor="toLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L297">
+<Export anchor="toLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L297">
 
 ```typescript
 𝑜𝑏𝑗.toLazySeq(): LazySeq<readonly [K, V]>
@@ -434,7 +434,7 @@ Creates a LazySeq which iterates all the entries in the HashMap
 </Summary>
 
 
-<Export anchor="keysToLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L306">
+<Export anchor="keysToLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L306">
 
 ```typescript
 𝑜𝑏𝑗.keysToLazySeq(): LazySeq<K>
@@ -449,7 +449,7 @@ Creates a LazySeq which iterates all the keys in the HashMap
 </Summary>
 
 
-<Export anchor="valuesToLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L315">
+<Export anchor="valuesToLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L315">
 
 ```typescript
 𝑜𝑏𝑗.valuesToLazySeq(): LazySeq<V>
@@ -464,7 +464,7 @@ Creates a LazySeq which iterates all the values in the HashMap
 </Summary>
 
 
-<Export anchor="keySet" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L330">
+<Export anchor="keySet" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L330">
 
 ```typescript
 𝑜𝑏𝑗.keySet(): HashSet<K>
@@ -490,7 +490,7 @@ share the same underlying tree without problems.
 
 ### Modification
 
-<Export anchor="set" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L357">
+<Export anchor="set" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L357">
 
 ```typescript
 𝑜𝑏𝑗.set(k: K, v: V): HashMap<K, V>
@@ -536,7 +536,7 @@ console.log(h3.get("one")); // prints 50
 
 </Remarks>
 
-<Export anchor="modify" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L375">
+<Export anchor="modify" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L375">
 
 ```typescript
 𝑜𝑏𝑗.modify(k: K, f: (existing: V | undefined) => V): HashMap<K, V>
@@ -564,7 +564,7 @@ object instance is returned unchanged.
 
 </Remarks>
 
-<Export anchor="delete" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L391">
+<Export anchor="delete" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L391">
 
 ```typescript
 𝑜𝑏𝑗.delete(k: K): HashMap<K, V>
@@ -585,7 +585,7 @@ If the key does not exist, then the HashMap object instance is returned unchange
 
 </Remarks>
 
-<Export anchor="alter" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L415">
+<Export anchor="alter" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L415">
 
 ```typescript
 𝑜𝑏𝑗.alter(k: K, f: (existing: V | undefined) => V | undefined): HashMap<K, V>
@@ -602,7 +602,7 @@ Return a new HashMap by inserting, modifying, or deleting the value at a given k
 <Remarks>
 
 `alter` is a generalization of [HashMap.get](#get), [HashMap.set](#set), [HashMap.modify](#modify),
-and [HashMap.delete](#delete).  It can be used to insert a new entry, modify an existing entry, or
+and [delete](#delete).  It can be used to insert a new entry, modify an existing entry, or
 delete an existing entry.  `alter` first looks for the key in the map.  The function `f` is then
 applied to the existing value if the key was found and `undefined` if the key does not exist.
 If the function `f` returns `undefined`, the entry is deleted and if `f` returns a value, the
@@ -616,7 +616,7 @@ a value `===` to the existing value, then the HashMap object instance is returne
 
 ### Transformation
 
-<Export anchor="mapValues" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L439">
+<Export anchor="mapValues" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L439">
 
 ```typescript
 𝑜𝑏𝑗.mapValues<V2 extends NotUndefined>(f: (v: V, k: K) => V2): HashMap<K, V2>
@@ -645,7 +645,7 @@ unchanged.
 
 </Remarks>
 
-<Export anchor="collectValues" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L466">
+<Export anchor="collectValues" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L466">
 
 ```typescript
 𝑜𝑏𝑗.collectValues<V2 extends NotUndefined>(
@@ -677,7 +677,7 @@ unchanged.
 
 </Remarks>
 
-<Export anchor="filter" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L493">
+<Export anchor="filter" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L493">
 
 ```typescript
 𝑜𝑏𝑗.filter(f: (v: V, k: K) => boolean): HashMap<K, V>
@@ -701,7 +701,7 @@ unchanged.
 
 </Remarks>
 
-<Export anchor="transform" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L515">
+<Export anchor="transform" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L515">
 
 ```typescript
 𝑜𝑏𝑗.transform<U>(f: (s: HashMap<K, V>) => U): U
@@ -726,7 +726,7 @@ temporary variable.
 
 ### Bulk Modification
 
-<Export anchor="union" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L535">
+<Export anchor="union" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L535">
 
 ```typescript
 𝑜𝑏𝑗.union(other: HashMap<K, V>, merge?: (vThis: V, vOther: V, k: K) => V): HashMap<K, V>
@@ -754,7 +754,7 @@ instance is returned unchanged.
 
 </Remarks>
 
-<Export anchor="union2" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L563">
+<Export anchor="union2" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L563">
 
 ```typescript
 static union<K extends HashKey, V extends NotUndefined>(
@@ -785,7 +785,7 @@ then the HashMap object instance is returned unchanged.
 
 </Remarks>
 
-<Export anchor="append" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L597">
+<Export anchor="append" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L597">
 
 ```typescript
 𝑜𝑏𝑗.append(items: Iterable<readonly [K, V & NotUndefined]>): HashMap<K, V>
@@ -809,7 +809,7 @@ already have a HashMap or [HashMap.build](#build) is more ergonomic, you should 
 
 </Remarks>
 
-<Export anchor="intersection" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L614">
+<Export anchor="intersection" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L614">
 
 ```typescript
 𝑜𝑏𝑗.intersection(
@@ -839,7 +839,7 @@ instance is returned unchanged.
 
 </Remarks>
 
-<Export anchor="intersection2" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L643">
+<Export anchor="intersection2" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L643">
 
 ```typescript
 static intersection<K extends HashKey, V extends NotUndefined>(
@@ -868,7 +868,7 @@ instance is returned unchanged.
 
 </Remarks>
 
-<Export anchor="difference" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L679">
+<Export anchor="difference" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L679">
 
 ```typescript
 𝑜𝑏𝑗.difference<V2>(other: HashMap<K, V2>): HashMap<K, V>
@@ -895,7 +895,29 @@ instance is returned unchanged.
 
 </Remarks>
 
-<Export anchor="withoutKeys" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L697">
+<Export anchor="symmetricDifference" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L696">
+
+```typescript
+𝑜𝑏𝑗.symmetricDifference(other: HashMap<K, V>): HashMap<K, V>
+```
+
+</Export>
+
+<Summary>
+
+Returns a new HashMap which contains only entries whose key appear in exactly one of the two maps
+
+</Summary>
+
+<Remarks>
+
+symmetricDifference produces a new HashMap which contains all the entries whose keys
+appear in exactly one of this and other. If other is empty, this is returned unchanged.
+
+
+</Remarks>
+
+<Export anchor="withoutKeys" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L719">
 
 ```typescript
 𝑜𝑏𝑗.withoutKeys(keys: HashSet<K>): HashMap<K, V>
@@ -918,7 +940,7 @@ removed from `this`, then the HashMap object instance is returned unchanged.
 
 </Remarks>
 
-<Export anchor="adjust" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/api/hashmap.ts#L745">
+<Export anchor="adjust" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/api/hashmap.ts#L767">
 
 ```typescript
 𝑜𝑏𝑗.adjust<V2>(

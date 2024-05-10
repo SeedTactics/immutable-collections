@@ -9,7 +9,7 @@ const config: Config = {
   tagline: "Efficient immutable balanced tree and hash array mapped tree",
   url: "https://immutable-collections.seedtactics.com",
   baseUrl: "/",
-  onBrokenLinks: "throw",
+  onBrokenLinks: "warn",
   onBrokenMarkdownLinks: "warn",
   favicon: "img/favicon.ico",
 

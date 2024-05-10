@@ -33,7 +33,7 @@ so you can always check if the tree is empty or not by just comparing the root n
 
 ### Data
 
-<Export anchor="LeafNode" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L81">
+<Export anchor="LeafNode" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L81">
 
 ```typescript
 export type LeafNode<K, V> = { readonly hash: number; readonly key: K; readonly val: V };
@@ -56,7 +56,7 @@ to use this type.
 
 </Remarks>
 
-<Export anchor="MutableLeafNode" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L91">
+<Export anchor="MutableLeafNode" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L91">
 
 ```typescript
 export type MutableLeafNode<K, V> = { readonly hash: number; readonly key: K; val: V };
@@ -78,7 +78,7 @@ efficiently.  After the tree is built, you should convert to the immutable `Leaf
 
 </Remarks>
 
-<Export anchor="CollisionNode" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L104">
+<Export anchor="CollisionNode" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L104">
 
 ```typescript
 export type CollisionNode<K, V> = {
@@ -106,7 +106,7 @@ to use this type.
 
 </Remarks>
 
-<Export anchor="MutableCollisionNode" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L117">
+<Export anchor="MutableCollisionNode" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L117">
 
 ```typescript
 export type MutableCollisionNode<K, V> = {
@@ -131,7 +131,7 @@ efficiently.  After the tree is built, you should convert to the immutable `Coll
 
 </Remarks>
 
-<Export anchor="InternalNode" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L135">
+<Export anchor="InternalNode" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L135">
 
 ```typescript
 export type InternalNode<K, V> = {
@@ -161,7 +161,7 @@ The non-null children are stored in the children array.
 
 </Remarks>
 
-<Export anchor="MutableInternalNode" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L148">
+<Export anchor="MutableInternalNode" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L148">
 
 ```typescript
 export type MutableInternalNode<K, V> = {
@@ -186,7 +186,7 @@ efficiently.  After the tree is built, you should convert to the immutable `Inte
 
 </Remarks>
 
-<Export anchor="Node" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L170">
+<Export anchor="Node" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L170">
 
 ```typescript
 export type Node<K, V> = LeafNode<K, V> | CollisionNode<K, V> | InternalNode<K, V>;
@@ -208,7 +208,7 @@ references to the tree.
 
 </Remarks>
 
-<Export anchor="MutableNode" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L180">
+<Export anchor="MutableNode" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L180">
 
 ```typescript
 export type MutableNode<K, V> =
@@ -235,7 +235,7 @@ efficiently.  After the tree is built, you should convert to the immutable `Node
 
 ### Hash Utils
 
-<Export anchor="HashConfig" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hashing.ts#L84">
+<Export anchor="HashConfig" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hashing.ts#L84">
 
 ```typescript
 export type HashConfig<K> = ComparisonConfig<K> & {
@@ -263,7 +263,7 @@ considerations.
 
 </Remarks>
 
-<Export anchor="HashableObj" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hashing.ts#L43">
+<Export anchor="HashableObj" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hashing.ts#L43">
 
 ```typescript
 export type HashableObj = {
@@ -318,7 +318,7 @@ class SomeKey {
 
 </Remarks>
 
-<Export anchor="hashValues" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hashing.ts#L146">
+<Export anchor="hashValues" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hashing.ts#L146">
 
 ```typescript
 function hashValues(
@@ -346,7 +346,7 @@ and implement a custom [HashableObj](#HashableObj) interface.
 
 </Remarks>
 
-<Export anchor="mkHashConfig" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hashing.ts#L205">
+<Export anchor="mkHashConfig" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hashing.ts#L205">
 
 ```typescript
 function mkHashConfig<K extends HashKey>(): HashConfig<K>
@@ -371,7 +371,7 @@ Note that this uses [hashValues](#hashValues) and is thus NOT cryptographically 
 
 ### Basic Operations
 
-<Export anchor="lookup" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L221">
+<Export anchor="lookup" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L221">
 
 ```typescript
 function lookup<K, V>(
@@ -390,7 +390,7 @@ Lookup a key in a HAMT
 </Summary>
 
 
-<Export anchor="insert" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L365">
+<Export anchor="insert" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L365">
 
 ```typescript
 function insert<K, V>(
@@ -426,7 +426,7 @@ the size of the tree didn't change.  You can use this to externally track the si
 
 ### Initial Building
 
-<Export anchor="mutateInsert" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L522">
+<Export anchor="mutateInsert" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L522">
 
 ```typescript
 function mutateInsert<K, T, V>(
@@ -465,7 +465,7 @@ is passed undefined, then the size is increasing by one.
 
 </Remarks>
 
-<Export anchor="from" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L638">
+<Export anchor="from" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L638">
 
 ```typescript
 function from<K, V>(
@@ -497,7 +497,7 @@ The return value is a tuple of the new tree and the size of the tree.
 
 </Remarks>
 
-<Export anchor="build" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L682">
+<Export anchor="build" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L682">
 
 ```typescript
 function build<K, V>(
@@ -526,7 +526,7 @@ The return value is a tuple of the new tree and the size of the tree.
 
 </Remarks>
 
-<Export anchor="build2" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L701">
+<Export anchor="build2" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L701">
 
 ```typescript
 function build<T, K, V>(
@@ -560,7 +560,7 @@ The return value is a tuple of the new tree and the size of the tree.
 
 ### Basic Operations
 
-<Export anchor="remove" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L838">
+<Export anchor="remove" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L838">
 
 ```typescript
 function remove<K, V>(
@@ -587,7 +587,7 @@ is not `===` to the old root.
 
 </Remarks>
 
-<Export anchor="alter" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L965">
+<Export anchor="alter" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L965">
 
 ```typescript
 function alter<K, V>(
@@ -624,7 +624,7 @@ a value `===` to the existing value, then the root instance is returned unchange
 
 ### Iteration
 
-<Export anchor="iterate" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L1141">
+<Export anchor="iterate" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L1141">
 
 ```typescript
 function iterate<K, V, R>(
@@ -650,7 +650,7 @@ call `iterate` again if you want to iterate the tree again.  The order of iterat
 
 </Remarks>
 
-<Export anchor="fold" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L1167">
+<Export anchor="fold" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L1167">
 
 ```typescript
 function fold<K, V, T>(
@@ -669,7 +669,7 @@ Reduce all the entries in the HAMT to a single value
 </Summary>
 
 
-<Export anchor="mapValues" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L1201">
+<Export anchor="mapValues" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L1201">
 
 ```typescript
 function mapValues<K, V1, V2>(
@@ -695,7 +695,7 @@ guarantees that if no values are changed, then the HAMT root node returned uncha
 
 </Remarks>
 
-<Export anchor="collectValues" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L1269">
+<Export anchor="collectValues" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L1269">
 
 ```typescript
 function collectValues<K, V1, V2>(
@@ -728,7 +728,7 @@ The return value is a tuple of the new root node and size of the new HAMT.
 
 ### Bulk Modification
 
-<Export anchor="union" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L1389">
+<Export anchor="union" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L1389">
 
 ```typescript
 function union<K, V>(
@@ -762,7 +762,7 @@ Thus, to compute the size after the union, the formula is `root1size + root2size
 
 </Remarks>
 
-<Export anchor="intersection" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L1634">
+<Export anchor="intersection" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L1634">
 
 ```typescript
 function intersection<K, V>(
@@ -793,7 +793,7 @@ The return value is a tuple of the new HAMT and the size of the intersection, so
 
 </Remarks>
 
-<Export anchor="difference" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L1830">
+<Export anchor="difference" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L1830">
 
 ```typescript
 function difference<K, V1, V2>(
@@ -825,7 +825,7 @@ is returned unchanged.
 
 </Remarks>
 
-<Export anchor="adjust" src="https://github.com/SeedTactics/immutable-collections/blob/d509fa0fc452fd4fad4c1db1a540dd37adc2040b/src/data-structures/hamt.ts#L2043">
+<Export anchor="adjust" src="https://github.com/SeedTactics/immutable-collections/blob/15ffb2bc13d6e22be8ea506bc66e8570984e6a09/src/data-structures/hamt.ts#L2043">
 
 ```typescript
 function adjust<K, V1, V2>(
