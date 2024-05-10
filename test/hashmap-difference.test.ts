@@ -17,7 +17,8 @@ import { createMap, expectEqual, randomNullableStr } from "./hashmap.test.js";
 describe("HashMap difference", () => {
   it("computes difference", () => {
     function* diffValues(): Generator<
-      { map1K: CollidingKey; map1V: string | null } | { map2K: CollidingKey; map2V: { foo: number } }
+      | { map1K: CollidingKey; map1V: string | null }
+      | { map2K: CollidingKey; map2V: { foo: number } }
     > {
       // want a bunch of keys in both maps
       for (let i = 0; i < 2000; i++) {
@@ -202,5 +203,55 @@ describe("HashMap difference", () => {
 
     const diff = HashMap.empty<CollidingKey, string>().difference(imMap);
     expectEqual(diff, new Map());
+  });
+
+  it("computes symmetric difference", () => {
+    function* diffValues(): Generator<
+      | { both: CollidingKey; val: string | null }
+      | { map1K: CollidingKey; map1V: string | null }
+      | { map2K: CollidingKey; map2V: string | null }
+    > {
+      // want a bunch of keys in both maps
+      for (let i = 0; i < 2000; i++) {
+        yield { both: randomCollisionKey(), val: randomNullableStr() };
+      }
+
+      // want a bunch of keys in distinct in each map
+      for (let i = 0; i < 2000; i++) {
+        yield { map1K: randomCollisionKey(), map1V: randomNullableStr() };
+        yield { map2K: randomCollisionKey(), map2V: randomNullableStr() };
+      }
+    }
+
+    // create the maps
+    let imMap1 = HashMap.empty<CollidingKey, string | null>();
+    let imMap2 = HashMap.empty<CollidingKey, string | null>();
+    const jsSymDiff = new Map<string, [CollidingKey, string | null]>();
+    for (const x of diffValues()) {
+      if ("both" in x) {
+        imMap1 = imMap1.set(x.both, x.val);
+        imMap2 = imMap2.set(x.both, x.val);
+      } else if ("map1K" in x) {
+        imMap1 = imMap1.set(x.map1K, x.map1V);
+        jsSymDiff.set(x.map1K.toString(), [x.map1K, x.map1V]);
+      } else {
+        imMap2 = imMap2.set(x.map2K, x.map2V);
+        jsSymDiff.set(x.map2K.toString(), [x.map2K, x.map2V]);
+      }
+    }
+
+    deepFreeze(imMap1);
+    deepFreeze(imMap2);
+
+    const diff = imMap1.symmetricDifference(imMap2);
+    expectEqual(diff, jsSymDiff);
+
+    const diff2 = imMap2.symmetricDifference(imMap1);
+    expectEqual(diff2, jsSymDiff);
+  });
+
+  it("doesn't change when symmetric diff with the empty set", () => {
+    const map = createMap(500, randomCollisionKey).imMap;
+    expect(map.symmetricDifference(HashMap.empty())).to.equal(map);
   });
 });

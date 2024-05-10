@@ -685,6 +685,28 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
     }
   }
 
+  /** Returns a new HashMap which contains only entries whose key appear in exactly one of the two maps
+   *
+   * @category Bulk Modification
+   *
+   * @remarks
+   * symmetricDifference produces a new HashMap which contains all the entries whose keys
+   * appear in exactly one of this and other. If other is empty, this is returned unchanged.
+   */
+  symmetricDifference(other: HashMap<K, V>): HashMap<K, V> {
+    const [newRoot, numRemoved] = adjust(
+      this.cfg,
+      (old, v) => (old === undefined ? v : undefined),
+      this.root,
+      other.root,
+    );
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new HashMap(this.cfg, newRoot, this.size - numRemoved);
+    }
+  }
+
   /** Returns a new HashMap which contains only keys which do not appear in the provided HashSet
    *
    * @category Bulk Modification

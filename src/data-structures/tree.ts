@@ -714,6 +714,76 @@ export function maxView<K, V>(root: TreeNode<K, V>): ViewResult<K, V> {
   return removeMax(root);
 }
 
+/** Returns true if every key in root1 is also present in root2
+ *
+ * @category Views
+ *
+ * @remarks
+ * isKeySubset checks if the keys in root1 are a subset of the keys in root2.
+ *
+ * Runs in time O(m log(n/m + 1)) where m is the size of root1 and n is the size of root2.
+ */
+export function isKeySubset<K, V1, V2>(
+  cfg: ComparisonConfig<K>,
+  root1: TreeNode<K, V1> | null,
+  root2: TreeNode<K, V2> | null,
+): boolean {
+  if (!root1) return true;
+  if (!root2) return false;
+  if (root1.size > root2.size) return false;
+
+  function loop(n1: TreeNode<K, V1> | null, n2: TreeNode<K, V2> | null): boolean {
+    if (!n1) return true;
+    //no need to check n2 null, the size checks before the recursion will catch that
+    //if (!n2) return false;
+
+    const s = split(cfg, n1.key, n2);
+    if (s.val === undefined) return false;
+
+    // cheap size checks can sometimes save expenseve recursion.  Do it here before
+    // recursion because the size check on the right side should happen before recursing
+    // into the left side.
+    if ((n1.left?.size ?? 0) > (s.below?.size ?? 0)) return false;
+    if ((n1.right?.size ?? 0) > (s.above?.size ?? 0)) return false;
+    return loop(n1.left, s.below) && loop(n1.right, s.above);
+  }
+
+  return loop(root1, root2);
+}
+
+/** Returns true if keys are disjoint between the two trees
+ *
+ * @category Views
+ *
+ * @remarks
+ * disjoint checks if the keys in root1 are disjoint from the keys in root2, i.e. the
+ * intersection is empty.
+ *
+ * Runs in time O(m log(n/m + 1)) where m is the size of the smaller set and n is the size of the larger set.
+ */
+export function isDisjoint<K, V1, V2>(
+  cfg: ComparisonConfig<K>,
+  root1: TreeNode<K, V1> | null,
+  root2: TreeNode<K, V2> | null,
+): boolean {
+  if (!root1 || !root2) return true;
+
+  function loop(n1: TreeNode<K, V1> | null, n2: TreeNode<K, V2> | null): boolean {
+    if (!n1 || !n2) return true;
+
+    if (n1.size === 1) {
+      // avoid a split for the singleton case
+      return lookup(cfg, n1.key, n2) === undefined;
+    }
+
+    const s = split(cfg, n1.key, n2);
+    if (s.val !== undefined) return false;
+    return loop(n1.left, s.below) && loop(n1.right, s.above);
+  }
+
+  return loop(root1, root2);
+}
+
 /** Returns a new tree which combines all entries in two trees
  *
  * @category Bulk Modification
@@ -866,6 +936,58 @@ export function difference<K, V1, V2>(
       } else {
         return combineDifferentSizes(newLeft, n1.key, n1.val, newRight);
       }
+    }
+  }
+
+  return loop(root1, root2);
+}
+
+/** Returns a new tree which contains only entries whose key appear in exactly one of the two trees
+ *
+ * @category Bulk Modification
+ *
+ * @remarks
+ * symmetricDifference produces a tree which contains all the entries in root1 and root2 where the key does not exist in both trees.
+ * If root1 or root2 are null, the other tree is returned unchanged.
+ *
+ * Runs in time O(m log(n/m)) where m is the size of the smaller tree and n is the size of the larger tree.
+ */
+export function symmetricDifference<K, V>(
+  cfg: ComparisonConfig<K>,
+  root1: TreeNode<K, V> | null,
+  root2: TreeNode<K, V> | null,
+): TreeNode<K, V> | null {
+  function loop(
+    n1: TreeNode<K, V> | null,
+    n2: TreeNode<K, V> | null,
+  ): TreeNode<K, V> | null {
+    if (!n1) return n2;
+    if (!n2) return n1;
+    if (!n1.left && !n1.right) {
+      return alter(
+        cfg,
+        n1.key,
+        (oldVal) => (oldVal === undefined ? n1.val : undefined),
+        n2,
+      );
+    }
+    if (!n2.left && !n2.right) {
+      return alter(
+        cfg,
+        n2.key,
+        (oldVal) => (oldVal === undefined ? n2.val : undefined),
+        n1,
+      );
+    }
+
+    const s = split(cfg, n1.key, n2);
+    const newLeft = loop(n1.left, s.below);
+    const newRight = loop(n1.right, s.above);
+    if (s.val !== undefined) {
+      // delete s.val
+      return glueDifferentSizes(newLeft, newRight);
+    } else {
+      return combineDifferentSizes(newLeft, n1.key, n1.val, newRight);
     }
   }
 

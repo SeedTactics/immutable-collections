@@ -12,6 +12,8 @@ import {
 import { deepFreeze } from "./deepfreeze.js";
 import { createMap } from "./hashmap.test.js";
 
+/* eslint-disable @typescript-eslint/no-base-to-string */
+
 interface HashSetAndJsSet<K extends HashKey> {
   readonly imSet: HashSet<K>;
   readonly jsMap: Map<string, K>;
@@ -50,7 +52,7 @@ function expectEqual<K extends HashKey>(imSet: HashSet<K>, jsMap: Map<string, K>
   expect(sortKeys(imSet.keys())).to.deep.equal(keys);
   expect(sortKeys(imSet.values())).to.deep.equal(keys);
   expect(
-    [...imSet.entries()].sort(([a], [b]) => a.toString().localeCompare(b.toString()))
+    [...imSet.entries()].sort(([a], [b]) => a.toString().localeCompare(b.toString())),
   ).to.deep.equal([...keys].map((k) => [k, k]));
 
   const forEachEntries = new Array<K>();
@@ -130,7 +132,7 @@ describe("HashSet", () => {
 
     const imSet = HashSet.build(values, (v) => v + 40_000);
     const jsMap = new Map<string, number>(
-      values.map((v) => [(v + 40_000).toString(), v + 40_000])
+      values.map((v) => [(v + 40_000).toString(), v + 40_000]),
     );
 
     expectEqual(imSet, jsMap);
@@ -220,7 +222,7 @@ describe("HashSet", () => {
       m.transform((t) => {
         expect(t).to.equal(m);
         return n;
-      })
+      }),
     ).to.equal(n);
   });
 
@@ -402,6 +404,110 @@ describe("HashSet", () => {
 
     const m = imSet.difference(HashSet.empty());
     expect(m).to.equal(imSet);
+  });
+
+  it("symmetric diffference between two sets", () => {
+    function* diffValues(): Generator<
+      { map1K: CollidingKey } | { map2K: CollidingKey } | { both: CollidingKey }
+    > {
+      // want a bunch of keys in both sets
+      for (let i = 0; i < 2000; i++) {
+        const k = randomCollisionKey();
+        yield { both: k };
+      }
+
+      // want a bunch of keys in distinct in each set
+      for (let i = 0; i < 2000; i++) {
+        yield { map1K: randomCollisionKey() };
+        yield { map2K: randomCollisionKey() };
+      }
+    }
+
+    // create the sets and the expected difference
+    let imSet1 = HashSet.empty<CollidingKey>();
+    let imSet2 = HashSet.empty<CollidingKey>();
+    const jsDiff = new Map<string, CollidingKey>();
+    for (const x of diffValues()) {
+      if ("map1K" in x) {
+        imSet1 = imSet1.add(x.map1K);
+        jsDiff.set(x.map1K.toString(), x.map1K);
+      } else if ("map2K" in x) {
+        imSet2 = imSet2.add(x.map2K);
+        jsDiff.set(x.map2K.toString(), x.map2K);
+      } else {
+        imSet1 = imSet1.add(x.both);
+        imSet2 = imSet2.add(x.both);
+      }
+    }
+
+    deepFreeze(imSet1);
+    deepFreeze(imSet2);
+
+    expectEqual(imSet1.symmetricDifference(imSet2), jsDiff);
+    expectEqual(imSet2.symmetricDifference(imSet1), jsDiff);
+  });
+
+  it("symmetric difference with empty set is unchanged", () => {
+    const { imSet } = createSet(1000, randomCollisionKey);
+    const m = imSet.symmetricDifference(HashSet.empty());
+    expect(m).to.equal(imSet);
+
+    const m2 = HashSet.empty<CollidingKey>().symmetricDifference(imSet);
+    expect(m2.keys()).to.deep.equal(imSet.keys());
+  });
+
+  it("checks subset", () => {
+    const { imSet } = createSet(1000, randomCollisionKey);
+
+    const subset = imSet
+      .toLazySeq()
+      .take(500)
+      .toHashSet((x) => x);
+
+    const notsubset = subset.add(randomCollisionKey());
+
+    expect(imSet.isSubsetOf(imSet)).to.be.true;
+    expect(subset.isSubsetOf(imSet)).to.be.true;
+    expect(notsubset.isSubsetOf(imSet)).to.be.false;
+    expect(imSet.isSubsetOf(subset)).to.be.false;
+  });
+
+  it("checks superset", () => {
+    const { imSet } = createSet(1000, randomCollisionKey);
+
+    const subset = imSet
+      .toLazySeq()
+      .take(500)
+      .toHashSet((x) => x);
+
+    const notsubset = subset.add(randomCollisionKey());
+
+    expect(imSet.isSupersetOf(imSet)).to.be.true;
+    expect(imSet.isSupersetOf(subset)).to.be.true;
+    expect(imSet.isSupersetOf(notsubset)).to.be.false;
+    expect(subset.isSupersetOf(imSet)).to.be.false;
+  });
+
+  it("checks disjoint", () => {
+    const { imSet } = createSet(1000, randomCollisionKey);
+    const { imSet: imSet2 } = createSet(800, randomCollisionKey);
+
+    expect(imSet.isDisjointFrom(imSet)).to.be.false;
+    expect(imSet.isDisjointFrom(imSet2)).to.be.true;
+    expect(imSet2.isDisjointFrom(imSet)).to.be.true;
+
+    const imSetAdded = imSet.add(imSet2.toLazySeq().head()!);
+    const imSet2Added = imSet.add(imSet2.toLazySeq().head()!);
+
+    expect(imSetAdded.isDisjointFrom(imSet)).to.be.false;
+    expect(imSetAdded.isDisjointFrom(imSet2)).to.be.false;
+    expect(imSet.isDisjointFrom(imSetAdded)).to.be.false;
+    expect(imSet2.isDisjointFrom(imSetAdded)).to.be.false;
+
+    expect(imSet2Added.isDisjointFrom(imSet)).to.be.false;
+    expect(imSet2Added.isDisjointFrom(imSet2)).to.be.false;
+    expect(imSet.isDisjointFrom(imSet2Added)).to.be.false;
+    expect(imSet2.isDisjointFrom(imSet2Added)).to.be.false;
   });
 
   it("creates a key set from a HashMap", () => {

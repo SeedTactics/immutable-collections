@@ -1,11 +1,12 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
+/* eslint-disable @typescript-eslint/no-base-to-string */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
 import { deepFreeze } from "./deepfreeze.js";
 import { createMap } from "./orderedmap.test.js";
-import { OrderedMapKey, OrderedSet } from "../src/api/classes.js";
+import { LazySeq, OrderedMapKey, OrderedSet } from "../src/api/classes.js";
 import { checkSetBalanceAndSize } from "./check-balance.js";
 import { mkNumKeyGenerator } from "./orderedmap.test.js";
 import { mkComparisonConfig } from "../src/data-structures/comparison.js";
@@ -22,7 +23,7 @@ function sortKeys<K extends OrderedMapKey>(e: Iterable<K>): Array<K> {
 
 function createSet<K extends OrderedMapKey>(
   size: number,
-  key: () => K
+  key: () => K,
 ): OrderedSetAndJsSet<K> {
   let imSet = OrderedSet.empty<K>();
   const jsMap = new Map<string, K>();
@@ -41,7 +42,7 @@ function createSet<K extends OrderedMapKey>(
 
 function expectEqual<K extends OrderedMapKey>(
   imSet: OrderedSet<K>,
-  jsMap: Map<string, K>
+  jsMap: Map<string, K>,
 ): void {
   const keys = sortKeys(jsMap.values());
   expect(imSet.size).to.equal(jsMap.size);
@@ -147,7 +148,7 @@ describe("OrderedSet", () => {
 
     const imSet = OrderedSet.build(values, (v) => v + 40_000);
     const jsMap = new Map<string, number>(
-      values.map((v) => [(v + 40_000).toString(), v + 40_000])
+      values.map((v) => [(v + 40_000).toString(), v + 40_000]),
     );
 
     checkSetBalanceAndSize(imSet);
@@ -319,7 +320,7 @@ describe("OrderedSet", () => {
       m.transform((t) => {
         expect(t).to.equal(m);
         return n;
-      })
+      }),
     ).to.equal(n);
   });
 
@@ -343,7 +344,7 @@ describe("OrderedSet", () => {
         for (let i = 99; i >= 0; i--) {
           yield i;
         }
-      })()
+      })(),
     );
 
     checkSetBalanceAndSize(m);
@@ -380,7 +381,7 @@ describe("OrderedSet", () => {
         for (let i = 0; i < 100; i++) {
           yield i;
         }
-      })()
+      })(),
     );
 
     checkSetBalanceAndSize(m);
@@ -589,6 +590,167 @@ describe("OrderedSet", () => {
 
     const m = imSet.difference(OrderedSet.empty());
     expect(m).to.equal(imSet);
+  });
+
+  it("symmetric diffference between two sets", () => {
+    function* diffValues(): Generator<
+      { map1K: number } | { map2K: number } | { both: number }
+    > {
+      const keygen = mkNumKeyGenerator(4000);
+      // want a bunch of keys in both sets
+      for (let i = 0; i < 2000; i++) {
+        const k = keygen() * 3;
+        yield { both: k };
+      }
+
+      // want a bunch of keys in distinct in each set
+      for (let i = 0; i < 2000; i++) {
+        yield { map1K: keygen() * 3 + 1 };
+        yield { map2K: keygen() * 3 + 2 };
+      }
+    }
+
+    // create the sets and the expected difference
+    let imSet1 = OrderedSet.empty<number>();
+    let imSet2 = OrderedSet.empty<number>();
+    const jsDiff = new Map<string, number>();
+    for (const x of diffValues()) {
+      if ("map1K" in x) {
+        imSet1 = imSet1.add(x.map1K);
+        jsDiff.set(x.map1K.toString(), x.map1K);
+      } else if ("map2K" in x) {
+        imSet2 = imSet2.add(x.map2K);
+        jsDiff.set(x.map2K.toString(), x.map2K);
+      } else {
+        imSet1 = imSet1.add(x.both);
+        imSet2 = imSet2.add(x.both);
+      }
+    }
+
+    deepFreeze(imSet1);
+    deepFreeze(imSet2);
+
+    expectEqual(imSet1.symmetricDifference(imSet2), jsDiff);
+    expectEqual(imSet2.symmetricDifference(imSet1), jsDiff);
+  });
+
+  it("symmetric difference with empty set is unchanged", () => {
+    const { imSet } = createSet(1000, mkNumKeyGenerator(2000));
+    const m = imSet.symmetricDifference(OrderedSet.empty());
+    expect(m).to.equal(imSet);
+
+    const m2 = OrderedSet.empty<number>().symmetricDifference(imSet);
+    expect(m2.keys()).to.deep.equal(imSet.keys());
+  });
+
+  it("checks subset", () => {
+    const keygen = mkNumKeyGenerator(2000);
+    const { imSet } = createSet(1000, () => keygen() * 2);
+
+    expect(imSet.isSubsetOf(imSet)).to.be.true;
+
+    const subsetSmall = imSet
+      .toAscLazySeq()
+      .take(200)
+      .toOrderedSet((x) => x);
+
+    const subsetMiddle = imSet
+      .toAscLazySeq()
+      .drop(imSet.size / 4)
+      .take(imSet.size / 2)
+      .toOrderedSet((x) => x);
+
+    const subsetEnd = imSet
+      .toAscLazySeq()
+      .drop((imSet.size * 3) / 4)
+      .toOrderedSet((x) => x);
+
+    for (const s of [subsetSmall, subsetMiddle, subsetEnd]) {
+      const notsubset = s.add(keygen() * 2 + 1);
+
+      expect(s.isSubsetOf(imSet)).to.be.true;
+      expect(imSet.isSubsetOf(s)).to.be.false;
+
+      expect(notsubset.isSubsetOf(imSet)).to.be.false;
+      expect(imSet.isSubsetOf(notsubset)).to.be.false;
+    }
+  });
+
+  it("checks the size shortcuts when checking subset", () => {
+    const { imSet } = createSet(1000, mkNumKeyGenerator(2000));
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+    const imRoot = (imSet as any).root.key as number;
+
+    // Check that the size shortcut checks after splitting are used.  Want the
+    // size after splitting to be bigger, so take 3/4 of the original size and 1/3 of the
+    // original size on each side of the imSet root
+    const notsubsetFirst = LazySeq.ofRange(
+      imRoot - Math.round((imSet.size * 3) / 4),
+      imRoot + Math.round(imSet.size / 3),
+    ).toOrderedSet((x) => x);
+    const notsubsetLast = LazySeq.ofRange(
+      imRoot - Math.round(imSet.size / 3),
+      imRoot + Math.round((imSet.size * 3) / 4),
+    ).toOrderedSet((x) => x);
+
+    for (const s of [notsubsetFirst, notsubsetLast]) {
+      expect(s.isSubsetOf(imSet)).to.be.false;
+      expect(imSet.isSubsetOf(s)).to.be.false;
+    }
+  });
+
+  it("checks subset with the empty set", () => {
+    const { imSet } = createSet(1000, mkNumKeyGenerator(2000));
+
+    expect(OrderedSet.empty<number>().isSubsetOf(imSet)).to.be.true;
+    expect(imSet.isSubsetOf(OrderedSet.empty())).to.be.false;
+  });
+
+  it("checks superset", () => {
+    const keygen = mkNumKeyGenerator(2000);
+    const { imSet } = createSet(1000, () => keygen() * 2);
+
+    const subset = imSet
+      .toAscLazySeq()
+      .take(500)
+      .toOrderedSet((x) => x);
+
+    const notsubset = subset.add(keygen() * 2 + 1);
+
+    expect(imSet.isSupersetOf(imSet)).to.be.true;
+    expect(imSet.isSupersetOf(subset)).to.be.true;
+    expect(imSet.isSupersetOf(notsubset)).to.be.false;
+    expect(subset.isSupersetOf(imSet)).to.be.false;
+
+    expect(OrderedSet.empty<number>().isSupersetOf(imSet)).to.be.false;
+    expect(imSet.isSupersetOf(OrderedSet.empty())).to.be.true;
+  });
+
+  it("checks disjoint", () => {
+    const keygen = mkNumKeyGenerator(2000);
+    const { imSet } = createSet(1000, () => keygen() * 2);
+    const { imSet: imSet2 } = createSet(800, () => keygen() * 2 + 1);
+
+    expect(imSet.isDisjointFrom(imSet)).to.be.false;
+    expect(imSet.isDisjointFrom(imSet2)).to.be.true;
+    expect(imSet2.isDisjointFrom(imSet)).to.be.true;
+
+    const imSetAdded = imSet.add(imSet2.toAscLazySeq().head()!);
+    const imSet2Added = imSet.add(imSet2.toAscLazySeq().head()!);
+
+    expect(imSetAdded.isDisjointFrom(imSet)).to.be.false;
+    expect(imSetAdded.isDisjointFrom(imSet2)).to.be.false;
+    expect(imSet.isDisjointFrom(imSetAdded)).to.be.false;
+    expect(imSet2.isDisjointFrom(imSetAdded)).to.be.false;
+
+    expect(imSet2Added.isDisjointFrom(imSet)).to.be.false;
+    expect(imSet2Added.isDisjointFrom(imSet2)).to.be.false;
+    expect(imSet.isDisjointFrom(imSet2Added)).to.be.false;
+    expect(imSet2.isDisjointFrom(imSet2Added)).to.be.false;
+
+    expect(imSet.isDisjointFrom(OrderedSet.empty())).to.be.true;
+    expect(OrderedSet.empty<number>().isDisjointFrom(imSet)).to.be.true;
   });
 
   it("creates a key set from a HashMap", () => {
