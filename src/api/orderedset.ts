@@ -621,9 +621,9 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    *
    * @remarks
    * isSupersetOf checks if this is a superset of smallerSet, that is, if every item in
-   * smallerSet also exists in largerSet.
+   * smallerSet also exists in this.
    *
-   * Runs in time O(m log(n/m)) where m is the size of this and n is the size of largerSet.
+   * Runs in time O(m log(n/m)) where m is the size of smallerSet and n is the size of this.
    */
   isSupersetOf(smallerSet: OrderedSet<T>): boolean {
     return isKeySubset(this.cfg, smallerSet.root, this.root);
@@ -637,7 +637,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    * isDisjointFrom checks if this is disjoint from other, that is,
    * the intersection is empty.
    *
-   * Runs in time O(m log(n/m)) where m is the size of this and n is the size of largerSet.
+   * Runs in time O(m log(n/m)) where m is the size of this and n is the size of other.
    */
   isDisjointFrom(other: OrderedSet<T>): boolean {
     return isDisjoint(this.cfg, this.root, other.root);

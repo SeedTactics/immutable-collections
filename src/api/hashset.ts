@@ -395,6 +395,15 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
     }
   }
 
+  /** Returns a HashSet which contains only items which appear in exactly one of the two sets
+   *
+   * @category Set Operations
+   *
+   * @remarks
+   * symmetricDifference produces a new set which contains all the items
+   * appear in exactly one of this and other. If this or other are empty, the non-empty
+   * set is returned unchanged.
+   */
   symmetricDifference(other: HashSet<T>): HashSet<T> {
     const [newRoot, numRemoved] = adjust(
       this.cfg,
@@ -444,18 +453,41 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
     return f(this);
   }
 
-  isSubsetOf(other: HashSet<T>): boolean {
-    if (this.size > other.size) return false;
+  /** Returns true if each item of this exists in largerSet
+   *
+   * @category Set Operations
+   *
+   * @remarks
+   * isSubsetOf checks if this is a subset of largerSet, that is, if every item in this is also in largerSet.
+   */
+  isSubsetOf(largerSet: HashSet<T>): boolean {
+    if (this.size > largerSet.size) return false;
     for (const k of this) {
-      if (!other.has(k)) return false;
+      if (!largerSet.has(k)) return false;
     }
     return true;
   }
 
-  isSupersetOf(other: HashSet<T>): boolean {
-    return other.isSubsetOf(this);
+  /** Returns true if each item of smallerSet exists in this
+   *
+   * @category Set Operations
+   *
+   * @remarks
+   * isSupersetOf checks if this is a superset of smallerSet, that is, if every item in
+   * smallerSet also exists in this.
+   */
+  isSupersetOf(smallerSet: HashSet<T>): boolean {
+    return smallerSet.isSubsetOf(this);
   }
 
+  /** Returns true if each item exists in exactly one of the two sets
+   *
+   * @category Set Operations
+   *
+   * @remarks
+   * isDisjointFrom checks if this is disjoint from other, that is,
+   * the intersection is empty.
+   */
   isDisjointFrom(other: HashSet<T>): boolean {
     if (this.size <= other.size) {
       for (const k of this) {
