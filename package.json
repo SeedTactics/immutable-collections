@@ -10,7 +10,7 @@
     "./tree": "./dist/data-structures/tree.js",
     "./hamt": "./dist/data-structures/hamt.js"
   },
-  "packageManager": "pnpm@8.9.1",
+  "packageManager": "pnpm@9.0.5",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SeedTactics/immutable-collections.git"
@@ -21,23 +21,23 @@
     "coverage": "c8 --reporter lcov mocha test/**/*.ts"
   },
   "devDependencies": {
-    "@faker-js/faker": "^8.3.1",
+    "@faker-js/faker": "^8.4.1",
     "@types/benchmark": "^2.1.5",
-    "@types/chai": "^4.3.11",
+    "@types/chai": "^4.3.16",
     "@types/mocha": "^10.0.6",
-    "@types/node": "^20.11.5",
-    "@typescript-eslint/eslint-plugin": "^6.19.0",
-    "@typescript-eslint/parser": "^6.19.0",
+    "@types/node": "^20.12.11",
+    "@typescript-eslint/eslint-plugin": "^7.8.0",
+    "@typescript-eslint/parser": "^7.8.0",
     "benchmark": "^2.1.4",
     "c8": "^9.1.0",
-    "chai": "^5.0.0",
-    "eslint": "^8.56.0",
+    "chai": "^5.1.1",
+    "eslint": "^9.2.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-escompat": "^3.4.0",
-    "mocha": "^10.2.0",
-    "prettier": "^3.2.4",
+    "mocha": "^10.4.0",
+    "prettier": "^3.2.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.4.5"
   },
   "mocha": {
     "loader": "ts-node/esm",
