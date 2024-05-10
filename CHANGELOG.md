@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add `LazySeq.reduce` to match the API of the
   [TC39 proposal](https://github.com/tc39/proposal-iterator-helpers)
+- Add set methods from [TC39 proposal](https://github.com/tc39/proposal-set-methods):
+  `symmetricDifference`, `isSubsetOf`, `isSupersetOf`, and `isDisjointFrom` all added to both HashSet and OrderedSet
+- Add `HashMap.symmetricDifference` and `OrderedMap.symmetricDifference`. The subset and superset operations can be
+  checked by calling `keySet()` on the map first.
 
 ### Changed
 
