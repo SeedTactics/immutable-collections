@@ -1,0 +1,1001 @@
+---
+id: tree
+title: Function-based Immutable Balanced Tree in Typescript
+---
+
+import Export from "@site/src/components/ApiExport";
+import Summary from "@site/src/components/ApiSummary";
+import Remarks from "@site/src/components/ApiRemarks";
+
+# Function-based Immutable Balanced Tree in Typescript
+
+This module contains the implementation of a size-balanced binary tree,
+which is the backing data structure for the [OrderedMap](orderedmap#OrderedMap) and [OrderedSet](orderedmap#OrderedSet) classes.
+
+The OrderedMap and OrderedSet classes are easier to use, but the downside is current bundlers such as
+webpack, esbuild, swc, etc. do not tree-shake classes.  Thus, this module exposes the tree as
+a collection of functions so that if you wish you can use this directly and get the benefit of tree-shaking.
+There is no additional functionality available in this module, so if you are already using the OrderedMap or
+OrderedSet classes, there is no reason to use this module.
+
+To use, import the functions from the tree module:
+
+```ts
+import * as tree from "@seedtactics/immutable-collections/tree";
+```
+
+### Data
+
+<Export anchor="TreeNode" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/rotations.ts#L46">
+
+```typescript
+export type TreeNode<K, V> = {
+  readonly key: K;
+  readonly val: V;
+  readonly size: number;
+  readonly left: TreeNode<K, V> | null;
+  readonly right: TreeNode<K, V> | null;
+};
+```
+
+</Export>
+
+<Summary>
+
+A tree node with a key, value, and size
+
+</Summary>
+
+<Remarks>
+
+This is the main data type of a balanced tree, and the type you should use in your own code when passing around
+references to the tree.  You can directly access the `size` property to determine the number of elements in the tree.
+(This module guarantees that the empty tree is always represented by `null`.)
+
+
+</Remarks>
+
+<Export anchor="MutableTreeNode" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/rotations.ts#L63">
+
+```typescript
+export type MutableTreeNode<K, V> = {
+  key: K;
+  val: V;
+  size: number;
+  left: MutableTreeNode<K, V> | null;
+  right: MutableTreeNode<K, V> | null;
+};
+```
+
+</Export>
+
+<Summary>
+
+A mutable tree node with a key, value, and size
+
+</Summary>
+
+<Remarks>
+
+This should only be used during the initial building of the tree so that the tree can be built
+efficiently.  After the tree is built, you should convert to the immutable `TreeNode` type and use
+the various immutable adjustment operations.
+
+
+</Remarks>
+
+### Comparison Utils
+
+<Export anchor="ComparisonConfig" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/comparison.ts#L210">
+
+```typescript
+export type ComparisonConfig<K> = {
+  readonly compare: (a: K, b: K) => number;
+};
+```
+
+</Export>
+
+<Summary>
+
+The configuration for a balanced tree
+
+</Summary>
+
+<Remarks>
+
+A `ComparisonConfig` is passed to most functions manipulating the balanced tree data structure.  You only need one
+`ComparisonConfig` per key type so you can store a single `ComparisonConfig` in a global variable per key type.
+The [mkCompareByProperties](#mkCompareByProperties) function can help implement the compare function.
+
+
+</Remarks>
+
+<Export anchor="mkComparisonConfig" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/comparison.ts#L251">
+
+```typescript
+function mkComparisonConfig<K extends OrderedMapKey>(): ComparisonConfig<K>
+```
+
+</Export>
+
+<Summary>
+
+Create a ComparisonConfig based on the key type
+
+</Summary>
+
+<Remarks>
+
+This function is used to create a [ComparisonConfig](#ComparisonConfig) based on the type of key.  It supports
+numbers, strings, booleans, dates, and objects which implement the [ComparableObj](#ComparableObj) interface.
+
+
+</Remarks>
+
+<Export anchor="ComparableObj" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/comparison.ts#L30">
+
+```typescript
+export type ComparableObj = {
+  compare(other: ComparableObj): number;
+};
+```
+
+</Export>
+
+<Summary>
+
+Interface allowing custom key objects in an OrderedMap
+
+</Summary>
+
+<Remarks>
+
+If you wish to use a custom object as a key in a HashMap or OrderedMap, you must implement the `compare` function.
+The `compare` function should return a negative number if `this < other`, return zero if `this` equals `other`, and
+return a positive number if `this > other`.  A common technique is to use subtraction to compare numbers
+and [String.localeCompare](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/localeCompare)
+to compare srings.  Comparing multiple properties can either use a sequence of `if` statements or use `||` to combine.
+
+<details>
+
+<summary>Example</summary>
+
+<div>
+
+```ts
+class SomeKey {
+ public readonly a: number;
+ public readonly b: string;
+ constructor(a: number, b: string) {
+   this.a = a;
+   this.b = b;
+ }
+
+ compare(other: SomeKey): number {
+   return (this.a - other.a) || this.b.localeCompare(other.b);
+ }
+}
+```
+
+</div>
+
+</details>
+
+
+</Remarks>
+
+<Export anchor="mkCompareByProperties" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/comparison.ts#L133">
+
+```typescript
+function mkCompareByProperties<T>(
+  ...getKeys: ReadonlyArray<ToComparable<T>>
+): (a: T, b: T) => -1 | 0 | 1
+```
+
+</Export>
+
+<Summary>
+
+Combine multiple comparable properties into a single comparison function
+
+</Summary>
+
+<Remarks>
+
+`mkCompareByProperties` will return a comparison function for the type `T` which
+compares multiple properties in order.  Each property is specified by an
+extraction function which extracts the property from the type `T`.  The comparison
+function will compare each property in order, returning as soon as a single property is
+not equal.  Strings are compared using
+[localeCompare](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/localeCompare).
+
+This function can optionally be used to implement [ComparableObj](#ComparableObj), but typically
+a direct implementation is shorter.  `mkCompareByProperties` is instead used primarily
+by [LazySeq](lazyseq#LazySeq).
+
+<details>
+
+<summary>Example</summary>
+
+<div>
+
+```ts
+type Foo = {
+  readonly someNum: number;
+  readonly someStr: string;
+}
+
+const compareFoo: (a: Foo, b: Foo) => -1 | 0 | 1 = mkCompareByProperties(
+  f => f.someNum,
+  { desc: f => f.someStr }
+);
+
+console.log(compareFoo(
+  { someNum: 1, someStr: "Hello"},
+  { someNum: 2, someStr: "Hello"}
+)); // prints -1
+console.log(compareFoo(
+  { someNum: 42, someStr: "AAA"},
+  { someNum: 42, someStr: "ZZZ"}
+)); // prints 1 due to descending ordering of the strings
+```
+
+</div>
+
+</details>
+
+
+</Remarks>
+
+### Lookup
+
+<Export anchor="lookup" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L55">
+
+```typescript
+function lookup<K, V>(
+  { compare }: ComparisonConfig<K>,
+  k: K,
+  root: TreeNode<K, V> | null
+): V | undefined
+```
+
+</Export>
+
+<Summary>
+
+Lookup a key in the tree
+
+</Summary>
+
+
+<Export anchor="lookupMin" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L79">
+
+```typescript
+function lookupMin<K, V>(root: TreeNode<K, V>): readonly [K, V]
+```
+
+</Export>
+
+<Summary>
+
+Find the minimum key in the tree and return the key and value.
+
+</Summary>
+
+
+<Export anchor="lookupMax" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L96">
+
+```typescript
+function lookupMax<K, V>(root: TreeNode<K, V>): readonly [K, V]
+```
+
+</Export>
+
+<Summary>
+
+Find the maximum key in the tree and return the key and value.
+
+</Summary>
+
+
+### Modification
+
+<Export anchor="alter" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L132">
+
+```typescript
+function alter<K, V>(
+  { compare }: ComparisonConfig<K>,
+  k: K,
+  f: (oldV: V | undefined) => V | undefined,
+  root: TreeNode<K, V> | null
+): TreeNode<K, V> | null
+```
+
+</Export>
+
+<Summary>
+
+Insert, update or delete an entry in the tree
+
+</Summary>
+
+<Remarks>
+
+Benchmarking showed that dedicated insert and remove functions were the same speed as a generalized
+alter function, so we only implement alter (which helps bundle size as well).
+
+`alter` first looks for the key in the tree.  The function `f` is then applied to the existing value
+if the key was found and `undefined` if the key does not exist.  If the function `f`
+returns `undefined`, the entry is deleted and if `f` returns a value, the entry is updated
+to use the new value.
+
+If the key is not found and `f` returns undefined or the key exists and the function `f` returns
+a value `===` to the existing value, then the tree object instance is returned unchanged.
+
+Runs in time O(log n)
+
+
+</Remarks>
+
+### Initial Construction
+
+<Export anchor="mutateInsert" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L199">
+
+```typescript
+function mutateInsert<K, V, T>(
+  { compare }: ComparisonConfig<K>,
+  k: K,
+  t: T,
+  getVal: (old: V | undefined, t: T) => V,
+  root: MutableTreeNode<K, V> | null
+): MutableTreeNode<K, V>
+```
+
+</Export>
+
+<Summary>
+
+Insert mutably a key and value into a mutable tree
+
+</Summary>
+
+<Remarks>
+
+This function is designed to only be used during the initial construction of
+a tree from a network request or other data structure.
+[from](#from) and [build](#build) internally use `mutateInsert` and are easier to use,
+this is exported for advanced use.
+
+An empty tree is represented as null and the tree will be mutated as values
+are inserted.  The return value is the new root and the old root should not be referenced
+again.  Once the tree is built, the type can be converted from [MutableTreeNode](#MutableTreeNode) to [TreeNode](#TreeNode).
+Typically this should happen in a single function whose return value is [TreeNode](#TreeNode).
+
+
+</Remarks>
+
+<Export anchor="from" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L252">
+
+```typescript
+function from<K, V>(
+  { compare }: ComparisonConfig<K>,
+  items: Iterable<readonly [K, V]>,
+  merge?: (v1: V, v2: V) => V
+): TreeNode<K, V> | null
+```
+
+</Export>
+
+<Summary>
+
+Efficiently create a tree from a sequence of key-value pairs
+
+</Summary>
+
+<Remarks>
+
+`from` efficiently creates a tree from a sequence of key-value pairs.  An optional `merge` function
+can be provided.  When `from` detects a duplicate key, the merge function is called to determine
+the value associated to the key.  The first parameter `v1` to the merge function is the existing value
+and the second parameter `v2` is the new value just recieved from the sequence. The return value from the
+merge function is the value associated to the key.  If no merge function is provided, the second value `v2`
+is used, overwriting the first value `v1`.
+
+
+</Remarks>
+
+<Export anchor="build" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L305">
+
+```typescript
+function build<K, V>(
+  { compare }: ComparisonConfig<K>,
+  items: Iterable<V>,
+  key: (t: V) => K
+): TreeNode<K, V> | null
+```
+
+</Export>
+
+<Summary>
+
+Efficently create a new tree
+
+</Summary>
+
+<Remarks>
+
+`build` efficiently creates a tree from a sequence of values and a key extraction function.  If a
+duplicate key is found, the later value is used and the earlier value is overwritten.  If this is
+not desired, use the more generalized version of `build` which also provides a value extraction function.
+
+
+</Remarks>
+
+<Export anchor="build2" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L322">
+
+```typescript
+function build<T, K, V>(
+  { compare }: ComparisonConfig<K>,
+  items: Iterable<T>,
+  key: (t: T) => K,
+  val: (old: V | undefined, t: T) => V
+): TreeNode<K, V> | null
+```
+
+</Export>
+
+<Summary>
+
+Efficently create a new tree
+
+</Summary>
+
+<Remarks>
+
+`build` efficiently creates a tree from a sequence of items, a key extraction function, and a value extraction
+function.  The sequence of initial items can have any type `T`, and for each item the key is extracted.  If the key does not
+yet exist, the `val` extraction function is called with `undefined` to retrieve the value associated to the key.
+If the key already exists in the tree, the `val` extraction function is called with the `old` value to
+merge the new item `t` into the existing value `old`.
+
+
+</Remarks>
+
+### Iteration
+
+<Export anchor="iterateAsc" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L396">
+
+```typescript
+function iterateAsc<K, V, T>(
+  f: (k: K, v: V) => T,
+  root: TreeNode<K, V> | null
+): IterableIterator<T>
+```
+
+</Export>
+
+<Summary>
+
+Iterates the entries in ascending order
+
+</Summary>
+
+<Remarks>
+
+This function produces an [iterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterator_protocol)
+that applies the function `f` to each key and value in ascending order of keys and yields the results.  This iterator can be used only once, you must
+call `iterateAsc` again if you want to iterate the tree again.
+
+
+</Remarks>
+
+<Export anchor="iterateDesc" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L423">
+
+```typescript
+function iterateDesc<K, V, T>(
+  f: (k: K, v: V) => T,
+  root: TreeNode<K, V> | null
+): IterableIterator<T>
+```
+
+</Export>
+
+<Summary>
+
+Iterates the entries in descending order
+
+</Summary>
+
+<Remarks>
+
+This function produces an [iterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterator_protocol)
+that applies the function `f` to each key and value in descending order of keys and yields the results.  This iterator can be used only once, you must
+call `iterateDesc` again if you want to iterate the tree again.
+
+
+</Remarks>
+
+<Export anchor="foldl" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L451">
+
+```typescript
+function foldl<K, V, T>(
+  f: (acc: T, k: K, v: V) => T,
+  zero: T,
+  root: TreeNode<K, V> | null
+): T
+```
+
+</Export>
+
+<Summary>
+
+Reduce all the entries in the tree to a single value
+
+</Summary>
+
+<Remarks>
+
+The letter-l in `foldl` stands for left.  Thinking of all the entries as an ascending list, `foldl` starts
+combining entries from the left side.  Thus, the entry with the smallest key is combined with the zero value,
+which is then combined with the next smallest key, and so on.
+
+
+</Remarks>
+
+<Export anchor="foldr" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L483">
+
+```typescript
+function foldr<K, V, T>(
+  f: (k: K, v: V, acc: T) => T,
+  zero: T,
+  root: TreeNode<K, V> | null
+): T
+```
+
+</Export>
+
+<Summary>
+
+Reduce all the entries in the tree to a single value
+
+</Summary>
+
+<Remarks>
+
+The letter-r in `foldr` stands for right.  Thinking of all the entries as an ascending list, `foldr` starts
+combining entries from the right side.  Thus, the entry with the largest key is combined with the zero value,
+which is then combined with the second-to-largest key, and so on.
+
+
+</Remarks>
+
+### Transformation
+
+<Export anchor="mapValues" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L519">
+
+```typescript
+function mapValues<K, V1, V2>(
+  f: (v: V1, k: K) => V2,
+  root: TreeNode<K, V1> | null
+): TreeNode<K, V2> | null
+```
+
+</Export>
+
+<Summary>
+
+Transform the values in the tree using a function
+
+</Summary>
+
+<Remarks>
+
+`mapValues` applies the function `f` to each value and key in the tree and returns a new tree
+with the same keys but the values adjusted to the result of the function `f`.  This can be done efficiently because
+the keys are unchanged the arrangement of the tree is unchanged.
+`mapValues` guarantees that if no values are changed, then the tree object instance is returned
+unchanged.
+
+This runs in O(n) time.
+
+
+</Remarks>
+
+<Export anchor="collectValues" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L559">
+
+```typescript
+function collectValues<K, V1, V2>(
+  f: (v: V1, k: K) => V2 | undefined,
+  filterNull: boolean,
+  root: TreeNode<K, V1> | null
+): TreeNode<K, V2> | null
+```
+
+</Export>
+
+<Summary>
+
+Transform or delete the values in the tree using a function
+
+</Summary>
+
+<Remarks>
+
+`collectValues` applies the function `f` to each value and key in the tree and uses the return value from
+`f` as the new value.  If `f` returns undefined, the key and value is removed.  If `filterNull` is true and
+`f` returns null, the key and value are also removed.
+`collectValues` guarantees that if no values are changed, then the tree object instance is returned
+unchanged.
+
+This runs in O(n) time.
+
+
+</Remarks>
+
+### Views
+
+<Export anchor="SplitResult" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L593">
+
+```typescript
+export type SplitResult<K, V> = {
+  readonly below: TreeNode<K, V> | null;
+  readonly val: V | undefined;
+  readonly above: TreeNode<K, V> | null;
+};
+```
+
+</Export>
+
+<Summary>
+
+The result of splitting a tree into keys above and below a given key
+
+</Summary>
+
+
+<Export anchor="split" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L610">
+
+```typescript
+function split<K, V>(
+  { compare }: ComparisonConfig<K>,
+  k: K,
+  root: TreeNode<K, V> | null
+): SplitResult<K, V>
+```
+
+</Export>
+
+<Summary>
+
+Split a tree on a key
+
+</Summary>
+
+<Remarks>
+
+`split` splits a tree into keys below and above a given key.  The return type consists of
+a balanced tree of all keys less than the given key, the value associated to the given key if
+it exists, and a balanced tree of all keys greater than the given key.
+
+Runs in O(log n) time.
+
+
+</Remarks>
+
+<Export anchor="partition" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L650">
+
+```typescript
+function partition<K, V>(
+  f: (k: K, v: V) => boolean,
+  root: TreeNode<K, V> | null
+): readonly [TreeNode<K, V> | null, TreeNode<K, V> | null]
+```
+
+</Export>
+
+<Summary>
+
+Partition a tree based on a boolean function
+
+</Summary>
+
+<Remarks>
+
+The function `f` is applied to each key and value.  The entries for which `f` returns `true`
+are placed in one tree and entries for which `f` returns false are placed in the other.
+The two trees are returned as a tuple, with the `true` tree returned as the first
+element of the tuple.
+
+If the function `f` returns `true` for all entries, then the first tree object instance
+is guaranteed to be === to the initial tree object instance.  Similar for if `f` returns `false` for
+all entries.
+
+This runs in O(n) time.
+
+
+</Remarks>
+
+<Export anchor="ViewResult" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L681">
+
+```typescript
+export type ViewResult<K, V> = {
+  k: K;
+  v: V;
+  rest: TreeNode<K, V> | null;
+};
+```
+
+</Export>
+
+<Summary>
+
+The combination of a single key-value and a balanced tree of all remaining values
+
+</Summary>
+
+
+<Export anchor="minView" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L698">
+
+```typescript
+function minView<K, V>(root: TreeNode<K, V>): ViewResult<K, V>
+```
+
+</Export>
+
+<Summary>
+
+Extract the minimum key and compute a balanced tree of all other values
+
+</Summary>
+
+<Remarks>
+
+`minView` finds the minimum key and then removes it, producing a new balanced
+tree of all other keys and values.  Both the removed key and value and the newly
+balanced tree is returned.
+
+Runs in O(log n) time, so can be used to efficiently pop the minimum key.
+
+
+</Remarks>
+
+<Export anchor="maxView" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L713">
+
+```typescript
+function maxView<K, V>(root: TreeNode<K, V>): ViewResult<K, V>
+```
+
+</Export>
+
+<Summary>
+
+Extract the maximum key and compute a balanced tree of all other values
+
+</Summary>
+
+<Remarks>
+
+`maxView` finds the maximum key and then removes it, producing a new balanced
+tree of all other keys and values.  Both the removed key and value and the newly
+balanced tree is returned.
+
+Runs in O(log n) time, so can be used to efficiently pop the maximum key.
+
+
+</Remarks>
+
+<Export anchor="isKeySubset" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L726">
+
+```typescript
+function isKeySubset<K, V1, V2>(
+  cfg: ComparisonConfig<K>,
+  root1: TreeNode<K, V1> | null,
+  root2: TreeNode<K, V2> | null
+): boolean
+```
+
+</Export>
+
+<Summary>
+
+Returns true if every key in root1 is also present in root2
+
+</Summary>
+
+<Remarks>
+
+isKeySubset checks if the keys in root1 are a subset of the keys in root2.
+
+Runs in time O(m log(n/m + 1)) where m is the size of root1 and n is the size of root2.
+
+
+</Remarks>
+
+<Export anchor="isDisjoint" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L764">
+
+```typescript
+function isDisjoint<K, V1, V2>(
+  cfg: ComparisonConfig<K>,
+  root1: TreeNode<K, V1> | null,
+  root2: TreeNode<K, V2> | null
+): boolean
+```
+
+</Export>
+
+<Summary>
+
+Returns true if keys are disjoint between the two trees
+
+</Summary>
+
+<Remarks>
+
+disjoint checks if the keys in root1 are disjoint from the keys in root2, i.e. the
+intersection is empty.
+
+Runs in time O(m log(n/m + 1)) where m is the size of the smaller set and n is the size of the larger set.
+
+
+</Remarks>
+
+### Bulk Modification
+
+<Export anchor="union" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L800">
+
+```typescript
+function union<K, V>(
+  cfg: ComparisonConfig<K>,
+  merge: (v1: V, v2: V, k: K) => V,
+  root1: TreeNode<K, V> | null,
+  root2: TreeNode<K, V> | null
+): TreeNode<K, V> | null
+```
+
+</Export>
+
+<Summary>
+
+Returns a new tree which combines all entries in two trees
+
+</Summary>
+
+<Remarks>
+
+`union` produces a new balanced tree which contains all the entries in both trees.  If a
+key appears in only one of the two trees, the value from the tree is used.  If a key appears
+in both trees, the provided merge function is used to determine the value.
+`union` guarantees that if the resulting tree is equal to `root1`, then the `root1` object
+instance is returned unchanged.
+
+Runs in time O(m log(n/m)) where m is the size of the smaller tree and n is the size of the larger tree.
+
+
+</Remarks>
+
+<Export anchor="intersection" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L865">
+
+```typescript
+function intersection<K, V>(
+  cfg: ComparisonConfig<K>,
+  merge: (v1: V, v2: V, k: K) => V,
+  root1: TreeNode<K, V> | null,
+  root2: TreeNode<K, V> | null
+): TreeNode<K, V> | null
+```
+
+</Export>
+
+<Summary>
+
+Returns a new tree which contains only entries whose keys are in both trees
+
+</Summary>
+
+<Remarks>
+
+`intersection` produces a tree which contains all the entries which have keys in
+both trees.  For each such entry, the merge function is used to determine the resulting value.
+`intersection` guarantees that if the resulting tree is equal to `root1`, then `root1` is returned
+unchanged.
+
+Runs in time O(m log(n/m)) where m is the size of the smaller tree and n is the size of the larger tree.
+
+
+</Remarks>
+
+<Export anchor="difference" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L914">
+
+```typescript
+function difference<K, V1, V2>(
+  cfg: ComparisonConfig<K>,
+  root1: TreeNode<K, V1> | null,
+  root2: TreeNode<K, V2> | null
+): TreeNode<K, V1> | null
+```
+
+</Export>
+
+<Summary>
+
+Returns a new tree which contains only keys which appear in the first but not the second tree
+
+</Summary>
+
+<Remarks>
+
+`difference` produces a tree which contains all the entries in `root1` where the key does
+**not** exist in `root2`.  Can think of this as `root1 - root2` where the subtraction
+is removing all the keys in `root2` from `root1`.  The values of the `root2` tree are ignored and
+can be any value `V2`.
+`difference` guarantees that if no entries are removed from `root1`, then `root1` object
+is returned unchanged.
+
+Runs in time O(m log(n/m)) where m is the size of the smaller tree and n is the size of the larger tree.
+
+
+</Remarks>
+
+<Export anchor="symmetricDifference" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L955">
+
+```typescript
+function symmetricDifference<K, V>(
+  cfg: ComparisonConfig<K>,
+  root1: TreeNode<K, V> | null,
+  root2: TreeNode<K, V> | null
+): TreeNode<K, V> | null
+```
+
+</Export>
+
+<Summary>
+
+Returns a new tree which contains only entries whose key appear in exactly one of the two trees
+
+</Summary>
+
+<Remarks>
+
+symmetricDifference produces a tree which contains all the entries in root1 and root2 where the key does not exist in both trees.
+If root1 or root2 are null, the other tree is returned unchanged.
+
+Runs in time O(m log(n/m)) where m is the size of the smaller tree and n is the size of the larger tree.
+
+
+</Remarks>
+
+<Export anchor="adjust" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/tree.ts#L1012">
+
+```typescript
+function adjust<K, V1, V2>(
+  cfg: ComparisonConfig<K>,
+  f: (v1: V1 | undefined, v2: V2, k: K) => V1 | undefined,
+  root1: TreeNode<K, V1> | null,
+  root2: TreeNode<K, V2> | null
+): TreeNode<K, V1> | null
+```
+
+</Export>
+
+<Summary>
+
+Return a tree which adjusts all the provided keys with a specified modification function.
+
+</Summary>
+
+<Remarks>
+
+`adjust` is passed two trees: `root1` is the tree to modify and `root2` is the keys to adjust associated to helper
+values of type `V2` (the type `V2` can be anything and does not need to be related `V1`).
+For each key in `root2` to modify, `adjust` looks up the key in `root1` and then calls the function `f`
+with the current existing value in `root1` (or `undefined` if the key does not exist) and the helper value from `root2`
+associated with the key. The return value from `f` is set as the new value for the key, or removed if the return value is `undefined`.
+
+`adjust` guarantees that if nothing was added, removed, or changed, then `root1` is returned.
+
+Runs in time O(n + m) where n and m are the sizes of the two trees.
+
+
+</Remarks>
+

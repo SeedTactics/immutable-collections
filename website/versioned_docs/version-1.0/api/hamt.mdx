@@ -1,0 +1,860 @@
+---
+id: hamt
+title: Function-based Immutable HashMap in Typescript
+---
+
+import Export from "@site/src/components/ApiExport";
+import Summary from "@site/src/components/ApiSummary";
+import Remarks from "@site/src/components/ApiRemarks";
+
+# Function-based Immutable HashMap in Typescript
+
+This module contains the implementation of the [HAMT](https://en.wikipedia.org/wiki/Hash_array_mapped_trie) data structure,
+which is the backing data structure for the [HashMap](hashmap#HashMap) and [HashSet](hashset#HashSet) classes.
+
+The HashMap and HashSet classes are easier to use, but the downside is current bundlers such as
+webpack, esbuild, swc, etc. do not tree-shake classes.  Thus, this module exposes the HAMT data structure as
+a collection of functions so that if you wish you can use the HAMT directly and get the benefit of tree-shaking.
+There is no additional functionality available in this module, so if you are already using the HashMap or
+HashSet classes, there is no reason to use this module.
+
+To use, import the functions from the hamt module:
+
+```ts
+import * as HAMT from "@seedtactics/immutable-collections/hamt";
+```
+
+A note about size: the HAMT data structure nodes do not track the size of the tree.  Instead, each function
+which modifies the tree returns a value to help track the size externally (for example, the intersection function returns
+the size of the intersection).  Thus, if you need to know the size, you will need to store it somewhere else and
+keep it updated as you modify the tree.  You can look at the source code for [HashMap](hashmap#HashMap) to see
+how this is done.  Note that this module guarantees that `null` represents an empty tree,
+so you can always check if the tree is empty or not by just comparing the root node to `null`.
+
+### Data
+
+<Export anchor="LeafNode" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L81">
+
+```typescript
+export type LeafNode<K, V> = { readonly hash: number; readonly key: K; readonly val: V };
+```
+
+</Export>
+
+<Summary>
+
+A leaf node with the hash, key, and value.
+
+</Summary>
+
+<Remarks>
+
+Despite being exported to use if you wish, you don't need to access tree nodes directly,
+the functions in this module manipulate the tree for you.  Thus it should be rare to need
+to use this type.
+
+
+</Remarks>
+
+<Export anchor="MutableLeafNode" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L91">
+
+```typescript
+export type MutableLeafNode<K, V> = { readonly hash: number; readonly key: K; val: V };
+```
+
+</Export>
+
+<Summary>
+
+A mutable version of the LeafNode with a mutable value.
+
+</Summary>
+
+<Remarks>
+
+This should only be used during the initial building of the tree so that the tree can be built
+efficiently.  After the tree is built, you should convert to the immutable `LeafNode` type.
+
+
+</Remarks>
+
+<Export anchor="CollisionNode" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L104">
+
+```typescript
+export type CollisionNode<K, V> = {
+  readonly hash: number;
+  readonly collision: tree.TreeNode<K, V>;
+};
+```
+
+</Export>
+
+<Summary>
+
+A collision node, which stores the colliding entries in a balanced tree
+
+</Summary>
+
+<Remarks>
+
+The colliding nodes are stored in a [TreeNode](tree#TreeNode).
+
+Despite being exported to use if you wish, you don't need to access tree nodes directly,
+the functions in this module manipulate the tree for you.  Thus it should be rare to need
+to use this type.
+
+
+</Remarks>
+
+<Export anchor="MutableCollisionNode" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L117">
+
+```typescript
+export type MutableCollisionNode<K, V> = {
+  readonly hash: number;
+  collision: tree.MutableTreeNode<K, V>;
+};
+```
+
+</Export>
+
+<Summary>
+
+A mutable collision node
+
+</Summary>
+
+<Remarks>
+
+This should only be used during the initial building of the tree so that the tree can be built
+efficiently.  After the tree is built, you should convert to the immutable `CollisionNode` type.
+
+
+</Remarks>
+
+<Export anchor="InternalNode" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L135">
+
+```typescript
+export type InternalNode<K, V> = {
+  readonly bitmap: number;
+  readonly children: ReadonlyArray<Node<K, V>>;
+};
+```
+
+</Export>
+
+<Summary>
+
+An internal node
+
+</Summary>
+
+<Remarks>
+
+Despite being exported to use if you wish, you don't need to access tree nodes directly,
+the functions in this module manipulate the tree for you.  Thus it should be rare to need
+to use this type.
+
+This implementation of the [HAMT](https://en.wikipedia.org/wiki/Hash_array_mapped_trie) breaks the
+hash into 5-bit chunks. Thus, bitmap is a 32-bit bitmap which stores which children are non-null.
+The non-null children are stored in the children array.
+
+
+</Remarks>
+
+<Export anchor="MutableInternalNode" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L148">
+
+```typescript
+export type MutableInternalNode<K, V> = {
+  bitmap: number;
+  readonly children: Array<MutableNode<K, V>>;
+};
+```
+
+</Export>
+
+<Summary>
+
+A mutable internal node
+
+</Summary>
+
+<Remarks>
+
+This should only be used during the initial building of the tree so that the tree can be built
+efficiently.  After the tree is built, you should convert to the immutable `InternalNode` type.
+
+
+</Remarks>
+
+<Export anchor="Node" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L170">
+
+```typescript
+export type Node<K, V> = LeafNode<K, V> | CollisionNode<K, V> | InternalNode<K, V>;
+```
+
+</Export>
+
+<Summary>
+
+A HAMT tree node
+
+</Summary>
+
+<Remarks>
+
+This is the main data type of the HAMT tree, and the type you should use in your own code when passing around
+references to the tree.
+
+
+</Remarks>
+
+<Export anchor="MutableNode" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L180">
+
+```typescript
+export type MutableNode<K, V> =
+  | MutableLeafNode<K, V>
+  | MutableCollisionNode<K, V>
+  | MutableInternalNode<K, V>;
+```
+
+</Export>
+
+<Summary>
+
+A mutable HAMT tree node
+
+</Summary>
+
+<Remarks>
+
+This should only be used during the initial building of the tree so that the tree can be built
+efficiently.  After the tree is built, you should convert to the immutable `Node` type.
+
+
+</Remarks>
+
+### Hash Utils
+
+<Export anchor="HashConfig" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hashing.ts#L84">
+
+```typescript
+export type HashConfig<K> = ComparisonConfig<K> & {
+  readonly hash: (v: K) => number;
+};
+```
+
+</Export>
+
+<Summary>
+
+The configuration for a HashMap
+
+</Summary>
+
+<Remarks>
+
+This combines a [ComparisonConfig](tree#ComparisonConfig) with a hash function for the key type.
+
+A `HashConfig` is passed to most functions manipulating the HAMT data structure.  You only need one
+`HashConfig` per key type so you can store a single `HashConfig` in a global variable per key type.
+The [hashValues](#hashValues) function can help implement the hash function if you do not have security
+considerations.
+
+
+</Remarks>
+
+<Export anchor="HashableObj" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hashing.ts#L43">
+
+```typescript
+export type HashableObj = {
+  hash(): number;
+};
+```
+
+</Export>
+
+<Summary>
+
+Interface allowing custom key objects in a HashMap
+
+</Summary>
+
+<Remarks>
+
+If you wish to use a custom object as a key in a HashMap, you must implement the `hash` function
+defined in the HashableObj type and the `compare` function defined in the [ComparableObj](#ComparableObj) type.
+The hash value must be a 32-bit integer.  The [hashValues](#hashValues) function can help implementing
+the hash function.
+
+<details>
+
+<summary>Example</summary>
+
+<div>
+
+```ts
+class SomeKey {
+ public readonly a: number;
+ public readonly b: string;
+ constructor(a: number, b: string) {
+   this.a = a;
+   this.b = b;
+ }
+
+ hash(): number {
+   return hashValues(this.a, this.b);
+ }
+
+ compare(other: SomeKey): number {
+   return (this.a - other.a) || this.b.localeCompare(other.b);
+ }
+}
+```
+
+</div>
+
+</details>
+
+
+</Remarks>
+
+<Export anchor="hashValues" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hashing.ts#L146">
+
+```typescript
+function hashValues(
+  ...vals: ReadonlyArray<
+    string | number | boolean | Date | HashableObj | null | undefined
+  >
+): number
+```
+
+</Export>
+
+<Summary>
+
+Combine multiple hashable values into a single hash
+
+</Summary>
+
+<Remarks>
+
+Useful helper function to hash multiple values to a single hash.
+This uses the [FNV-1 hash function](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function), which is
+**NOT** secure.  If you need a secure hash, use something like [highwayhash](https://github.com/google/highwayhash#third-party-implementations--bindings)
+and implement a custom [HashableObj](#HashableObj) interface.
+
+
+</Remarks>
+
+<Export anchor="mkHashConfig" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hashing.ts#L205">
+
+```typescript
+function mkHashConfig<K extends HashKey>(): HashConfig<K>
+```
+
+</Export>
+
+<Summary>
+
+Create a HashConfig based on the key type
+
+</Summary>
+
+<Remarks>
+
+This function is used to create a [HashConfig](#HashConfig) based on the type of key.  It supports
+numbers, strings, booleans, dates, and objects which implement the [HashableObj](#HashableObj) interface.
+Note that this uses [hashValues](#hashValues) and is thus NOT cryptographically secure.
+
+
+</Remarks>
+
+### Basic Operations
+
+<Export anchor="lookup" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L221">
+
+```typescript
+function lookup<K, V>(
+  cfg: HashConfig<K>,
+  k: K,
+  rootNode: Node<K, V>
+): V | undefined
+```
+
+</Export>
+
+<Summary>
+
+Lookup a key in a HAMT
+
+</Summary>
+
+
+<Export anchor="insert" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L365">
+
+```typescript
+function insert<K, V>(
+  cfg: HashConfig<K>,
+  k: K,
+  getVal: (v: V | undefined) => V,
+  rootNode: Node<K, V> | null
+): readonly [Node<K, V>, boolean]
+```
+
+</Export>
+
+<Summary>
+
+Insert or update a key and value in a HAMT
+
+</Summary>
+
+<Remarks>
+
+This function lookus up the key and if it is found, the existing value is passed to `getVal`.
+Otherwise, undefined is passed to `getVal`.  The return value from `getVal` is then placed
+into the tree.  This function guarantees that if the return value from getVal is `===`
+the existing the value, the tree is returned unchanged (and the tree root will be the exact same
+object). The empty tree is represented by `null`.
+
+This returns a tuple of the new tree after the operation and a boolean which is
+true if the size has increased and false if the value overwrote an existing value and thus
+the size of the tree didn't change.  You can use this to externally track the size of the tree.
+
+
+</Remarks>
+
+### Initial Building
+
+<Export anchor="mutateInsert" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L522">
+
+```typescript
+function mutateInsert<K, T, V>(
+  cfg: HashConfig<K>,
+  k: K,
+  t: T,
+  getVal: (old: V | undefined, t: T) => V,
+  rootNode: MutableNode<K, V> | null
+): MutableNode<K, V>
+```
+
+</Export>
+
+<Summary>
+
+Mutably insert a key and value into a HAMT tree
+
+</Summary>
+
+<Remarks>
+
+This function is designed to only be used during the initial construction of
+a HAMT from a network request or other data structure.
+[from](#from) and [build](#build) internally use `mutateInsert` and are easier to use,
+this is exported for advanced use.
+
+An empty tree is represented as null and the tree will be mutated as values
+are inserted.  The return value is the new root and the old root should not be referenced
+again.  Once the tree is built, the type can be converted from [MutableNode](#MutableNode) to [Node](#Node).
+Typically this should happen in a single function whose return value is [Node](#Node).
+See the source code of [from](#from) and [build](#build) for examples of size tracking.
+
+If you wish to track the size, it must be done inside the `getVal` function.  If `getVal`
+is passed undefined, then the size is increasing by one.
+
+
+</Remarks>
+
+<Export anchor="from" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L638">
+
+```typescript
+function from<K, V>(
+  cfg: HashConfig<K>,
+  items: Iterable<readonly [K, V]>,
+  merge?: (v1: V, v2: V) => V
+): [Node<K, V> | null, number]
+```
+
+</Export>
+
+<Summary>
+
+Efficiently create a HAMT from a sequence of key-value pairs
+
+</Summary>
+
+<Remarks>
+
+`from` efficiently creates a HAMT from a sequence of key-value pairs.  An optional `merge` function
+can be provided.  When `from` detects a duplicate key, the merge function is called to determine
+the value associated to the key.  The first parameter `v1` to the merge function is the existing value
+and the second parameter `v2` is the new value just recieved from the sequence. The return value from the
+merge function is the value associated to the key.  If no merge function is provided, the second value `v2`
+is used, overwriting the first value `v1`.
+
+The return value is a tuple of the new tree and the size of the tree.
+
+
+</Remarks>
+
+<Export anchor="build" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L682">
+
+```typescript
+function build<K, V>(
+  cfg: HashConfig<K>,
+  items: Iterable<V>,
+  key: (v: V) => K
+): [Node<K, V> | null, number]
+```
+
+</Export>
+
+<Summary>
+
+Efficently create a new HAMT
+
+</Summary>
+
+<Remarks>
+
+`build` efficiently creates a HAMT from a sequence of values and a key extraction function.  If a
+duplicate key is found, the later value is used and the earlier value is overwritten.  If this is
+not desired, use the more generalized version of `build` which also provides a value extraction function.
+
+The return value is a tuple of the new tree and the size of the tree.
+
+
+</Remarks>
+
+<Export anchor="build2" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L701">
+
+```typescript
+function build<T, K, V>(
+  cfg: HashConfig<K>,
+  items: Iterable<T>,
+  key: (v: T) => K,
+  val: (old: V | undefined, t: T) => V
+): [Node<K, V> | null, number]
+```
+
+</Export>
+
+<Summary>
+
+Efficently create a new HAMT
+
+</Summary>
+
+<Remarks>
+
+`build` efficiently creates a HAMT from a sequence of items, a key extraction function, and a value extraction
+function.  The sequence of initial items can have any type `T`, and for each item the key is extracted.  If the key does not
+yet exist, the `val` extraction function is called with `undefined` to retrieve the value associated to the key.
+If the key already exists in the HAMT, the `val` extraction function is called with the `old` value to
+merge the new item `t` into the existing value `old`.
+
+The return value is a tuple of the new tree and the size of the tree.
+
+
+</Remarks>
+
+### Basic Operations
+
+<Export anchor="remove" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L838">
+
+```typescript
+function remove<K, V>(
+  cfg: HashConfig<K>,
+  k: K,
+  rootNode: Node<K, V> | null
+): Node<K, V> | null
+```
+
+</Export>
+
+<Summary>
+
+Remove a key from a HAMT
+
+</Summary>
+
+<Remarks>
+
+If the key exists, `remove` returns a new tree with the entry removed.  Otherwise, `remove` returns the
+tree root node unchanged.  This can be used to track the size if you wish, decrement the size if the new root
+is not `===` to the old root.
+
+
+</Remarks>
+
+<Export anchor="alter" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L965">
+
+```typescript
+function alter<K, V>(
+  cfg: HashConfig<K>,
+  k: K,
+  f: (oldV: V | undefined) => V | undefined,
+  rootNode: Node<K, V> | null
+): [Node<K, V> | null, number]
+```
+
+</Export>
+
+<Summary>
+
+Insert, change, or remove a key from a HAMT
+
+</Summary>
+
+<Remarks>
+
+`alter` is a generalization of [lookup](#lookup), [insert](#insert), and [remove](#remove).
+It can be used to insert a new entry, modify an existing entry, or
+delete an existing entry.  `alter` first looks for the key in the map.  The function `f` is then
+applied to the existing value if the key was found and `undefined` if the key does not exist.
+If the function `f` returns `undefined`, the entry is deleted and if `f` returns a value, the
+entry is updated to use the new value.
+
+The return value is a tuple of the new root and the size change (either +1, 0, or -1).
+If the key is not found and `f` returns undefined or the key exists and the function `f` returns
+a value `===` to the existing value, then the root instance is returned unchanged.
+
+
+</Remarks>
+
+### Iteration
+
+<Export anchor="iterate" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L1141">
+
+```typescript
+function iterate<K, V, R>(
+  f: (k: K, v: V) => R,
+  root: Node<K, V> | null
+): IterableIterator<R>
+```
+
+</Export>
+
+<Summary>
+
+Iterates the entries in the HAMT
+
+</Summary>
+
+<Remarks>
+
+This function produces an [iterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterator_protocol)
+that applies the function `f` to each key and value and yields the results.  This iterator can be used only once, you must
+call `iterate` again if you want to iterate the tree again.  The order of iteration is undefined.
+
+
+</Remarks>
+
+<Export anchor="fold" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L1167">
+
+```typescript
+function fold<K, V, T>(
+  f: (acc: T, key: K, val: V) => T,
+  zero: T,
+  root: Node<K, V> | null
+): T
+```
+
+</Export>
+
+<Summary>
+
+Reduce all the entries in the HAMT to a single value
+
+</Summary>
+
+
+<Export anchor="mapValues" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L1201">
+
+```typescript
+function mapValues<K, V1, V2>(
+  f: (v: V1, k: K) => V2,
+  root: Node<K, V1> | null
+): Node<K, V2> | null
+```
+
+</Export>
+
+<Summary>
+
+Transform the values in a HAMT using a function
+
+</Summary>
+
+<Remarks>
+
+`mapValues` applies the function `f` to each value and key in the HAMT and returns a new HAMT
+with the same keys but the values adjusted to the result of the function `f`. `mapValues`
+guarantees that if no values are changed, then the HAMT root node returned unchanged.
+
+
+</Remarks>
+
+<Export anchor="collectValues" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L1269">
+
+```typescript
+function collectValues<K, V1, V2>(
+  f: (v: V1, k: K) => V2 | undefined,
+  filterNull: boolean,
+  root: Node<K, V1> | null
+): [Node<K, V2> | null, number]
+```
+
+</Export>
+
+<Summary>
+
+Transform or delete the values in a HAMT using a function
+
+</Summary>
+
+<Remarks>
+
+`collectValues` applies the function `f` to each value and key in the HAMT, with the return value from `f` the new value
+associated to the key.  If `f` returns undefined, the key and value is removed.  If `filterNull` is true and `f` returns null,
+the key and value are also removed. If `filterNull` is false, null values are kept and only undefined values are removed.
+`collectValues` guarantees that if no values are changed, then the root node is returned
+unchanged.
+
+The return value is a tuple of the new root node and size of the new HAMT.
+
+
+</Remarks>
+
+### Bulk Modification
+
+<Export anchor="union" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L1389">
+
+```typescript
+function union<K, V>(
+  cfg: HashConfig<K>,
+  merge: (v1: V, v2: V, k: K) => V,
+  root1: Node<K, V> | null,
+  root2: Node<K, V> | null
+): [Node<K, V> | null, number]
+```
+
+</Export>
+
+<Summary>
+
+Returns a new HAMT which combines all entries in two HAMTs
+
+</Summary>
+
+<Remarks>
+
+`union` produces a new HAMT which contains all the entries in both HAMT.  If a
+key appears in only one of the two maps, the value from the map is used.  If a key appears
+in both maps, the provided merge function is used to determine the value.
+`union` guarantees that if the resulting HAMT is equal to `root1`, then the `root1` object
+instance is returned unchanged.
+
+The return value is a tuple of the new root node and the size of the *intersection* (since
+the algorithm can skip and not traverse sections of the tree that are not in both trees).
+Thus, to compute the size after the union, the formula is `root1size + root2size - intersectionSize`.
+
+
+</Remarks>
+
+<Export anchor="intersection" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L1634">
+
+```typescript
+function intersection<K, V>(
+  cfg: HashConfig<K>,
+  merge: (v1: V, v2: V, k: K) => V,
+  root1: Node<K, V> | null,
+  root2: Node<K, V> | null
+): [Node<K, V> | null, number]
+```
+
+</Export>
+
+<Summary>
+
+Returns a new HAMT which contains only entries whose keys are in both HAMTs
+
+</Summary>
+
+<Remarks>
+
+`intersection` produces a HAMT which contains all the entries which have keys in
+both HAMTs.  For each such entry, the merge function is used to determine the resulting value.
+`intersection` guarantees that if the resulting HAMT is equal to `root1`, then `root1` is returned
+unchanged.
+
+The return value is a tuple of the new HAMT and the size of the intersection, so the number of entries in the new HAMT.
+
+
+</Remarks>
+
+<Export anchor="difference" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L1830">
+
+```typescript
+function difference<K, V1, V2>(
+  cfg: HashConfig<K>,
+  root1: Node<K, V1> | null,
+  root2: Node<K, V2> | null
+): readonly [Node<K, V1> | null, number]
+```
+
+</Export>
+
+<Summary>
+
+Returns a new HAMT which contains only keys which appear in the first but not the second HAMT
+
+</Summary>
+
+<Remarks>
+
+`difference` produces a HAMT which contains all the entries in `root1` where the key does
+**not** exist in `root2`.  Can think of this as `root1 - root2` where the subtraction
+is removing all the keys in `root2` from `root1`.  The values of the `root2` HashMap are ignored and
+can be any value `V2`.
+
+The return value is a tuple of the HAMT root and the number of entries removed from `root1`.
+`difference` guarantees that if no entries are removed from `root1`, then `root1` object
+is returned unchanged.
+
+
+</Remarks>
+
+<Export anchor="adjust" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/data-structures/hamt.ts#L2043">
+
+```typescript
+function adjust<K, V1, V2>(
+  cfg: HashConfig<K>,
+  f: (v1: V1 | undefined, v2: V2, k: K) => V1 | undefined,
+  root1: Node<K, V1> | null,
+  root2: Node<K, V2> | null
+): readonly [Node<K, V1> | null, number]
+```
+
+</Export>
+
+<Summary>
+
+Return a HAMT which adjusts all the provided keys with a specified modification function.
+
+</Summary>
+
+<Remarks>
+
+`adjust` is passed two HAMTs: `root1` is the HAMT to modify and `root2` is the keys to adjust associated to helper
+values of type `V2` (the type `V2` can be anything and does not need to be related `V1`).
+For each key in `root2` to modify, `adjust` looks up the key in `root1` and then calls the function `f`
+with the current existing value in `root1` (or `undefined` if the key does not exist) and the helper value from `root2`
+associated with the key. The return value from `f` is set as the new value for the key, or removed if the return value is `undefined`.
+
+The return value is a tuple of the HAMT root and the number of keys removed.  Note the number of keys removed can be negative if
+nodes were added to the HAMT.  `adjust` guarantees that if nothing was added, removed, or changed, then `root1` is returned.
+
+
+</Remarks>
+
