@@ -4,7 +4,7 @@ import * as path from "node:path";
 import * as cp from "node:child_process";
 import ts from "typescript";
 //import { SidebarsConfig } from "@docusaurus/plugin-content-docs";
-import basePackage from "../package.json" assert { type: "json" };
+import basePackage from "../package.json" with { type: "json" };
 
 const majorMinorVersion = basePackage.version.substring(
   0,
@@ -200,13 +200,13 @@ function emitDocFile(doc: DocFile) {
         const hash = linkRefs[linkRefs.length - 1];
         write(`[${link}](${page ?? ""}${hash ? "#" : ""}${hash})`);
       } else if (part.kind === ts.SyntaxKind.JSDocText) {
-        if (onlyFirstParagraph && part.text.indexOf("\n\n") >= 0) {
+        if (onlyFirstParagraph && part.text.includes("\n\n")) {
           write(part.text.substring(0, part.text.indexOf("\n\n")));
           return;
         }
         write(part.text);
       } else {
-        console.log("UNKNWON JSDoc Kind: " + part.kind);
+        console.log("UNKNWON JSDoc Kind: " + part.kind.toString());
       }
     }
   }
@@ -283,7 +283,7 @@ function emitDocFile(doc: DocFile) {
     const file = path.relative(path.resolve(".."), node.getSourceFile().fileName);
     const line = node.getSourceFile().getLineAndCharacterOfPosition(node.getStart());
 
-    const src = srcPrefix + file + "#L" + (line.line + 1);
+    const src = srcPrefix + file + "#L" + (line.line + 1).toString();
     write(`<Export anchor="${anchor}" src="${src}">\n\n`);
   }
 
@@ -307,7 +307,7 @@ function emitDocFile(doc: DocFile) {
       const params = sig.parameters.map((t) => t.getFullText()).join(",");
       write(params);
       // if some param has a newline, add a final newline before the close paren
-      if (params.indexOf("\n") >= 0) write("\n");
+      if (params.includes("\n")) write("\n");
       write(")");
     }
     write(":");
