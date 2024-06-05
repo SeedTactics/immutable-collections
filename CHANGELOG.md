@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- No changes, 1.0.0 is identical to 0.9.5, but is now a stable release.
+
 ## 0.9.5 - 2024-05-10
 
 ### Added
