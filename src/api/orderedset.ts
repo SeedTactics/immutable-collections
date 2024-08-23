@@ -108,7 +108,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    * @category Creating Ordered Sets
    *
    * @remarks
-   * `build` efficiently creates a new HashSet by applying the given function to each thing in the
+   * `build` efficiently creates a new OrderedSet by applying the given function to each thing in the
    * `things` collection.
    *
    * Runs in time O(n log n)
@@ -271,12 +271,12 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
     }
   }
 
-  /** Return a new OrderedMap with the given item removed
+  /** Return a new OrderedSet with the given item removed
    *
    * @category Add and Delete
    *
    * @remarks
-   * If the item does not exist, then the HashSet object instance is returned unchanged.
+   * If the item does not exist, then the OrderedSet object instance is returned unchanged.
    * Runs in time O(log n)
    */
   delete(t: T): OrderedSet<T> {
@@ -568,7 +568,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    * @remarks
    * `difference` produces a new OrderedSet which contains all the items which appear in `this` OrderedSet,
    * except all the items from the `other` OrderedSet are removed.  `difference` can be thought of as subtracting: `this - other`.
-   * `difference` guarantees that if the resulting OrderedSet is equal to `this`, then the HashSet object
+   * `difference` guarantees that if the resulting OrderedSet is equal to `this`, then the OrderedSet object
    * instance is returned unchanged.
    *
    * Runs in time O(m log(n/m)) where m is the size of the smaller set and n is the size of the larger set.
