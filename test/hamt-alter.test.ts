@@ -1,5 +1,7 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+
 import { expect } from "chai";
 import { CollidingKey as Key, createKeyWithSameHash } from "./collision-key.js";
 import { mkHashConfig } from "../src/data-structures/hashing.js";
@@ -7,7 +9,7 @@ import { InternalNode, alter, Node } from "../src/data-structures/hamt.js";
 
 function setNewVal(
   val: number | undefined,
-  expected?: number | undefined
+  expected?: number
 ): (old: number | undefined) => number | undefined {
   return (old) => {
     expect(old).to.equal(expected);

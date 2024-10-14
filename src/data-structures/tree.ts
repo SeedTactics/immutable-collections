@@ -78,7 +78,6 @@ export function lookup<K, V>(
  */
 export function lookupMin<K, V>(root: TreeNode<K, V>): readonly [K, V] {
   let node = root;
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const left = node.left;
     if (left) {
@@ -95,7 +94,6 @@ export function lookupMin<K, V>(root: TreeNode<K, V>): readonly [K, V] {
  */
 export function lookupMax<K, V>(root: TreeNode<K, V>): readonly [K, V] {
   let node = root;
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const right = node.right;
     if (right) {
@@ -404,7 +402,6 @@ export function* iterateAsc<K, V, T>(
       nodes.push(node);
       node = node.left;
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       node = nodes.pop()!;
       yield f(node.key, node.val);
       node = node.right;
@@ -431,7 +428,6 @@ export function* iterateDesc<K, V, T>(
       nodes.push(node);
       node = node.right;
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       node = nodes.pop()!;
       yield f(node.key, node.val);
       node = node.left;
@@ -461,7 +457,6 @@ export function foldl<K, V, T>(
       nodes.push(node);
       node = node.left;
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       node = nodes.pop()!;
       acc = f(acc, node.key, node.val);
       node = node.right;
@@ -493,7 +488,6 @@ export function foldr<K, V, T>(
       nodes.push(node);
       node = node.right;
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       node = nodes.pop()!;
       acc = f(node.key, node.val, acc);
       node = node.left;

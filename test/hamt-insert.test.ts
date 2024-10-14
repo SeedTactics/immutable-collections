@@ -1,5 +1,7 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+
 import { expect } from "chai";
 import { CollidingKey as Key, createKeyWithSameHash } from "./collision-key.js";
 import { mkHashConfig } from "../src/data-structures/hashing.js";
@@ -177,7 +179,6 @@ describe("HAMT insert and lookup", () => {
     });
 
     for (let i = 0; i < 32; i++) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       expect(lookup(cfg, new Key(i, i), tree!)).to.equal(i * 100);
       expect(lookup(cfg, new Key(i, i), after)).to.equal(i * 100);
 

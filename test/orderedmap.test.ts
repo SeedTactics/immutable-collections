@@ -1,5 +1,5 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable @typescript-eslint/no-base-to-string */
 
 import { expect } from "chai";
@@ -126,9 +126,9 @@ function expectEqual<K extends OrderedMapKey, V>(
   expect([...ordMap.keys()]).to.deep.equal(entries.map(([k]) => k));
   expect([...ordMap.keysToAscLazySeq()]).to.deep.equal(entries.map(([k]) => k));
   expect([...ordMap.keysToDescLazySeq()]).to.deep.equal(revEntries.map(([k]) => k));
-  expect([...ordMap.values()]).to.deep.equal(entries.map(([_, v]) => v));
-  expect([...ordMap.valuesToAscLazySeq()]).to.deep.equal(entries.map(([_, v]) => v));
-  expect([...ordMap.valuesToDescLazySeq()]).to.deep.equal(revEntries.map(([_, v]) => v));
+  expect([...ordMap.values()]).to.deep.equal(entries.map(([, v]) => v));
+  expect([...ordMap.valuesToAscLazySeq()]).to.deep.equal(entries.map(([, v]) => v));
+  expect([...ordMap.valuesToDescLazySeq()]).to.deep.equal(revEntries.map(([, v]) => v));
 
   const forEachEntries = new Array<[K, V]>();
   ordMap.forEach((v, k, m) => {

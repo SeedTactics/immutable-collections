@@ -1,6 +1,5 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/unbound-method */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 
 import { expect } from "chai";
 import { alter, iterateAsc, iterateDesc, lookup } from "../src/data-structures/tree.js";

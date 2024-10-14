@@ -1,6 +1,6 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 /* eslint-disable @typescript-eslint/no-base-to-string */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
@@ -113,10 +113,10 @@ export function expectEqual<K extends HashKey, V>(
   expect(sortKeys(imMap.keys())).to.deep.equal(entries.map(([k]) => k));
   expect(sortKeys(imMap.keysToLazySeq())).to.deep.equal(entries.map(([k]) => k));
   expect(sortValues(imMap.values())).to.deep.equal(
-    sortValues(entries.map(([_, v]) => v)),
+    sortValues(entries.map(([, v]) => v)),
   );
   expect(sortValues(imMap.valuesToLazySeq())).to.deep.equal(
-    sortValues(entries.map(([_, v]) => v)),
+    sortValues(entries.map(([, v]) => v)),
   );
 
   const forEachEntries = new Array<[K, V]>();
