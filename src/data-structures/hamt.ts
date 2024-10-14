@@ -312,7 +312,6 @@ function two<K, V>(
   // parent array.
   let parent: Array<Node<K, V>> | undefined;
 
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const mask1 = mask(hash1, shift);
     const mask2 = mask(hash2, shift);
@@ -476,7 +475,6 @@ export function insert<K, V>(
       let inserted = true;
       if (hash === curNode.hash) {
         // check and extend the existing collision node
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const newRoot = tree.alter(cfg, k, getVal, curNode.collision)!;
         if (newRoot === curNode.collision) {
           // return the original root node because nothing changed
@@ -746,7 +744,6 @@ export function build<T, K, V>(
 function hasSingleLeafOrCollision<K, V>(
   node: Node<K, V>,
 ): LeafNode<K, V> | CollisionNode<K, V> | null {
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     if ("children" in node) {
       if (node.children.length === 1) {
@@ -917,7 +914,6 @@ export function remove<K, V>(
       // collision
       if (hash === curNode.hash) {
         // collision node always has at least two nodes, so removing one will still leave non-empty tree
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const newRoot = tree.alter(cfg, k, constUndefined, curNode.collision)!;
         if (newRoot === curNode.collision) {
           return rootNode;
@@ -1092,7 +1088,6 @@ export function alter<K, V>(
       let sizeChange: number;
       if (hash === curNode.hash) {
         // collision node always has at least two nodes, so removing one will still leave non-empty tree
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const newRoot = tree.alter(cfg, k, f, curNode.collision)!;
         if (newRoot === curNode.collision) {
           return [rootNode, 0];
@@ -1244,7 +1239,6 @@ export function mapValues<K, V1, V2>(
         return node as unknown as Node<K, V2>;
       } else {
         // mapValues on a non-null tree produces a non-null tree
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return { hash: node.hash, collision: newRoot! };
       }
     }
@@ -1424,7 +1418,6 @@ export function union<K, V>(
       }
     } else if ("key" in node1 && "collision" in node2) {
       if (node1.hash === node2.hash) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const newRoot = tree.alter(
           cfg,
           node1.key,
@@ -1448,7 +1441,6 @@ export function union<K, V>(
       }
     } else if ("collision" in node1 && "key" in node2) {
       if (node1.hash === node2.hash) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const newRoot = tree.alter(
           cfg,
           node2.key,
@@ -1473,7 +1465,6 @@ export function union<K, V>(
     } else if ("collision" in node1 && "collision" in node2) {
       if (node1.hash === node2.hash) {
         // union of non-empty trees is non-empty
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const newRoot = tree.union(cfg, merge, node1.collision, node2.collision)!;
         if (newRoot === node1.collision) {
           return node1;
@@ -2104,7 +2095,6 @@ export function adjust<K, V1, V2>(
       if (node1.hash === node2.hash) {
         // altering the node1 tree cannot produce null, because node1 has at least two elements and we are
         // adjusting only a single key (noed2.key)
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const newCol1 = tree.alter(
           cfg,
           node2.key,

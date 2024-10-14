@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
 import { expect } from "chai";

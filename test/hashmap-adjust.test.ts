@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";

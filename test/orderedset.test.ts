@@ -1,6 +1,6 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 /* eslint-disable @typescript-eslint/no-base-to-string */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
@@ -768,7 +768,6 @@ describe("OrderedSet", () => {
     expectEqual(imSet, jsSet);
 
     const newK = keygen() * 2 + 1;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const existingK = m.ordMap.keysToAscLazySeq().head()!;
     const imSet2 = imSet.add(newK).add(existingK);
     jsSet.set(newK.toString(), newK);

@@ -1,4 +1,5 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
@@ -523,7 +524,6 @@ describe("HashSet", () => {
     expectEqual(imSet, jsSet);
 
     const newK = randomCollisionKey();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const existingK = m.imMap.keysToLazySeq().head()!;
     const imSet2 = imSet.add(newK).add(existingK);
     jsSet.set(newK.toString(), newK);

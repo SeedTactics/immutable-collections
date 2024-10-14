@@ -1,5 +1,5 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
-/* eslint-disable @typescript-eslint/unbound-method */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 
 import { expect } from "chai";
 import { faker } from "@faker-js/faker";
@@ -17,7 +17,7 @@ class ComparableInt {
 
 describe("LazySeq", () => {
   it("constructs from an iterable", () => {
-    const arr = faker.datatype.array();
+    const arr = faker.helpers.multiple(() => faker.number.int());
 
     const seq = LazySeq.of(arr);
 

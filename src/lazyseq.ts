@@ -17,7 +17,7 @@ import { OrderedSet } from "./api/orderedset.js";
 
 type JsMapKey = number | string | boolean;
 
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 type NotUndefined = {} | null;
 
 type TupleOfHashProps<T, FS extends ToHashable<T>[]> = FS extends [(t: T) => infer R]

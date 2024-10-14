@@ -21,7 +21,7 @@ import { HashConfig, HashKey, mkHashConfig } from "../data-structures/hashing.js
 import { LazySeq } from "../lazyseq.js";
 import { HashSet } from "./hashset.js";
 
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 type NotUndefined = {} | null;
 
 /**
