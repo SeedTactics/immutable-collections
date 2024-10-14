@@ -30,14 +30,14 @@ The OrderedSet is immutable, which means that no changes or mutations are allowe
 Instead, modification operations such as [OrderedSet.add](#add) return a new OrderedSet which contains the
 result of the modification.  The original OrderedSet is unchanged and can continue to be accessed and used.
 The OrderedSet implements this efficiently using structural sharing and does not require a full copy; indeed,
-the [delete](#delete) method will copy at most `O(log n)` entries.
+the [OrderedSet.delete](#delete) method will copy at most `O(log n)` entries.
 
 
 </Remarks>
 
 ### Creating Ordered Sets
 
-<Export anchor="empty" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L70">
+<Export anchor="empty" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L70">
 
 ```typescript
 static empty<T extends OrderedMapKey>(): OrderedSet<T>
@@ -63,7 +63,7 @@ or using various methods on [LazySeq](lazyseq#LazySeq) to convert a `LazySeq` to
 
 </Remarks>
 
-<Export anchor="ofKeys" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L82">
+<Export anchor="ofKeys" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L82">
 
 ```typescript
 static ofKeys<K extends OrderedMapKey, V>(map: OrderedMap<K, V>): OrderedSet<K>
@@ -85,7 +85,7 @@ This function is O(1) and very fast because the backing data structure is reused
 
 </Remarks>
 
-<Export anchor="from" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L98">
+<Export anchor="from" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L98">
 
 ```typescript
 static from<T extends OrderedMapKey>(items: Iterable<T>): OrderedSet<T>
@@ -106,7 +106,7 @@ Runs in time O(n log n)
 
 </Remarks>
 
-<Export anchor="build" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L116">
+<Export anchor="build" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L116">
 
 ```typescript
 static build<T extends OrderedMapKey, R>(
@@ -125,7 +125,7 @@ Efficiently create a new set from a collection of values and an item extraction 
 
 <Remarks>
 
-`build` efficiently creates a new HashSet by applying the given function to each thing in the
+`build` efficiently creates a new OrderedSet by applying the given function to each thing in the
 `things` collection.
 
 Runs in time O(n log n)
@@ -135,7 +135,7 @@ Runs in time O(n log n)
 
 ### IReadOnlySet interface
 
-<Export anchor="size" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L128">
+<Export anchor="size" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L128">
 
 ```typescript
 𝑜𝑏𝑗.size(): number
@@ -150,7 +150,7 @@ size is a readonly property containing the number of items in the set.
 </Summary>
 
 
-<Export anchor="has" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L139">
+<Export anchor="has" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L139">
 
 ```typescript
 𝑜𝑏𝑗.has(t: T): boolean
@@ -171,7 +171,7 @@ Runs in time O(log n)
 
 </Remarks>
 
-<Export anchor="Symbol_iterator" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L152">
+<Export anchor="Symbol_iterator" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L152">
 
 ```typescript
 𝑜𝑏𝑗.[Symbol.iterator](): IterableIterator<T>
@@ -193,7 +193,7 @@ all the items in ascending order.
 
 </Remarks>
 
-<Export anchor="entries" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L165">
+<Export anchor="entries" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L165">
 
 ```typescript
 𝑜𝑏𝑗.entries(): IterableIterator<[T, T]>
@@ -216,7 +216,7 @@ method.)  The items are iterated in ascending order.
 
 </Remarks>
 
-<Export anchor="keys" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L177">
+<Export anchor="keys" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L177">
 
 ```typescript
 𝑜𝑏𝑗.keys(): IterableIterator<T>
@@ -238,7 +238,7 @@ are iterated in ascending order. Both `keys` and `values` are equivalent for an 
 
 </Remarks>
 
-<Export anchor="values" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L189">
+<Export anchor="values" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L189">
 
 ```typescript
 𝑜𝑏𝑗.values(): IterableIterator<T>
@@ -260,7 +260,7 @@ are iterated in ascending order. Both `keys` and `values` are equivalent for an 
 
 </Remarks>
 
-<Export anchor="forEach" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L202">
+<Export anchor="forEach" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L202">
 
 ```typescript
 𝑜𝑏𝑗.forEach(f: (val: T, val2: T, set: OrderedSet<T>) => void): void
@@ -285,7 +285,7 @@ The items are iterated in ascending order.
 
 ### Iteration
 
-<Export anchor="foldl" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L222">
+<Export anchor="foldl" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L222">
 
 ```typescript
 𝑜𝑏𝑗.foldl<R>(f: (acc: R, t: T) => R, zero: R): R
@@ -308,7 +308,7 @@ which is then combined with the next smallest item, and so on.
 
 </Remarks>
 
-<Export anchor="foldr" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L235">
+<Export anchor="foldr" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L235">
 
 ```typescript
 𝑜𝑏𝑗.foldr<R>(f: (t: T, acc: R) => R, zero: R): R
@@ -331,7 +331,7 @@ which is then combined with the second-to-largest item, and so on.
 
 </Remarks>
 
-<Export anchor="toAscLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L243">
+<Export anchor="toAscLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L243">
 
 ```typescript
 𝑜𝑏𝑗.toAscLazySeq(): LazySeq<T>
@@ -346,7 +346,7 @@ Creates a LazySeq which iterates all the items in the OrderedSet in ascending or
 </Summary>
 
 
-<Export anchor="toDescLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L252">
+<Export anchor="toDescLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L252">
 
 ```typescript
 𝑜𝑏𝑗.toDescLazySeq(): LazySeq<T>
@@ -363,7 +363,7 @@ Creates a LazySeq which iterates all the items in the OrderedSet in descending o
 
 ### Add and Delete
 
-<Export anchor="add" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L265">
+<Export anchor="add" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L265">
 
 ```typescript
 𝑜𝑏𝑗.add(t: T): OrderedSet<T>
@@ -385,7 +385,7 @@ Runs in time O(log n)
 
 </Remarks>
 
-<Export anchor="delete" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L282">
+<Export anchor="delete" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L282">
 
 ```typescript
 𝑜𝑏𝑗.delete(t: T): OrderedSet<T>
@@ -395,13 +395,13 @@ Runs in time O(log n)
 
 <Summary>
 
-Return a new OrderedMap with the given item removed
+Return a new OrderedSet with the given item removed
 
 </Summary>
 
 <Remarks>
 
-If the item does not exist, then the HashSet object instance is returned unchanged.
+If the item does not exist, then the OrderedSet object instance is returned unchanged.
 Runs in time O(log n)
 
 
@@ -409,7 +409,7 @@ Runs in time O(log n)
 
 ### Transformation
 
-<Export anchor="partition" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L307">
+<Export anchor="partition" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L307">
 
 ```typescript
 𝑜𝑏𝑗.partition(f: (t: T) => boolean): [OrderedSet<T>, OrderedSet<T>]
@@ -439,7 +439,7 @@ This runs in O(n) time.
 
 </Remarks>
 
-<Export anchor="filter" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L330">
+<Export anchor="filter" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L330">
 
 ```typescript
 𝑜𝑏𝑗.filter(f: (t: T) => boolean): OrderedSet<T>
@@ -465,7 +465,7 @@ This runs in O(n) time.
 
 </Remarks>
 
-<Export anchor="split" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L351">
+<Export anchor="split" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L351">
 
 ```typescript
 𝑜𝑏𝑗.split(t: T): {
@@ -495,7 +495,7 @@ This runs in time O(log n)
 
 </Remarks>
 
-<Export anchor="transform" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L373">
+<Export anchor="transform" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L373">
 
 ```typescript
 𝑜𝑏𝑗.transform<U>(f: (s: OrderedSet<T>) => U): U
@@ -520,7 +520,7 @@ temporary variable.
 
 ### Min/Max Items
 
-<Export anchor="lookupMin" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L384">
+<Export anchor="lookupMin" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L384">
 
 ```typescript
 𝑜𝑏𝑗.lookupMin(): T | undefined
@@ -541,7 +541,7 @@ In O(log n) time, find the minimum item.  Returns undefined if the OrderedSet is
 
 </Remarks>
 
-<Export anchor="lookupMax" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L396">
+<Export anchor="lookupMax" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L396">
 
 ```typescript
 𝑜𝑏𝑗.lookupMax(): T | undefined
@@ -562,7 +562,7 @@ In O(log n) time, find the maximum item.  Returns undefined if the OrderedSet is
 
 </Remarks>
 
-<Export anchor="deleteMin" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L408">
+<Export anchor="deleteMin" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L408">
 
 ```typescript
 𝑜𝑏𝑗.deleteMin(): OrderedSet<T>
@@ -583,7 +583,7 @@ In O(log n) time, return a new OrderedSet with the the minimum item removed.
 
 </Remarks>
 
-<Export anchor="deleteMax" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L421">
+<Export anchor="deleteMax" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L421">
 
 ```typescript
 𝑜𝑏𝑗.deleteMax(): OrderedSet<T>
@@ -604,7 +604,7 @@ In O(log n) time, return a new OrderedSet with the the maximum item removed.
 
 </Remarks>
 
-<Export anchor="minView" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L436">
+<Export anchor="minView" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L436">
 
 ```typescript
 𝑜𝑏𝑗.minView(): { readonly min: T; readonly rest: OrderedSet<T> } | undefined
@@ -627,7 +627,7 @@ undefined is returned.
 
 </Remarks>
 
-<Export anchor="maxView" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L454">
+<Export anchor="maxView" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L454">
 
 ```typescript
 𝑜𝑏𝑗.maxView(): { readonly max: T; readonly rest: OrderedSet<T> } | undefined
@@ -652,7 +652,7 @@ undefined is returned.
 
 ### Set Operations
 
-<Export anchor="union" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L474">
+<Export anchor="union" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L474">
 
 ```typescript
 𝑜𝑏𝑗.union(other: OrderedSet<T>): OrderedSet<T>
@@ -677,7 +677,7 @@ Runs in time O(m log(n/m)) where m is the size of the smaller set and n is the s
 
 </Remarks>
 
-<Export anchor="union2" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L494">
+<Export anchor="union2" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L494">
 
 ```typescript
 static union<T extends OrderedMapKey>(
@@ -704,7 +704,7 @@ then the OrderedSet object instance is returned unchanged.
 
 </Remarks>
 
-<Export anchor="intersection" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L525">
+<Export anchor="intersection" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L525">
 
 ```typescript
 𝑜𝑏𝑗.intersection(other: OrderedSet<T>): OrderedSet<T>
@@ -729,7 +729,7 @@ Runs in time O(m log(n/m)) where m is the size of the smaller set and n is the s
 
 </Remarks>
 
-<Export anchor="intersection2" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L545">
+<Export anchor="intersection2" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L545">
 
 ```typescript
 static intersection<T extends OrderedMapKey>(
@@ -756,7 +756,7 @@ instance is returned unchanged.
 
 </Remarks>
 
-<Export anchor="difference" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L576">
+<Export anchor="difference" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L576">
 
 ```typescript
 𝑜𝑏𝑗.difference(other: OrderedSet<T>): OrderedSet<T>
@@ -774,7 +774,7 @@ Returns a new set which contains items which appear this but NOT in the provided
 
 `difference` produces a new OrderedSet which contains all the items which appear in `this` OrderedSet,
 except all the items from the `other` OrderedSet are removed.  `difference` can be thought of as subtracting: `this - other`.
-`difference` guarantees that if the resulting OrderedSet is equal to `this`, then the HashSet object
+`difference` guarantees that if the resulting OrderedSet is equal to `this`, then the OrderedSet object
 instance is returned unchanged.
 
 Runs in time O(m log(n/m)) where m is the size of the smaller set and n is the size of the larger set.
@@ -782,7 +782,7 @@ Runs in time O(m log(n/m)) where m is the size of the smaller set and n is the s
 
 </Remarks>
 
-<Export anchor="symmetricDifference" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L596">
+<Export anchor="symmetricDifference" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L596">
 
 ```typescript
 𝑜𝑏𝑗.symmetricDifference(other: OrderedSet<T>): OrderedSet<T>
@@ -807,7 +807,7 @@ Runs in time O(m log(n/m)) where m is the size of the smaller set and n is the s
 
 </Remarks>
 
-<Export anchor="isSubsetOf" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L614">
+<Export anchor="isSubsetOf" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L614">
 
 ```typescript
 𝑜𝑏𝑗.isSubsetOf(largerSet: OrderedSet<T>): boolean
@@ -830,7 +830,7 @@ Runs in time O(m log(n/m)) where m is the size of this and n is the size of larg
 
 </Remarks>
 
-<Export anchor="isSupersetOf" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L628">
+<Export anchor="isSupersetOf" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L628">
 
 ```typescript
 𝑜𝑏𝑗.isSupersetOf(smallerSet: OrderedSet<T>): boolean
@@ -854,7 +854,7 @@ Runs in time O(m log(n/m)) where m is the size of smallerSet and n is the size o
 
 </Remarks>
 
-<Export anchor="isDisjointFrom" src="https://github.com/SeedTactics/immutable-collections/blob/51cb410e92845cb870d6c8385cdc1395b2721aff/src/api/orderedset.ts#L642">
+<Export anchor="isDisjointFrom" src="https://github.com/SeedTactics/immutable-collections/blob/a481a956c2ef55e296542578d73d3d1d9556308c/src/api/orderedset.ts#L642">
 
 ```typescript
 𝑜𝑏𝑗.isDisjointFrom(other: OrderedSet<T>): boolean
