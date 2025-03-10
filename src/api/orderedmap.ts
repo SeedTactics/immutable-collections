@@ -46,8 +46,7 @@ function constUndefined() {
  * The `OrderedMap<K, V>` class stores key-value pairs where the keys have type `K` and the values type `V`.
  * Keys can be numbers, strings, booleans, dates, or custom objects which implement the {@link ./classes#ComparableObj} interface.
  * The entries are stored in a balanced binary tree, and various methods can iterate over the entries in either ascending
- * or descending order of keys.  OrderedMap implements the typescript-builtin `ReadonlyMap` interface (which
- * consists of the read-only methods of [the JS builtin Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)).
+ * or descending order of keys.
  *
  * The OrderedMap is immutable, which means that no changes or mutations are allowed directly to the OrderedMap.
  * Instead, modification operations such as {@link OrderedMap.alter} return a new OrderedMap which contains the
@@ -55,7 +54,7 @@ function constUndefined() {
  * The OrderedMap implements this efficiently using structural sharing and does not require a full copy; indeed,
  * the `alter` method will copy at most `O(log n)` entries.
  */
-export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V> {
+export class OrderedMap<K extends OrderedMapKey, V> {
   /** Static method to create a new empty OrderedMap
    *
    * @category Creating Ordered Maps
@@ -189,7 +188,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * This is the default iteration when using `for .. of` directly on the `OrderedMap`.  It iterates
    * all keys and values in ascinding order of keys.
    */
-  [Symbol.iterator](): IterableIterator<[K, V]> {
+  [Symbol.iterator](): MapIterator<[K, V]> {
     return iterateAsc((k, v) => [k, v], this.root);
   }
 
@@ -203,7 +202,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * it can only be iterated once.  Use {@link OrderedMap.toAscLazySeq} or {@link OrderedMap.toDescLazySeq} to create an iterable that can be
    * iterated more than once.
    */
-  entries(): IterableIterator<[K, V]> {
+  entries(): MapIterator<[K, V]> {
     return iterateAsc((k, v) => [k, v], this.root);
   }
 
@@ -217,7 +216,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * it can only be iterated once.  Use {@link OrderedMap.keysToAscLazySeq} or {@link OrderedMap.keysToDescLazySeq} to
    * create an iterable that can be iterated more than once.
    */
-  keys(): IterableIterator<K> {
+  keys(): MapIterator<K> {
     return iterateAsc((k) => k, this.root);
   }
 
@@ -233,7 +232,7 @@ export class OrderedMap<K extends OrderedMapKey, V> implements ReadonlyMap<K, V>
    * iterated more than once.
    *
    */
-  values(): IterableIterator<V> {
+  values(): MapIterator<V> {
     return iterateAsc((_, v) => v, this.root);
   }
 

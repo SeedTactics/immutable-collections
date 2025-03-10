@@ -44,9 +44,7 @@ function constUndefined() {
  *
  * @remarks
  * The `OrderedSet<T>` class stores numbers, strings, booleans, dates, or custom objects which implement the
- * {@link ./classes#ComparableObj} interface. OrderedSet implements the typescript-builtin `ReadonlySet`
- * interface (which consists of the read-only methods of
- * [the JS builtin Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set)).
+ * {@link ./classes#ComparableObj} interface.
  *
  * The OrderedSet is immutable, which means that no changes or mutations are allowed directly to the OrderedSet.
  * Instead, modification operations such as {@link OrderedSet.add} return a new OrderedSet which contains the
@@ -54,7 +52,7 @@ function constUndefined() {
  * The OrderedSet implements this efficiently using structural sharing and does not require a full copy; indeed,
  * the {@link OrderedSet.delete} method will copy at most `O(log n)` entries.
  */
-export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
+export class OrderedSet<T extends OrderedMapKey> {
   /** Static method to create a new empty OrderedSet
    *
    * @category Creating Ordered Sets
@@ -149,7 +147,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    * This is the default iteration when using `for .. of` directly on the `OrderedSet`.  It iterates
    * all the items in ascending order.
    */
-  [Symbol.iterator](): IterableIterator<T> {
+  [Symbol.iterator](): SetIterator<T> {
     return iterateAsc((k) => k, this.root);
   }
 
@@ -162,7 +160,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    * twice.  (This matches the builtin [Set.entries](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/entries)
    * method.)  The items are iterated in ascending order.
    */
-  entries(): IterableIterator<[T, T]> {
+  entries(): SetIterator<[T, T]> {
     return iterateAsc((t) => [t, t], this.root);
   }
 
@@ -174,7 +172,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    * This provides an iterator to iterate all the items in the OrderedSet. Items
    * are iterated in ascending order. Both `keys` and `values` are equivalent for an OrderedSet.
    */
-  keys(): IterableIterator<T> {
+  keys(): SetIterator<T> {
     return iterateAsc((t) => t, this.root);
   }
 
@@ -186,7 +184,7 @@ export class OrderedSet<T extends OrderedMapKey> implements ReadonlySet<T> {
    * This provides an iterator to iterate all the items in the OrderedSet. Items
    * are iterated in ascending order. Both `keys` and `values` are equivalent for an OrderedSet.
    */
-  values(): IterableIterator<T> {
+  values(): SetIterator<T> {
     return iterateAsc((t) => t, this.root);
   }
 

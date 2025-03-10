@@ -131,7 +131,7 @@ export class LazySeq<T> {
    * This is the default iteration when using `for .. of` directly on the `LazySeq`.
    */
   [Symbol.iterator](): Iterator<T> {
-    return this.iter[Symbol.iterator]();
+    return this.#iter[Symbol.iterator]();
   }
 
   /** Strictly combines entries which map to the same key
@@ -153,7 +153,7 @@ export class LazySeq<T> {
     combine: (s1: S, s2: S) => S,
   ): LazySeq<readonly [K, S]> {
     const m = new Map<K, S>();
-    for (const x of this.iter) {
+    for (const x of this.#iter) {
       const k = key(x);
       const v = m.get(k);
       if (v === undefined) {
@@ -170,7 +170,7 @@ export class LazySeq<T> {
    * @category Transformation
    */
   append(x: T): LazySeq<T> {
-    const iter = this.iter;
+    const iter = this.#iter;
     return LazySeq.ofIterator(function* () {
       yield* iter;
       yield x;
@@ -185,7 +185,7 @@ export class LazySeq<T> {
    * Each chunk except the final chunk will have exactly `size` entries.
    */
   chunk(size: number): LazySeq<ReadonlyArray<T>> {
-    const iter = this.iter;
+    const iter = this.#iter;
     return LazySeq.ofIterator(function* () {
       let chunk: T[] = [];
       for (const x of iter) {
@@ -219,7 +219,7 @@ export class LazySeq<T> {
    * ```
    */
   concat(i: Iterable<T>): LazySeq<T> {
-    const iter = this.iter;
+    const iter = this.#iter;
     return LazySeq.ofIterator(function* () {
       yield* iter;
       yield* i;
@@ -236,7 +236,7 @@ export class LazySeq<T> {
    * or {@link LazySeq.toOrderedSet}.
    */
   distinct(this: LazySeq<T & JsMapKey>): LazySeq<T> {
-    const iter = this.iter;
+    const iter = this.#iter;
     return LazySeq.ofIterator(function* () {
       const s = new Set<T>();
       for (const x of iter) {
@@ -265,7 +265,7 @@ export class LazySeq<T> {
    */
   distinctBy(prop: ToHashable<T>, ...props: Array<ToHashable<T>>): LazySeq<T> {
     props.unshift(prop);
-    const iter = this.iter;
+    const iter = this.#iter;
     const cfg = {
       hash: (x: T) => hashValues(...props.map((f) => f(x))),
       compare: mkCompareByProperties(...props),
@@ -308,7 +308,7 @@ export class LazySeq<T> {
     function fst(old: T | undefined, x: T): T {
       return old === undefined ? x : old;
     }
-    for (const x of this.iter) {
+    for (const x of this.#iter) {
       s = tree.mutateInsert(cfg, x, x, fst, s);
     }
     return LazySeq.ofIterator(() => tree.iterateAsc((k) => k, s));
@@ -323,7 +323,7 @@ export class LazySeq<T> {
    * larger than the total number of entries, the resulting LazySeq will be empty.
    */
   drop(n: number): LazySeq<T> {
-    const iter = this.iter;
+    const iter = this.#iter;
     return LazySeq.ofIterator(function* () {
       let cnt = 0;
       for (const x of iter) {
@@ -347,7 +347,7 @@ export class LazySeq<T> {
    * Thus, only the initial prefix of entries for which the predicate returns true are skipped.
    */
   dropWhile(f: (x: T) => boolean): LazySeq<T> {
-    const iter = this.iter;
+    const iter = this.#iter;
     return LazySeq.ofIterator(function* () {
       let dropping = true;
       for (const x of iter) {
@@ -391,7 +391,7 @@ export class LazySeq<T> {
 
   /** @internal */
   filter(f: (x: T) => boolean): LazySeq<T> {
-    const iter = this.iter;
+    const iter = this.#iter;
     return LazySeq.ofIterator(function* () {
       for (const x of iter) {
         if (f(x)) {
@@ -406,7 +406,7 @@ export class LazySeq<T> {
    * @category Transformation
    */
   flatMap<S>(f: (x: T) => Iterable<S>): LazySeq<S> {
-    const iter = this.iter;
+    const iter = this.#iter;
     return LazySeq.ofIterator(function* () {
       for (const x of iter) {
         yield* f(x);
@@ -464,7 +464,7 @@ export class LazySeq<T> {
         return old;
       }
     }
-    for (const x of this.iter) {
+    for (const x of this.#iter) {
       s = hamt.mutateInsert(cfg, x, x, appendVal, s);
     }
     return LazySeq.ofIterator(() =>
@@ -516,7 +516,7 @@ export class LazySeq<T> {
         return old;
       }
     }
-    for (const x of this.iter) {
+    for (const x of this.#iter) {
       s = tree.mutateInsert(cfg, x, x, appendVal, s);
     }
     return LazySeq.ofIterator(() =>
@@ -552,7 +552,7 @@ export class LazySeq<T> {
    * the zero-based index of the element.
    */
   map<S>(f: (x: T, idx: number) => S): LazySeq<S> {
-    const iter = this.iter;
+    const iter = this.#iter;
     return LazySeq.ofIterator(function* () {
       let idx = 0;
       for (const x of iter) {
@@ -571,7 +571,7 @@ export class LazySeq<T> {
    * undefined, it is included in the resulting LazySeq.
    */
   collect<S>(f: (x: T) => S | null | undefined): LazySeq<S> {
-    const iter = this.iter;
+    const iter = this.#iter;
     return LazySeq.ofIterator(function* () {
       for (const x of iter) {
         const y = f(x);
@@ -587,7 +587,7 @@ export class LazySeq<T> {
    * @category Transformation
    */
   prepend(x: T): LazySeq<T> {
-    const iter = this.iter;
+    const iter = this.#iter;
     return LazySeq.ofIterator(function* () {
       yield x;
       yield* iter;
@@ -604,7 +604,7 @@ export class LazySeq<T> {
    * entries in the LazySeq.
    */
   prependAll(i: Iterable<T>): LazySeq<T> {
-    const iter = this.iter;
+    const iter = this.#iter;
     return LazySeq.ofIterator(function* () {
       yield* i;
       yield* iter;
@@ -621,7 +621,7 @@ export class LazySeq<T> {
    * {@link LazySeq.toSortedArray} or {@link LazySeq.toOrderedMap}.
    */
   sortWith(compare: (v1: T, v2: T) => number): LazySeq<T> {
-    return LazySeq.of(Array.from(this.iter).sort(compare));
+    return LazySeq.of(Array.from(this.#iter).sort(compare));
   }
 
   /** Strictly sort the values in the LazySeq by the provided properties
@@ -636,7 +636,7 @@ export class LazySeq<T> {
    * {@link LazySeq.toSortedArray} or {@link LazySeq.toOrderedMap}.
    */
   sortBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): LazySeq<T> {
-    return LazySeq.of(Array.from(this.iter).sort(mkCompareByProperties(prop, ...props)));
+    return LazySeq.of(Array.from(this.#iter).sort(mkCompareByProperties(prop, ...props)));
   }
 
   /** Lazily create a LazySeq which iterates all but the first entry
@@ -657,7 +657,7 @@ export class LazySeq<T> {
    * ```
    */
   tail(): LazySeq<T> {
-    const iter = this.iter;
+    const iter = this.#iter;
     return LazySeq.ofIterator(function* () {
       let seenFirst = false;
       for (const x of iter) {
@@ -680,7 +680,7 @@ export class LazySeq<T> {
    * beyond the first `n` will be ignored.
    */
   take(n: number): LazySeq<T> {
-    const iter = this.iter;
+    const iter = this.#iter;
     return LazySeq.ofIterator(function* () {
       let cnt = 0;
       for (const x of iter) {
@@ -703,7 +703,7 @@ export class LazySeq<T> {
    * is not yielded and no more entries are processed.
    */
   takeWhile(f: (x: T) => boolean): LazySeq<T> {
-    const iter = this.iter;
+    const iter = this.#iter;
     return LazySeq.ofIterator(function* () {
       for (const x of iter) {
         if (f(x)) {
@@ -739,7 +739,7 @@ export class LazySeq<T> {
    * ```
    */
   zip<S>(other: Iterable<S>): LazySeq<readonly [T, S]> {
-    const iter = this.iter;
+    const iter = this.#iter;
     return LazySeq.ofIterator(function* () {
       const i1 = iter[Symbol.iterator]();
       const i2 = other[Symbol.iterator]();
@@ -762,7 +762,7 @@ export class LazySeq<T> {
    * If the LazySeq is empty, this function returns true.
    */
   every(f: (x: T) => boolean): boolean {
-    for (const x of this.iter) {
+    for (const x of this.#iter) {
       if (!f(x)) {
         return false;
       }
@@ -778,7 +778,7 @@ export class LazySeq<T> {
    * If the LazySeq is empty, this function returns false.
    */
   some(f: (x: T) => boolean): boolean {
-    for (const x of this.iter) {
+    for (const x of this.#iter) {
       if (f(x)) {
         return true;
       }
@@ -791,7 +791,7 @@ export class LazySeq<T> {
    * @category Query
    */
   isEmpty(): boolean {
-    const first = this.iter[Symbol.iterator]().next();
+    const first = this.#iter[Symbol.iterator]().next();
     return first.done === true;
   }
 
@@ -803,7 +803,7 @@ export class LazySeq<T> {
    * If found, the element is returned.  Otherwise, `undefined` is returned.
    */
   find(f: (v: T) => boolean): T | undefined {
-    for (const x of this.iter) {
+    for (const x of this.#iter) {
       if (f(x)) {
         return x;
       }
@@ -816,7 +816,7 @@ export class LazySeq<T> {
    * @category Query
    */
   head(): T | undefined {
-    const first = this.iter[Symbol.iterator]().next();
+    const first = this.#iter[Symbol.iterator]().next();
     if (first.done) {
       return undefined;
     } else {
@@ -831,7 +831,7 @@ export class LazySeq<T> {
   length(): number {
     let cnt = 0;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for (const _ of this.iter) {
+    for (const _ of this.#iter) {
       cnt += 1;
     }
     return cnt;
@@ -848,7 +848,7 @@ export class LazySeq<T> {
   maxBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): T | undefined {
     const compare = mkCompareByProperties<T>(prop, ...props);
     let ret: T | undefined = undefined;
-    for (const x of this.iter) {
+    for (const x of this.#iter) {
       if (ret === undefined) {
         ret = x;
       } else {
@@ -871,7 +871,7 @@ export class LazySeq<T> {
   minBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): T | undefined {
     const compare = mkCompareByProperties<T>(prop, ...props);
     let ret: T | undefined = undefined;
-    for (const x of this.iter) {
+    for (const x of this.#iter) {
       if (ret === undefined) {
         ret = x;
       } else {
@@ -893,7 +893,7 @@ export class LazySeq<T> {
    */
   sumBy(getNumber: (v: T) => number): number {
     let sum = 0;
-    for (const x of this.iter) {
+    for (const x of this.#iter) {
       sum += getNumber(x);
     }
     return sum;
@@ -904,7 +904,7 @@ export class LazySeq<T> {
    * @category Conversion
    */
   toRArray(): ReadonlyArray<T> {
-    return Array.from(this.iter);
+    return Array.from(this.#iter);
   }
 
   /** Converts the LazySeq to an Array
@@ -915,7 +915,7 @@ export class LazySeq<T> {
    * In the spirit of immutability, you should prefer {@link LazySeq.toRArray} which returns a readonly array.
    */
   toMutableArray(): Array<T> {
-    return Array.from(this.iter);
+    return Array.from(this.#iter);
   }
 
   /** Sorts the entries in the LazySeq and returns a readonly array
@@ -929,7 +929,7 @@ export class LazySeq<T> {
     prop: ToComparable<T>,
     ...props: ReadonlyArray<ToComparable<T>>
   ): ReadonlyArray<T> {
-    return Array.from(this.iter).sort(mkCompareByProperties(prop, ...props));
+    return Array.from(this.#iter).sort(mkCompareByProperties(prop, ...props));
   }
 
   /** Converts the entries in the LazySeq to a HashMap
@@ -982,7 +982,7 @@ export class LazySeq<T> {
     key: (x: T) => K & HashKey,
     val?: (old: S | undefined, t: T) => S,
   ): HashMap<K & HashKey, S> {
-    return HashMap.build(this.iter, key, val as (old: S | undefined, t: T) => S);
+    return HashMap.build(this.#iter, key, val as (old: S | undefined, t: T) => S);
   }
 
   /** Converts the entries in the LazySeq to an OrderedMap
@@ -1038,7 +1038,7 @@ export class LazySeq<T> {
     key: (x: T) => K & OrderedMapKey,
     val?: (old: S | undefined, t: T) => S,
   ): OrderedMap<K & OrderedMapKey, S> {
-    return OrderedMap.build(this.iter, key, val as (old: S | undefined, t: T) => S);
+    return OrderedMap.build(this.#iter, key, val as (old: S | undefined, t: T) => S);
   }
 
   /** Converts the entries of the LazySeq to a readonly JS Map
@@ -1074,7 +1074,7 @@ export class LazySeq<T> {
     merge?: (v1: S, v2: S) => S,
   ): Map<K, S> {
     const m = new Map<K, S>();
-    for (const x of this.iter) {
+    for (const x of this.#iter) {
       const [k, s] = f(x);
       if (merge !== undefined) {
         const old = m.get(k);
@@ -1124,7 +1124,7 @@ export class LazySeq<T> {
     merge?: (v1: S, v2: S) => S,
   ): { [key: string | number]: S } {
     const m: { [key: string | number]: S } = {};
-    for (const x of this.iter) {
+    for (const x of this.#iter) {
       const [k, s] = f(x);
       if (merge !== undefined) {
         const old = m[k];
@@ -1149,7 +1149,7 @@ export class LazySeq<T> {
    * which converts the entries in the LazySeq to a hashable value.
    */
   toHashSet<S>(converter: (x: T) => S & HashKey): HashSet<S & HashKey> {
-    return HashSet.build(this.iter, converter);
+    return HashSet.build(this.#iter, converter);
   }
 
   /** Converts the entries in the LazySeq to an OrderedSet
@@ -1161,7 +1161,7 @@ export class LazySeq<T> {
    * which converts the entries in the LazySeq to an orderable value.
    */
   toOrderedSet<S>(converter: (x: T) => S & OrderedMapKey): OrderedSet<S & OrderedMapKey> {
-    return OrderedSet.build(this.iter, converter);
+    return OrderedSet.build(this.#iter, converter);
   }
 
   /** Converts the entries in the LazySeq to a JS Set
@@ -1187,7 +1187,7 @@ export class LazySeq<T> {
    */
   toMutableSet<S>(converter: (x: T) => S & JsMapKey): Set<S> {
     const s = new Set<S>();
-    for (const x of this.iter) {
+    for (const x of this.#iter) {
       s.add(converter(x));
     }
     return s;
@@ -1204,7 +1204,7 @@ export class LazySeq<T> {
    */
   fold<S>(zero: S, f: (soFar: S, cur: T) => S): S {
     let soFar = zero;
-    for (const x of this.iter) {
+    for (const x of this.#iter) {
       soFar = f(soFar, x);
     }
     return soFar;
@@ -1237,7 +1237,7 @@ export class LazySeq<T> {
     if (initialValue === undefined) {
       let first = true;
       let soFar: S | undefined = undefined;
-      for (const x of this.iter) {
+      for (const x of this.#iter) {
         if (first) {
           first = false;
           soFar = x as unknown as S;
@@ -1316,7 +1316,7 @@ export class LazySeq<T> {
         }
       };
     }
-    return HashMap.build(this.iter, key, merge);
+    return HashMap.build(this.#iter, key, merge);
   }
 
   /** Group entries in the LazySeq by a key, returning an OrderedMap with an array of values
@@ -1369,7 +1369,7 @@ export class LazySeq<T> {
         }
       };
     }
-    return OrderedMap.build(this.iter, key, merge);
+    return OrderedMap.build(this.#iter, key, merge);
   }
 
   /** Group entries in the LazySeq by two keys, returning a HashMap of HashMaps
@@ -1427,7 +1427,7 @@ export class LazySeq<T> {
         );
     }
 
-    return HashMap.build(this.iter, key1, merge);
+    return HashMap.build(this.#iter, key1, merge);
   }
 
   /** Group entries in the LazySeq by two keys, returning an OrderedMap of OrderedMaps
@@ -1484,7 +1484,7 @@ export class LazySeq<T> {
           oldV === undefined ? val(t) : mergeVals(oldV as unknown as S, val(t)),
         );
     }
-    return OrderedMap.build(this.iter, key1, merge);
+    return OrderedMap.build(this.#iter, key1, merge);
   }
 
   /** Group entries in the LazySeq by a key, returning a Javascript Map with an array of values
@@ -1514,7 +1514,7 @@ export class LazySeq<T> {
     val?: (x: T) => S,
   ): ReadonlyMap<K, ReadonlyArray<T | S>> {
     const m = new Map<K, Array<T | S>>();
-    for (const x of this.iter) {
+    for (const x of this.#iter) {
       const k = key(x);
       const v = val === undefined ? x : val(x);
       const old = m.get(k);
@@ -1527,5 +1527,9 @@ export class LazySeq<T> {
     return m;
   }
 
-  private constructor(private iter: Iterable<T>) {}
+  #iter: Iterable<T>;
+
+  private constructor(iter: Iterable<T>) {
+    this.#iter = iter;
+  }
 }

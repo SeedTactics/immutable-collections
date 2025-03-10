@@ -12,6 +12,7 @@
     "allowSyntheticDefaultImports": true,
 
     "strict": true,
+    "erasableSyntaxOnly": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,

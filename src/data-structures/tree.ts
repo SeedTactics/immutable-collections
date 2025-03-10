@@ -394,7 +394,7 @@ export function build<T, K, V>(
 export function* iterateAsc<K, V, T>(
   f: (k: K, v: V) => T,
   root: TreeNode<K, V> | null,
-): IterableIterator<T> {
+): MapIterator<T> {
   const nodes: Array<TreeNode<K, V>> = [];
   let node: TreeNode<K, V> | null = root;
   while (node !== null || nodes.length > 0) {
@@ -420,7 +420,7 @@ export function* iterateAsc<K, V, T>(
 export function* iterateDesc<K, V, T>(
   f: (k: K, v: V) => T,
   root: TreeNode<K, V> | null,
-): IterableIterator<T> {
+): MapIterator<T> {
   const nodes: Array<TreeNode<K, V>> = [];
   let node: TreeNode<K, V> | null = root;
   while (node !== null || nodes.length > 0) {

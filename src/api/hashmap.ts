@@ -31,9 +31,6 @@ type NotUndefined = {} | null;
  * The `HashMap<K, V>` class stores key-value pairs where the keys have type `K`
  * and the values type `V`.  Keys can be numbers, strings, booleans, dates, or
  * custom objects which implement the {@link ./classes#HashableObj} and {@link ./classes#ComparableObj} interfaces.
- * `HashMap` implements the typescript-builtin `ReadonlyMap` interface (which
- * consists of the read-only methods of [the JS builtin
- * Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)).
  *
  * The HashMap is immutable, which means that no changes or mutations are
  * allowed directly to the HashMap.  Instead, modification operations such as
@@ -42,7 +39,7 @@ type NotUndefined = {} | null;
  * accessed and used.  The HashMap implements this efficiently using structural
  * sharing and does not require a full copy.
  */
-export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
+export class HashMap<K extends HashKey, V> {
   /** Static method to create a new empty HashMap
    *
    * @category Creating Hash Maps
@@ -210,7 +207,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * // key three: 3
    * ```
    */
-  [Symbol.iterator](): IterableIterator<[K, V]> {
+  [Symbol.iterator](): MapIterator<[K, V]> {
     return iterate((k, v) => [k, v], this.root);
   }
 
@@ -226,7 +223,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * iterated more than once.
    *
    */
-  entries(): IterableIterator<[K, V]> {
+  entries(): MapIterator<[K, V]> {
     return iterate((k, v) => [k, v], this.root);
   }
 
@@ -242,7 +239,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * iterated more than once.
    *
    */
-  keys(): IterableIterator<K> {
+  keys(): MapIterator<K> {
     return iterate((k) => k, this.root);
   }
 
@@ -258,7 +255,7 @@ export class HashMap<K extends HashKey, V> implements ReadonlyMap<K, V> {
    * iterated more than once.
    *
    */
-  values(): IterableIterator<V> {
+  values(): MapIterator<V> {
     return iterate((_, v) => v, this.root);
   }
 

@@ -1136,7 +1136,7 @@ export function alter<K, V>(
 export function* iterate<K, V, R>(
   f: (k: K, v: V) => R,
   root: Node<K, V> | null,
-): IterableIterator<R> {
+): MapIterator<R> {
   if (root === null) return;
 
   const stack: Array<Node<K, V>> = [root];

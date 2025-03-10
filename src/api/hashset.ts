@@ -29,16 +29,14 @@ function constTrue() {
  *
  * @remarks
  * The `HashSet<T>` class stores numbers, strings, booleans, dates, or custom objects which implement the
- * {@link ./classes#HashableObj} and {@link ./classes#ComparableObj} interface. HashSet
- * implements the typescript-builtin `ReadonlySet` interface (which consists of the read-only methods of
- * [the JS builtin Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set)).
+ * {@link ./classes#HashableObj} and {@link ./classes#ComparableObj} interface.
  *
  * The HashSet is immutable, which means that no changes or mutations are allowed directly to the HashSet.
  * Instead, modification operations such as {@link HashSet.delete} return a new HashSet which contains the
  * result of the modification.  The original HashSet is unchanged and can continue to be accessed and used.
  * The HashSet implements this efficiently using structural sharing and does not require a full copy.
  */
-export class HashSet<T extends HashKey> implements ReadonlySet<T> {
+export class HashSet<T extends HashKey> {
   /** Static method to create a new empty HashSet
    *
    * @category Creating Hash Sets
@@ -148,7 +146,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    * This is the default iteration when using `for .. of` directly on the `HashSet`.  It iterates
    * all the items, but the order of iteration is an implementation detail and cannot be relied upon.
    */
-  [Symbol.iterator](): IterableIterator<T> {
+  [Symbol.iterator](): SetIterator<T> {
     return iterate((t) => t, this.root);
   }
 
@@ -161,7 +159,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    * twice.  (This matches the builtin [Set.entries](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/entries)
    * method.)  The order of iteration is an implementation detail and cannot be relied upon.
    */
-  entries(): IterableIterator<[T, T]> {
+  entries(): SetIterator<[T, T]> {
     return iterate((t) => [t, t], this.root);
   }
 
@@ -173,7 +171,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    * This provides an iterator to iterate all the items in the HashSet.  The order of iteration is an implementation detail and cannot be relied upon.
    * Both `keys` and `values` are equivalent for a `HashSet`.
    */
-  keys(): IterableIterator<T> {
+  keys(): SetIterator<T> {
     return iterate((t) => t, this.root);
   }
 
@@ -185,7 +183,7 @@ export class HashSet<T extends HashKey> implements ReadonlySet<T> {
    * This provides an iterator to iterate all the items in the HashSet.  The order of iteration is an implementation detail and cannot be relied upon.
    * Both `keys` and `values` are equivalent for a `HashSet`.
    */
-  values(): IterableIterator<T> {
+  values(): SetIterator<T> {
     return iterate((t) => t, this.root);
   }
 

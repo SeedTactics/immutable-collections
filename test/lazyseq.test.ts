@@ -8,7 +8,10 @@ import assert from "assert";
 import { LazySeq } from "../src/lazyseq.js";
 
 class ComparableInt {
-  constructor(public value: number) {}
+  value: number;
+  constructor(value: number) {
+    this.value = value;
+  }
 
   compare(other: ComparableInt): number {
     return this.value - other.value;
