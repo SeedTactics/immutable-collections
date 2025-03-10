@@ -1527,6 +1527,7 @@ export class LazySeq<T> {
     return m;
   }
 
+  /** @internal */
   #iter: Iterable<T>;
 
   private constructor(iter: Iterable<T>) {
