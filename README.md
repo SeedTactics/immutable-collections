@@ -48,8 +48,8 @@ the largest or smallest key, allowing list operations at the ends of the list.
 
 ## Development
 
-Immutable-collections is written in pure typescript with an extensive test suite using mocha and chai, using `pnpm` as
-a package manager. Run `pnpm test` to run the test suite or `pnpm coverage` to run the test suite and also output coverage
+Immutable-collections is written in pure typescript with an extensive test suite using vitest.
+Run `pnpm test` to run the test suite or `pnpm coverage` to run the test suite and also output coverage
 information.
 
 The website is built using [docusaurus](https://docusaurus.io/) and lives inside the website subdirectory.
