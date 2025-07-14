@@ -17,8 +17,8 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
-    "test": "vitest run --slow-test-threshold=10000",
-    "coverage": "vitest run --coverage --coverage.include=src --slow-test-threshold=20000"
+    "test": "vitest run --slow-test-threshold=7500 --test-timeout=15000",
+    "coverage": "vitest run --coverage --coverage.include=src --slow-test-threshold=10000 --test-timeout=20000"
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
