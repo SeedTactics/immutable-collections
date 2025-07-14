@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
-import { expect } from "chai";
+import { expect, describe, it } from "vitest";
 import { CollidingKey as Key, createKeyWithSameHash } from "./collision-key.js";
 import { mkHashConfig } from "../src/data-structures/hashing.js";
 import { InternalNode, Node, insert, lookup } from "../src/data-structures/hamt.js";
@@ -125,7 +125,7 @@ describe("HAMT insert and lookup", () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
     expect((node2 as any).children[0].children[0]).to.equal(
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-      (node3 as any).children[0].children[0]
+      (node3 as any).children[0].children[0],
     );
 
     expect(lookup(cfg, k1, node2)).to.equal(100);
@@ -142,7 +142,7 @@ describe("HAMT insert and lookup", () => {
         const [n, inserted] = insert(cfg, new Key(i, i), setNewVal(i * 100), node);
         expect(inserted).to.be.true;
         return n;
-      }
+      },
     );
 
     expect(tree).to.deep.equal({
@@ -224,7 +224,7 @@ describe("HAMT insert and lookup", () => {
         expect(old).to.equal(100);
         return 200;
       },
-      node1
+      node1,
     );
 
     expect(inserted1).to.be.true;
@@ -255,7 +255,7 @@ describe("HAMT insert and lookup", () => {
         expect(old).to.equal(200);
         return 200;
       },
-      node2
+      node2,
     );
 
     expect(inserted1).to.be.true;
@@ -291,11 +291,11 @@ describe("HAMT insert and lookup", () => {
     >;
 
     expect(() => lookup(cfg, 5, badNode)).to.throw(
-      "Internal immutable-collections violation: node undefined during lookup"
+      "Internal immutable-collections violation: node undefined during lookup",
     );
 
     expect(() => insert(cfg, 5, () => "hello", badNode)).to.throw(
-      "Internal immutable-collections violation: hamt insert reached null"
+      "Internal immutable-collections violation: hamt insert reached null",
     );
   });
 });

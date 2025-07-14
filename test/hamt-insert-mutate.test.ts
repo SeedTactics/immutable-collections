@@ -1,7 +1,7 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
-import { expect } from "chai";
+import { expect, describe, it } from "vitest";
 import { CollidingKey as Key } from "./collision-key.js";
 import { mkHashConfig } from "../src/data-structures/hashing.js";
 import { InternalNode, MutableNode, mutateInsert } from "../src/data-structures/hamt.js";
@@ -9,7 +9,7 @@ import { LazySeq } from "../src/lazyseq.js";
 
 function setNewVal(
   str: string,
-  val: number
+  val: number,
 ): (old: number | undefined, t: string) => number {
   return (old, t) => {
     expect(t).to.equal(str);
@@ -85,12 +85,12 @@ describe("hamt mutate insert", () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
     expect((node2 as any).children[0].children).to.equal(
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-      (node3 as any).children[0].children
+      (node3 as any).children[0].children,
     );
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
     expect((node2 as any).children[0].children[0]).to.equal(
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-      (node3 as any).children[0].children[0]
+      (node3 as any).children[0].children[0],
     );
 
     expect(node2).to.deep.equal({
@@ -124,13 +124,13 @@ describe("hamt mutate insert", () => {
         new Key(i, i),
         "aa" + i.toString(),
         setNewVal("aa" + i.toString(), i * 100),
-        node
-      )
+        node,
+      ),
     );
 
     // check array was re-used
     expect((node1 as InternalNode<Key, number>).children).to.equal(
-      (tree as InternalNode<Key, number>).children
+      (tree as InternalNode<Key, number>).children,
     );
 
     expect(tree).to.deep.equal({
@@ -149,13 +149,13 @@ describe("hamt mutate insert", () => {
       new Key(32, 32),
       "after",
       setNewVal("after", 32 * 100),
-      tree
+      tree,
     );
 
     // check node and array was re-used
     expect(tree).to.equal(after);
     expect((after as InternalNode<Key, number>).children).to.equal(
-      (tree as InternalNode<Key, number>).children
+      (tree as InternalNode<Key, number>).children,
     );
 
     // note, checking tree deep equals the result of inserting 32 since it should have been mutated
@@ -234,7 +234,7 @@ describe("hamt mutate insert", () => {
         expect(old).to.equal(100);
         return 200;
       },
-      node1
+      node1,
     );
 
     expect(node1).to.equal(node2);
@@ -257,7 +257,7 @@ describe("hamt mutate insert", () => {
     >;
 
     expect(() => mutateInsert(cfg, 5, "abc", () => "hello", badNode)).to.throw(
-      "Internal immutable-collections violation: hamt mutate insert reached null"
+      "Internal immutable-collections violation: hamt mutate insert reached null",
     );
   });
 });

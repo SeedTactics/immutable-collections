@@ -1,6 +1,6 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
-import { expect } from "chai";
+import { expect } from "vitest";
 import { TreeNode } from "../src/data-structures/tree.js";
 import { ComparisonConfig, OrderedMapKey } from "../src/data-structures/comparison.js";
 import { OrderedMap } from "../src/api/orderedmap.js";

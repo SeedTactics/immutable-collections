@@ -1,7 +1,7 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
-import { expect } from "chai";
+import { expect, describe, it } from "vitest";
 import { alter, iterateAsc, iterateDesc, lookup } from "../src/data-structures/tree.js";
 import { checkBalanceAndSize } from "./check-balance.js";
 
@@ -40,7 +40,7 @@ describe("Tree", () => {
         expect(old).to.be.undefined;
         return "aaa";
       },
-      null
+      null,
     )!;
     const n2 = alter(compareNum, 20, () => "bbb", n1)!;
 
@@ -52,7 +52,7 @@ describe("Tree", () => {
         expect(old).to.equal("aaa");
         return "aaa";
       },
-      n2
+      n2,
     )!;
     expect(n2).to.equal(n3);
 
@@ -64,7 +64,7 @@ describe("Tree", () => {
         expect(old).to.equal("aaa");
         return "aaa2";
       },
-      n2
+      n2,
     )!;
 
     expect(lookup(compareNum, 10, n1)).to.equal("aaa");

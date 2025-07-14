@@ -1,11 +1,22 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
-import { expect } from "chai";
+import { expect, describe, it } from "vitest";
 import { HashMap } from "../src/api/hashmap.js";
-import { CollidingKey, createKeyWithSameHash, createKeyWithSamePrefix, randomCollisionKey } from "./collision-key.js";
+import {
+  CollidingKey,
+  createKeyWithSameHash,
+  createKeyWithSamePrefix,
+  randomCollisionKey,
+} from "./collision-key.js";
 import { deepFreeze } from "./deepfreeze.js";
-import { combineNullableStr, createMap, expectEqual, HashMapAndJsMap, randomNullableStr } from "./hashmap.test.js";
+import {
+  combineNullableStr,
+  createMap,
+  expectEqual,
+  HashMapAndJsMap,
+  randomNullableStr,
+} from "./hashmap.test.js";
 
 describe("HashMap Union", () => {
   it("returns an empty map from an empty union", () => {
@@ -30,7 +41,8 @@ describe("HashMap Union", () => {
 
   it("unions two maps", () => {
     function* unionValues(): Generator<
-      { map1K: CollidingKey; map1V: string | null } | { map2K: CollidingKey; map2V: string | null }
+      | { map1K: CollidingKey; map1V: string | null }
+      | { map2K: CollidingKey; map2V: string | null }
     > {
       // want a bunch of keys in both maps
       for (let i = 0; i < 2000; i++) {

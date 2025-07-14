@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
-import { expect } from "chai";
+import { expect, describe, it } from "vitest";
 //import { faker } from "@faker-js/faker";
 import { Node, insert, lookup, remove } from "../src/data-structures/hamt.js";
 import { mkHashConfig } from "../src/data-structures/hashing.js";
@@ -44,11 +44,11 @@ describe("HAMT Remove", () => {
           cfg,
           new CollidingKey(i, i),
           setNewVal(i * 100),
-          node
+          node,
         );
         expect(inserted).to.be.true;
         return n;
-      }
+      },
     );
 
     const newTree = remove(cfg, new CollidingKey(3, 3), tree);
@@ -83,11 +83,11 @@ describe("HAMT Remove", () => {
           cfg,
           new CollidingKey(i, i),
           setNewVal(i * 100),
-          node
+          node,
         );
         expect(inserted).to.be.true;
         return n;
-      }
+      },
     );
 
     const newTree = remove(cfg, new CollidingKey(3, 3), tree);
@@ -202,7 +202,7 @@ describe("HAMT Remove", () => {
     >;
 
     expect(() => remove(cfg, 5, badNode)).to.throw(
-      "Internal immutable-collections violation: hamt remove reached null"
+      "Internal immutable-collections violation: hamt remove reached null",
     );
   });
 });

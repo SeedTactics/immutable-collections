@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-base-to-string */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
-import { expect } from "chai";
+import { expect, describe, it } from "vitest";
 import { faker } from "@faker-js/faker";
 import { HashKey } from "../src/data-structures/hashing.js";
 import { HashMap } from "../src/api/hashmap.js";
@@ -112,9 +112,7 @@ export function expectEqual<K extends HashKey, V>(
   expect(sortEntries(imMap.toLazySeq())).to.deep.equal(entries);
   expect(sortKeys(imMap.keys())).to.deep.equal(entries.map(([k]) => k));
   expect(sortKeys(imMap.keysToLazySeq())).to.deep.equal(entries.map(([k]) => k));
-  expect(sortValues(imMap.values())).to.deep.equal(
-    sortValues(entries.map(([, v]) => v)),
-  );
+  expect(sortValues(imMap.values())).to.deep.equal(sortValues(entries.map(([, v]) => v)));
   expect(sortValues(imMap.valuesToLazySeq())).to.deep.equal(
     sortValues(entries.map(([, v]) => v)),
   );

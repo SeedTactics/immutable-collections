@@ -1,11 +1,21 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
-import { expect } from "chai";
+import { expect, describe, it } from "vitest";
 import { HashMap } from "../src/api/hashmap.js";
-import { CollidingKey, createKeyWithSameHash, createKeyWithSamePrefix, randomCollisionKey } from "./collision-key.js";
+import {
+  CollidingKey,
+  createKeyWithSameHash,
+  createKeyWithSamePrefix,
+  randomCollisionKey,
+} from "./collision-key.js";
 import { deepFreeze } from "./deepfreeze.js";
-import { combineNullableStr, createMap, expectEqual, randomNullableStr } from "./hashmap.test.js";
+import {
+  combineNullableStr,
+  createMap,
+  expectEqual,
+  randomNullableStr,
+} from "./hashmap.test.js";
 
 describe("HashMap Intersection", () => {
   it("returns an empty map from an empty intersection", () => {
@@ -30,7 +40,11 @@ describe("HashMap Intersection", () => {
   it("returns empty if one side is empty from an intersection", () => {
     const { imMap } = createMap(50, randomCollisionKey);
 
-    let empty = HashMap.intersection((a, b) => a + b, imMap, HashMap.empty<CollidingKey, string>());
+    let empty = HashMap.intersection(
+      (a, b) => a + b,
+      imMap,
+      HashMap.empty<CollidingKey, string>(),
+    );
     expectEqual(empty, new Map());
 
     empty = imMap.intersection(HashMap.empty<CollidingKey, string>());
@@ -124,7 +138,10 @@ describe("HashMap Intersection", () => {
       } else {
         imMap1 = imMap1.set(x.both, x.val1);
         imMap2 = imMap2.set(x.both, x.val2);
-        jsIntersection.set(x.both.toString(), [x.both, combineNullableStr(x.val1, x.val2)]);
+        jsIntersection.set(x.both.toString(), [
+          x.both,
+          combineNullableStr(x.val1, x.val2),
+        ]);
       }
     }
 

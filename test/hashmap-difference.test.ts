@@ -1,6 +1,6 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
-import { expect } from "chai";
+import { expect, describe, it } from "vitest";
 import { HashMap } from "../src/api/hashmap.js";
 import { HashSet } from "../src/api/hashset.js";
 import {

@@ -2,14 +2,14 @@
 
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
-import { expect } from "chai";
+import { expect, describe, it } from "vitest";
 import { CollidingKey as Key, createKeyWithSameHash } from "./collision-key.js";
 import { mkHashConfig } from "../src/data-structures/hashing.js";
 import { InternalNode, alter, Node } from "../src/data-structures/hamt.js";
 
 function setNewVal(
   val: number | undefined,
-  expected?: number
+  expected?: number,
 ): (old: number | undefined) => number | undefined {
   return (old) => {
     expect(old).to.equal(expected);
@@ -106,7 +106,7 @@ describe("HAMT alter", () => {
         expect(old).to.equal(100);
         return 200;
       },
-      node1
+      node1,
     );
 
     expect(inserted1).to.be.equal(1);
@@ -137,7 +137,7 @@ describe("HAMT alter", () => {
         expect(old).to.equal(200);
         return 200;
       },
-      node2
+      node2,
     );
 
     expect(inserted1).to.equal(1);
@@ -173,7 +173,7 @@ describe("HAMT alter", () => {
     >;
 
     expect(() => alter(cfg, 5, () => "hello", badNode)).to.throw(
-      "Internal immutable-collections violation: hamt alter reached null"
+      "Internal immutable-collections violation: hamt alter reached null",
     );
   });
 });

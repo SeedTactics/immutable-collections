@@ -1,9 +1,14 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
-import { expect } from "chai";
+import { expect, describe, it } from "vitest";
 import { faker } from "@faker-js/faker";
-import { HashKey, hashValues, isHashableObj, mkHashConfig } from "../src/data-structures/hashing.js";
+import {
+  HashKey,
+  hashValues,
+  isHashableObj,
+  mkHashConfig,
+} from "../src/data-structures/hashing.js";
 
 class IntStrKey {
   readonly i: number;
@@ -122,16 +127,26 @@ describe("Hashing", () => {
 
   it("hashes a complex key", () => {
     const k1 = new ComplexKey(true, new Date(Date.UTC(2022, 5, 6, 10, 2, 2)), 100, "str");
-    const k1a = new ComplexKey(true, new Date(Date.UTC(2022, 5, 6, 10, 2, 2)), 100, "str");
+    const k1a = new ComplexKey(
+      true,
+      new Date(Date.UTC(2022, 5, 6, 10, 2, 2)),
+      100,
+      "str",
+    );
 
     expect(k1.hash()).to.equal(-2118882045);
     expect(k1.hash()).to.equal(-2118882045);
     expect(k1a.hash()).to.equal(-2118882045);
 
     expect(new ComplexKey(false, k1.d, k1.k.i, k1.k.s).hash()).to.equal(1408291771);
-    expect(new ComplexKey(k1.b, new Date(Date.UTC(2022, 5, 4, 10, 2, 2)), k1.k.i, k1.k.s).hash()).to.equal(
-      1439714075
-    );
+    expect(
+      new ComplexKey(
+        k1.b,
+        new Date(Date.UTC(2022, 5, 4, 10, 2, 2)),
+        k1.k.i,
+        k1.k.s,
+      ).hash(),
+    ).to.equal(1439714075);
     expect(new ComplexKey(k1.b, k1.d, 102, k1.k.s).hash()).to.equal(1753788917);
     expect(new ComplexKey(k1.b, k1.d, k1.k.i, "hello").hash()).to.equal(1731446667);
   });
@@ -152,7 +167,7 @@ describe("Hashing", () => {
     // typescript will prevent this, but check if give error when used from js (for example)
     const cfg = mkHashConfig<{ foo: number } & HashKey>();
     expect(() => cfg.hash({ foo: 1 } as { foo: number } & HashKey)).to.throw(
-      "key type must have compare and hash methods"
+      "key type must have compare and hash methods",
     );
   });
 

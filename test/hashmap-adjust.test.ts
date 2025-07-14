@@ -1,7 +1,7 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
-import { expect } from "chai";
+import { expect, describe, it } from "vitest";
 import { faker } from "@faker-js/faker";
 import { HashMap } from "../src/api/hashmap.js";
 import {
@@ -12,7 +12,12 @@ import {
   randomCollisionKey,
 } from "./collision-key.js";
 import { deepFreeze } from "./deepfreeze.js";
-import { combineNullableStr, createMap, expectEqual, randomNullableStr } from "./hashmap.test.js";
+import {
+  combineNullableStr,
+  createMap,
+  expectEqual,
+  randomNullableStr,
+} from "./hashmap.test.js";
 
 type AdjustType =
   | { type: "delete" }
@@ -44,7 +49,8 @@ function randomMissingAdjType(): AdjustType {
 describe("HashMap adjust", () => {
   it("adjusts a map", () => {
     function* adjValues(): Generator<
-      { map1K: CollidingKey; map1V: string | null } | { map2K: CollidingKey; map2V: AdjustType }
+      | { map1K: CollidingKey; map1V: string | null }
+      | { map2K: CollidingKey; map2V: AdjustType }
     > {
       // want a bunch of keys in both maps to be deleted, adjusted, or left unchanged
       for (let i = 0; i < 10000; i++) {
@@ -213,7 +219,8 @@ describe("HashMap adjust", () => {
 
   it("adjusts and reuses parts of the tree when the values are the same", () => {
     function* adjValues(): Generator<
-      { map1K: CollidingKey; map1V: string | null } | { map2K: CollidingKey; map2V: string | null }
+      | { map1K: CollidingKey; map1V: string | null }
+      | { map2K: CollidingKey; map2V: string | null }
     > {
       // want a bunch of keys in both maps
       for (let i = 0; i < 10000; i++) {
@@ -296,7 +303,7 @@ describe("HashMap adjust", () => {
     const toAdjust = HashMap.build(
       keys,
       (k) => k,
-      (_, k) => k.toString()
+      (_, k) => k.toString(),
     );
 
     const m = imMap.adjust(toAdjust, (existingVal, helperVal, k) => {

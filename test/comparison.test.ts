@@ -1,7 +1,11 @@
 /* Copyright John Lenz, BSD license, see LICENSE file for details */
 
-import { expect } from "chai";
-import { mkCompareByProperties, mkComparisonConfig, OrderedMapKey } from "../src/data-structures/comparison.js";
+import { describe, it, expect } from "vitest";
+import {
+  mkCompareByProperties,
+  mkComparisonConfig,
+  OrderedMapKey,
+} from "../src/data-structures/comparison.js";
 
 class IntStr {
   readonly i: number;
@@ -52,7 +56,10 @@ describe("Comparison", () => {
   });
 
   it("compares by some desc properties", () => {
-    const cmp = mkCompareByProperties<SomeProperties>({ desc: (p) => p.i }, { desc: (p) => p.s });
+    const cmp = mkCompareByProperties<SomeProperties>(
+      { desc: (p) => p.i },
+      { desc: (p) => p.s },
+    );
     expect(cmp(p1, p2)).to.equal(1);
     expect(cmp(p2, p1)).to.equal(-1);
     expect(cmp(p1, p1)).to.equal(0);
@@ -126,7 +133,10 @@ describe("Comparison", () => {
     // typescript will prevent this, but check if give error when used from js (for example)
     const cfg = mkComparisonConfig<{ foo: number } & OrderedMapKey>();
     expect(() =>
-      cfg.compare({ foo: 1 } as { foo: number } & OrderedMapKey, { foo: 2 } as { foo: number } & OrderedMapKey)
+      cfg.compare(
+        { foo: 1 } as { foo: number } & OrderedMapKey,
+        { foo: 2 } as { foo: number } & OrderedMapKey,
+      ),
     ).to.throw("key type must have compare method");
   });
 });

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable @typescript-eslint/no-base-to-string */
 
-import { expect } from "chai";
+import { expect, describe, it } from "vitest";
 import { faker } from "@faker-js/faker";
 import { mkComparisonConfig, OrderedMapKey } from "../src/data-structures/comparison.js";
 import { deepFreeze } from "./deepfreeze.js";
