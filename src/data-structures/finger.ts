@@ -70,7 +70,7 @@ export function unshift<T>(value: T, tree: FingerTree<T>): FingerTree<T> {
   if (tree instanceof DeepNode) {
     if (tree.left.length === 4) {
       // left digit is full, need to move them into the middle
-      // Deep([d1, d2, d3 d4], mi, right) becomes Deep([v, d1], Node [d2 d3 d4] added to mi, right)
+      // Deep([d1, d2, d3 d4], mi, right) becomes Deep([v, d1], Node(d2 d3 d4) added to mi, right)
       return new DeepNode(
         tree.size + addingSize,
         [value, tree.left[0]],
@@ -100,7 +100,7 @@ export function push<T>(tree: FingerTree<T>, value: T): FingerTree<T> {
   if (tree instanceof DeepNode) {
     if (tree.right.length === 4) {
       // right digit is full, need to move them into the middle
-      // Deep(left, mi, [d1, d2, d3 d4]) becomes Deep(left, mi with [d1 d2 d3], [d4, v])
+      // Deep(left, mi, [d1, d2, d3 d4]) becomes Deep(left, mi with Node(d1 d2 d3), [d4, v])
       return new DeepNode(
         tree.size + addingSize,
         tree.left,
@@ -123,6 +123,16 @@ export function push<T>(tree: FingerTree<T>, value: T): FingerTree<T> {
 export function head<T>(tree: FingerTree<T>): T | undefined {
   if (tree instanceof DeepNode) {
     return tree.left[0];
+  } else if (tree === emptyTree) {
+    return undefined;
+  } else {
+    return tree;
+  }
+}
+
+export function last<T>(tree: FingerTree<T>): T | undefined {
+  if (tree instanceof DeepNode) {
+    return tree.right[tree.right.length - 1];
   } else if (tree === emptyTree) {
     return undefined;
   } else {
@@ -167,11 +177,12 @@ export function tail<T>(tree: FingerTree<T>): FingerTree<T> {
         );
       }
     } else {
-      const a = tree.middle instanceof DeepNode ? tree.left[0] : tree.middle;
+      // the middle is not empty, need to pull an element up from there
+      const headMiddle = tree.middle instanceof DeepNode ? tree.left[0] : tree.middle;
       const restMiddle = tail(tree.middle);
       return new DeepNode(
         tree.size - removeSize,
-        a instanceof Node ? a.children() : [a],
+        headMiddle instanceof Node ? headMiddle.children() : [headMiddle],
         restMiddle,
         tree.right,
       );
@@ -182,24 +193,84 @@ export function tail<T>(tree: FingerTree<T>): FingerTree<T> {
   }
 }
 
-function mkNodes<T>(vals: ReadonlyArray<T>): Node<T>[] {
-  if (vals.length === 0) {
-    return [];
-  } else if (vals.length <= 3) {
-    // single node
-    return [new Node(vals[0], vals[1], vals[2])];
-  } else if (vals.length === 4) {
-    // two nodes, balanced as size 2, 2
-    return [new Node(vals[0], vals[1]), new Node(vals[2], vals[3])];
+export function allButLast<T>(tree: FingerTree<T>): FingerTree<T> {
+  if (tree === emptyTree) {
+    return emptyTree;
+  } else if (tree instanceof DeepNode) {
+    // remove the last element from the right digit
+    const removeSize = size(tree.right[tree.right.length - 1]);
+    if (tree.right.length > 1) {
+      // right digit has more than one element, just remove the last
+      return new DeepNode(
+        tree.size - removeSize,
+        tree.left,
+        tree.middle,
+        tree.right.slice(0, tree.right.length - 1),
+      );
+    } else if (tree.middle === emptyTree) {
+      // single right digit, no middle.  Left becomes the new tree
+      if (tree.left.length === 1) {
+        // left has only one element, so the result is a single element tree
+        return tree.left[0];
+      } else if (tree.left.length === 4) {
+        // keep balanced, so put 2 on each side
+        return new DeepNode(
+          tree.size - removeSize,
+          [tree.left[0], tree.left[1]],
+          emptyTree,
+          [tree.left[2], tree.left[3]],
+        );
+      } else {
+        // put one on the right, rest on the left
+        return new DeepNode(
+          tree.size - removeSize,
+          tree.left.slice(0, tree.left.length - 1),
+          emptyTree,
+          [tree.left[tree.left.length - 1]],
+        );
+      }
+    } else {
+      // single right digit, the middle is not empty, need to pull an element up from there
+      const lastMiddle =
+        tree.middle instanceof DeepNode ? tree.right[tree.right.length - 1] : tree.middle;
+      const restMiddle = allButLast(tree.middle);
+      return new DeepNode(
+        tree.size - removeSize,
+        tree.left,
+        restMiddle,
+        lastMiddle instanceof Node ? lastMiddle.children() : [lastMiddle],
+      );
+    }
   } else {
-    // first node of size 3, added to the rest
-    const n = mkNodes(vals.slice(3));
-    n.unshift(new Node(vals[0], vals[1], vals[2]));
-    return n;
+    // tree is a single element
+    return emptyTree;
   }
 }
 
-function addInMiddle<T>(
+function mkNodes<T>(vals: ReadonlyArray<T>): ReadonlyArray<Node<T>> {
+  const result: Node<T>[] = [];
+  let i = 0;
+  while (i < vals.length) {
+    // if exactly 4 left, make two nodes of size 2
+    if (vals.length - i === 4) {
+      result.push(new Node(vals[i], vals[i + 1]));
+      result.push(new Node(vals[i + 2], vals[i + 3]));
+      return result;
+    }
+    // if at least 3 left, make a node of size 3
+    if (vals.length - i >= 3) {
+      result.push(new Node(vals[i], vals[i + 1], vals[i + 2]));
+      i += 3;
+    } else {
+      // make a node of size 2
+      result.push(new Node(vals[i], vals[i + 1]));
+      return result;
+    }
+  }
+  return result;
+}
+
+export function join<T>(
   t1: FingerTree<T>,
   vals: ReadonlyArray<T>,
   t2: FingerTree<T>,
@@ -230,14 +301,14 @@ function addInMiddle<T>(
     return new DeepNode(
       t1.size + t2.size + valsSize,
       t1.left,
-      addInMiddle(t1.middle, mkNodes([...t1.right, ...vals, ...t2.left]), t2.middle),
+      join(t1.middle, mkNodes([...t1.right, ...vals, ...t2.left]), t2.middle),
       t2.right,
     );
   }
 }
 
 export function concat<T>(t1: FingerTree<T>, t2: FingerTree<T>): FingerTree<T> {
-  return addInMiddle(t1, [], t2);
+  return join(t1, [], t2);
 }
 
 export function* iterate<T>(tree: FingerTree<T>): Iterable<T> {
@@ -313,14 +384,102 @@ export function lookup<T>(tree: FingerTree<T>, index: number): T {
   return lookupTree(index, tree)[1];
 }
 
+export function lookup2<T>(tree: FingerTree<T>, index: number): T {
+  let current: FingerTree<unknown> = tree;
+  if (tree === emptyTree || index < 0 || index >= size(tree)) {
+    throw new Error("Index out of bounds");
+  }
+
+  // iterative version of the above
+  let idx = index;
+  mainLoop: while (true) {
+    if (current instanceof DeepNode) {
+      // Check left digit
+      if (current.left[0] instanceof Node) {
+        // left digit is all nodes
+        for (let i = 0; i < current.left.length; i++) {
+          const node = current.left[i] as Node<unknown>;
+          if (idx < node.size) {
+            // recurse into this node
+            current = node as FingerTree<unknown>;
+            continue mainLoop;
+          } else {
+            idx -= node.size;
+          }
+        }
+      } else {
+        // leaf node, return the value
+        return current.left[idx] as T;
+      }
+
+      // Check middle tree
+      if (current.middle !== emptyTree) {
+        if (idx < current.middle.size) {
+          // recurse into middle tree
+          current = current.middle;
+          continue mainLoop;
+        } else {
+          idx -= current.middle.size;
+        }
+      }
+
+      // Check right digit.
+      if (current.right[0] instanceof Node) {
+        // right digit is all nodes
+        for (let i = 0; i < current.right.length; i++) {
+          const node = current.right[i] as Node<unknown>;
+          if (idx < node.size) {
+            // recurse into this node
+            current = node as FingerTree<unknown>;
+            continue mainLoop;
+          } else {
+            idx -= node.size;
+          }
+        }
+      } else {
+        // leaf node, return the value
+        return current.right[idx] as T;
+      }
+    } else if (current instanceof Node) {
+      const v1Size = size(current.v1);
+      if (idx < v1Size) {
+        current = current.v1 as FingerTree<unknown>;
+        continue;
+      } else if (current.v3 === undefined) {
+        // must be in v2
+        idx -= v1Size;
+        current = current.v2 as FingerTree<unknown>;
+        continue;
+      } else {
+        const v2Size = size(current.v2);
+        if (idx < v1Size + v2Size) {
+          // must be in v2
+          idx -= v1Size;
+          current = current.v2 as FingerTree<unknown>;
+          continue;
+        } else {
+          // must be in v3
+          idx -= v1Size + v2Size;
+          current = current.v3 as FingerTree<unknown>;
+          continue;
+        }
+      }
+    } else {
+      // single leaf node, return the value.  The overall index checks guarantee idx is 0
+      return current as T;
+    }
+
+    // Because of the overall size checks, we should never get here.  The loop should always
+    // either return or continue
+    throw new Error("Invalid tree detected");
+  }
+}
+
 function adjustDigit<T>(
   f: (idx: number, n: T) => T,
   idx: number,
   digit: Digit<T>,
 ): Digit<T> {
-  if (idx < 0 || idx >= digit.length) {
-    return digit;
-  }
   const copy = digit.slice();
   copy[idx] = f(idx, copy[idx]);
   return copy;
@@ -352,8 +511,7 @@ function adjustTree<T>(
 ): FingerTree<T> {
   if (tree === emptyTree) {
     return tree;
-  }
-  if (tree instanceof DeepNode) {
+  } else if (tree instanceof DeepNode) {
     const leftSize = tree.left.reduce((sum, node) => sum + size(node), 0);
     if (idx < leftSize) {
       return new DeepNode(
