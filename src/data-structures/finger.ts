@@ -145,6 +145,69 @@ export function push<M, T extends HasMeasure<M>>(
   }
 }
 
+export function from<M, T extends HasMeasure<M>>(
+  cfg: MeasurableConfig<M>,
+  values: Iterable<T>,
+): FingerTree<M, T> {
+  // TODO: use mutation
+  let result: FingerTree<M, T> = emptyTree;
+  for (const v of values) {
+    result = push(cfg, result, v);
+  }
+  return result;
+}
+
+function mkDeepWithLeftPossiblyEmpty<M, T extends HasMeasure<M>>(
+  cfg: MeasurableConfig<M>,
+  left: ReadonlyArray<T>,
+  middle: FingerTree<M, Node<M, T>>,
+  right: ReadonlyArray<T>,
+): FingerTree<M, T> {
+  if (left.length === 0) {
+    if (middle === emptyTree) {
+      // right is the new tree
+      return from(cfg, right);
+    } else if (middle instanceof DeepNode) {
+      // children of the head become the new left digit,
+      // and everything except the head becomes the new middle
+      return new DeepNode(cfg, middle.left[0].children(), tail(cfg, middle), right);
+    } else {
+      // middle is a node, with 2 or 3 children, so can become the left digit
+      return new DeepNode(cfg, middle.children(), emptyTree, right);
+    }
+  } else {
+    return new DeepNode(cfg, left, middle, right);
+  }
+}
+
+function mkDeepWithRightPossiblyEmpty<M, T extends HasMeasure<M>>(
+  cfg: MeasurableConfig<M>,
+  left: ReadonlyArray<T>,
+  middle: FingerTree<M, Node<M, T>>,
+  right: ReadonlyArray<T>,
+): FingerTree<M, T> {
+  if (right.length === 0) {
+    if (middle === emptyTree) {
+      // left is the new tree
+      return from(cfg, left);
+    } else if (middle instanceof DeepNode) {
+      // children of the last become the new right digit,
+      // and everything except the last becomes the new middle
+      return new DeepNode(
+        cfg,
+        left,
+        allButLast(cfg, middle),
+        middle.right[middle.right.length - 1].children(),
+      );
+    } else {
+      // middle is a node, with 2 or 3 children, so can become the right digit
+      return new DeepNode(cfg, left, emptyTree, middle.children());
+    }
+  } else {
+    return new DeepNode(cfg, left, middle, right);
+  }
+}
+
 export function head<M, T extends HasMeasure<M>>(tree: FingerTree<M, T>): T | undefined {
   if (tree instanceof DeepNode) {
     return tree.left[0];
@@ -328,6 +391,180 @@ export function concat<M, T extends HasMeasure<M>>(
   t2: FingerTree<M, T>,
 ): FingerTree<M, T> {
   return join(cfg, t1, [], t2);
+}
+
+type SplitResult<M, T extends HasMeasure<M>> = {
+  readonly belowOrEqual: FingerTree<M, T>;
+  readonly above: FingerTree<M, T>;
+};
+
+type DigitSplitResult<M> =
+  | {
+      readonly type: "contains";
+      readonly idx: number;
+      readonly seen: M;
+    }
+  | { readonly type: "allBelow"; readonly seen: M };
+
+function splitDigit<M, T extends HasMeasure<M>>(
+  cfg: MeasurableConfig<M>,
+  digit: Digit<T>,
+  seen: M,
+  measure: M,
+): DigitSplitResult<M> {
+  for (let i = 0; i < digit.length; i++) {
+    const seenAfter = cfg.add(seen, digit[i].m);
+    if (cfg.compare(measure, seenAfter) < 0) {
+      return {
+        type: "contains",
+        idx: i,
+        seen,
+      };
+    } else {
+      seen = seenAfter;
+    }
+  }
+  return { type: "allBelow", seen };
+}
+
+type TreeSplitResult<M, T extends HasMeasure<M>> = {
+  readonly belowOrEqual: FingerTree<M, T>;
+  readonly containingSplit: T;
+  readonly above: FingerTree<M, T>;
+  readonly seen: M;
+};
+
+function splitTree<M, T extends HasMeasure<M>>(
+  cfg: MeasurableConfig<M>,
+  tree: FingerTree<M, T>,
+  seen: M,
+  measure: M,
+): TreeSplitResult<M, T> {
+  if (tree instanceof DeepNode) {
+    const leftSplit = splitDigit(cfg, tree.left, seen, measure);
+    if (leftSplit.type === "contains") {
+      // split is in the left digit
+      return {
+        belowOrEqual: from(cfg, tree.left.slice(0, leftSplit.idx)),
+        containingSplit: tree.left[leftSplit.idx],
+        above: mkDeepWithLeftPossiblyEmpty(
+          cfg,
+          tree.left.slice(leftSplit.idx + 1),
+          tree.middle,
+          tree.right,
+        ),
+        seen: leftSplit.seen,
+      };
+    } else {
+      seen = leftSplit.seen;
+    }
+
+    if (
+      tree.middle !== emptyTree &&
+      cfg.compare(measure, cfg.add(seen, tree.middle.m)) < 0
+    ) {
+      const {
+        belowOrEqual,
+        containingSplit,
+        seen: seenAfterSplit,
+        above,
+      } = splitTree(cfg, tree.middle, seen, measure);
+
+      const toSplit = containingSplit.children();
+
+      // We are guaranteed to find the split here, so can cast the result
+      const middleSplit = splitDigit(
+        cfg,
+        toSplit,
+        seenAfterSplit,
+        measure,
+      ) as DigitSplitResult<M> & { type: "contains" };
+
+      return {
+        belowOrEqual: mkDeepWithRightPossiblyEmpty(
+          cfg,
+          tree.left,
+          belowOrEqual,
+          toSplit.slice(0, middleSplit.idx),
+        ),
+        containingSplit: toSplit[middleSplit.idx],
+        above: mkDeepWithLeftPossiblyEmpty(
+          cfg,
+          toSplit.slice(middleSplit.idx + 1),
+          above,
+          tree.right,
+        ),
+        seen: middleSplit.seen,
+      };
+    }
+
+    // must be in the right
+    const rightSplit = splitDigit(cfg, tree.right, seen, measure);
+    if (rightSplit.type === "contains") {
+      return {
+        belowOrEqual: mkDeepWithRightPossiblyEmpty(
+          cfg,
+          tree.left,
+          tree.middle,
+          tree.right.slice(0, rightSplit.idx),
+        ),
+        containingSplit: tree.right[rightSplit.idx],
+        above: from(cfg, tree.right.slice(rightSplit.idx + 1)),
+        seen: rightSplit.seen,
+      };
+    } else {
+      throw new Error("split measure is out of bounds");
+    }
+  } else {
+    return {
+      belowOrEqual: emptyTree,
+      containingSplit: tree as T, // can't be empty tree here
+      above: emptyTree,
+      seen,
+    };
+  }
+}
+
+export function split<M, T extends HasMeasure<M>>(
+  cfg: MeasurableConfig<M>,
+  tree: FingerTree<M, T>,
+  measure: M,
+): SplitResult<M, T> {
+  if (tree === emptyTree) {
+    return { belowOrEqual: emptyTree, above: emptyTree };
+  } else if (tree instanceof DeepNode) {
+    if (cfg.compare(measure, tree.m) >= 0) {
+      // everything is below or equal
+      return { belowOrEqual: tree, above: emptyTree };
+    } else {
+      // split is in the tree, so can call splitTree
+      const { belowOrEqual, containingSplit, above, seen } = splitTree(
+        cfg,
+        tree,
+        cfg.zero,
+        measure,
+      );
+      if (cfg.compare(measure, cfg.add(seen, containingSplit.m)) < 0) {
+        // add containingSplit to above
+        return {
+          belowOrEqual,
+          above: unshift(cfg, containingSplit, above),
+        };
+      } else {
+        return {
+          belowOrEqual: push(cfg, belowOrEqual, containingSplit),
+          above,
+        };
+      }
+    }
+  } else {
+    // single element tree
+    if (cfg.compare(measure, tree.m) < 0) {
+      return { belowOrEqual: emptyTree, above: tree };
+    } else {
+      return { belowOrEqual: tree, above: emptyTree };
+    }
+  }
 }
 
 export function* iterate<M, T extends HasMeasure<M>>(
