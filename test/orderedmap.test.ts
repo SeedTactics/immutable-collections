@@ -1016,6 +1016,58 @@ describe("Ordered Map", () => {
     expect(interWithItself2).is.equal(imMap1);
   });
 
+  it("intersects two maps without a combining function", () => {
+    function* intersectionValues(): Generator<
+      | { map1K: number; map1V: string | null }
+      | { map2K: number; map2V: string | null }
+      | { both: number; val1: string | null; val2: string | null }
+    > {
+      const keygen = mkNumKeyGenerator(10_000);
+      // want a bunch of keys in both maps
+      for (let i = 0; i < 2000; i++) {
+        const k = keygen() * 3;
+        yield { both: k, val1: randomNullableStr(), val2: randomNullableStr() };
+      }
+
+      // want a bunch of keys in distinct in each map
+      for (let i = 0; i < 2000; i++) {
+        const k = keygen();
+        yield { map1K: k * 3 + 1, map1V: randomNullableStr() };
+        yield { map2K: k * 3 + 2, map2V: randomNullableStr() };
+      }
+    }
+
+    // create the maps and the expected intersection
+    let imMap1 = OrderedMap.empty<number, string | null>();
+    let imMap2 = OrderedMap.empty<number, string | null>();
+    const jsIntersection = new Map<string, [number, string | null]>();
+    for (const x of intersectionValues()) {
+      if ("map1K" in x) {
+        imMap1 = imMap1.set(x.map1K, x.map1V);
+      } else if ("map2K" in x) {
+        imMap2 = imMap2.set(x.map2K, x.map2V);
+      } else {
+        imMap1 = imMap1.set(x.both, x.val1);
+        imMap2 = imMap2.set(x.both, x.val2);
+        // val2 overrides val1
+        jsIntersection.set(x.both.toString(), [x.both, x.val2]);
+      }
+    }
+
+    deepFreeze(imMap1);
+    deepFreeze(imMap2);
+    checkMapBalanceAndSize(imMap1);
+    checkMapBalanceAndSize(imMap2);
+
+    const imInter = imMap1.intersection(imMap2);
+    expectEqual(imInter, jsIntersection);
+    checkMapBalanceAndSize(imInter);
+
+    // intersection with itself returns unchanged
+    const interWithIteself = imMap1.intersection(imMap1);
+    expect(interWithIteself).is.equal(imMap1);
+  });
+
   it("splits a map on an existing key", () => {
     const { ordMap, jsMap } = createMap(1000, mkNumKeyGenerator(5000));
     const [kToSplit, vToSplit] = ordMap.toAscLazySeq().drop(300).head()!;

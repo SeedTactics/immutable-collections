@@ -47,6 +47,14 @@ describe("LazySeq", () => {
     ]);
   });
 
+  it("only iterates own properties from object", () => {
+    const parent = { inherited: 42 };
+    const obj = Object.create(parent) as Record<string, string>;
+    obj["ownProp"] = "hello";
+    const seq = LazySeq.ofObject(obj);
+    expect(seq.toRArray()).to.deep.equal([["ownProp", "hello"]]);
+  })
+
   it("constructs a range of numbers", () => {
     const seq = LazySeq.ofRange(1, 5);
     expect(seq.toRArray()).to.deep.equal([1, 2, 3, 4]);
@@ -124,6 +132,12 @@ describe("LazySeq", () => {
     const chunks = seq.chunk(3);
 
     expect(chunks.toRArray()).to.deep.equal([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10]]);
+  });
+
+  it("chunks when size is divisible", () => {
+    const seq = LazySeq.ofRange(1, 11);
+    const chunks = seq.chunk(2);
+    expect(chunks.toRArray()).to.deep.equal([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]);
   });
 
   it("concats a sequence", () => {
