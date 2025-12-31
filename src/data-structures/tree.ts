@@ -25,6 +25,7 @@ import {
   combineDifferentSizes,
   glueDifferentSizes,
   glueSizeBalanced,
+  insertMin,
   MutableTreeNode,
   mutateBalanceAfterLeftIncrease,
   mutateBalanceAfterRightIncrease,
@@ -776,6 +777,174 @@ export function isDisjoint<K, V1, V2>(
   }
 
   return loop(root1, root2);
+}
+
+/** Find the index of a key
+ *
+ * @category Indexing
+ *
+ * @remarks
+ * Find the index of a key, which is its zero-based index in the sequence
+ * sorted by key.  The index is a number from 0 to size-1.  If the key is not found,
+ * -1 is returned.
+ *
+ * Runs in O(log n) time.
+ */
+export function indexOf<K, V>(
+  { compare }: ComparisonConfig<K>,
+  k: K,
+  root: TreeNode<K, V> | null,
+): number {
+  let node = root;
+  let index = 0;
+  while (node) {
+    const c = compare(k, node.key);
+    if (c === 0) {
+      if (node.left) {
+        index += node.left.size;
+      }
+      return index;
+    } else if (c < 0) {
+      node = node.left;
+    } else {
+      if (node.left) {
+        index += node.left.size;
+      }
+      index += 1;
+      node = node.right;
+    }
+  }
+
+  return -1;
+}
+
+/** Lookup a key and value by index
+ *
+ * @category Indexing
+ *
+ * @remarks
+ * Lookup the key and value at the given zero-based index in key order.  If the index is out of range,
+ * undefined is returned.
+ *
+ * Runs in O(log n) time.
+ */
+export function lookupByIndex<K, V>(
+  n: number,
+  root: TreeNode<K, V> | null,
+): readonly [K, V] | undefined {
+  let node = root;
+  let index = n;
+  while (node) {
+    const leftSize = node.left ? node.left.size : 0;
+    if (index < leftSize) {
+      node = node.left;
+    } else if (index === leftSize) {
+      return [node.key, node.val];
+    } else {
+      index -= leftSize + 1;
+      node = node.right;
+    }
+  }
+
+  return undefined;
+}
+
+/** Take the given number of entries in key order
+ *
+ * @category Indexing
+ *
+ * @remarks
+ * Runs in O(log n) time.
+ */
+export function take<K, V>(
+  n: number,
+  root: TreeNode<K, V> | null,
+): TreeNode<K, V> | null {
+  if (n <= 0 || root === null) return null;
+  if (n >= root.size) return root;
+  const leftSize = root.left ? root.left.size : 0;
+  if (n <= leftSize) {
+    return take(n, root.left);
+  } else {
+    const rightTake = take(n - leftSize - 1, root.right);
+    return combineDifferentSizes(root.left, root.key, root.val, rightTake);
+  }
+}
+
+/** Drops the given number of entries in key order
+ *
+ * @category Indexing
+ *
+ * @remarks
+ * Runs in O(log n) time.
+ */
+export function drop<K, V>(
+  n: number,
+  root: TreeNode<K, V> | null,
+): TreeNode<K, V> | null {
+  if (n <= 0 || root === null) return root;
+  if (n >= root.size) return null;
+  const leftSize = root.left ? root.left.size : 0;
+  if (n < leftSize) {
+    const newLeft = drop(n, root.left);
+    return combineDifferentSizes(newLeft, root.key, root.val, root.right);
+  } else if (n === leftSize) {
+    return insertMin(root.key, root.val, root.right);
+  } else {
+    return drop(n - leftSize - 1, root.right);
+  }
+}
+
+/** Update or delete a value at a given index
+ *
+ * @category Indexing
+ *
+ * @remarks
+ * `alterByIndex` updates the value at the given zero-based index in key order using the function `f`.
+ * If `f` returns undefined, the key and value at the index is removed.  If the index is out of range,
+ * the tree is returned unchanged.
+ *
+ * This runs in O(log n) time.
+ */
+export function alterByIndex<K, V>(
+  n: number,
+  f: (key: K, oldVal: V) => V | undefined,
+  root: TreeNode<K, V> | null,
+): TreeNode<K, V> | null {
+  if (n < 0 || root === null) return root;
+
+  const leftSize = root.left ? root.left.size : 0;
+
+  if (n < leftSize) {
+    const newLeft = alterByIndex(n, f, root.left);
+    if (newLeft === root.left) {
+      return root;
+    } else {
+      return combineAfterInsertOrRemove(newLeft, root.key, root.val, root.right);
+    }
+  } else if (n === leftSize) {
+    const newVal = f(root.key, root.val);
+    if (newVal === undefined) {
+      return glueSizeBalanced(root.left, root.right);
+    } else if (newVal === root.val) {
+      return root;
+    } else {
+      return {
+        key: root.key,
+        val: newVal,
+        size: root.size,
+        left: root.left,
+        right: root.right,
+      };
+    }
+  } else {
+    const newRight = alterByIndex(n - leftSize - 1, f, root.right);
+    if (newRight === root.right) {
+      return root;
+    } else {
+      return combineAfterInsertOrRemove(root.left, root.key, root.val, newRight);
+    }
+  }
 }
 
 /** Returns a new tree which combines all entries in two trees
