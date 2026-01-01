@@ -1385,4 +1385,194 @@ describe("Ordered Map", () => {
 
     expect(m).to.equal(ordMap);
   });
+
+  it("finds the index of an element", () => {
+    const { ordMap } = createMap(1000, mkNumKeyGenerator(5000));
+    const keysInOrder = ordMap.keysToAscLazySeq().toRArray();
+
+    for (let i = 0; i < keysInOrder.length; i++) {
+      const k = keysInOrder[i];
+      expect(ordMap.indexOf(k)).to.equal(i);
+    }
+
+    expect(ordMap.indexOf(-9999)).to.equal(-1);
+    expect(ordMap.indexOf(999999)).to.equal(-1);
+  });
+
+  it("finds an element by index", () => {
+    const { ordMap } = createMap(1000, mkNumKeyGenerator(5000));
+    const keysInOrder = ordMap.keysToAscLazySeq().toRArray();
+
+    for (let i = 0; i < keysInOrder.length; i++) {
+      expect(ordMap.getByIndex(i)).to.deep.equal([
+        keysInOrder[i],
+        ordMap.get(keysInOrder[i]),
+      ]);
+    }
+
+    expect(ordMap.getByIndex(-1)).to.be.undefined;
+    expect(ordMap.getByIndex(ordMap.size)).to.be.undefined;
+    expect(ordMap.getByIndex(ordMap.size + 10)).to.be.undefined;
+  });
+
+  it("takes part of an ordered map", () => {
+    const { ordMap, jsMap } = createMap(1000, mkNumKeyGenerator(5000));
+    const keysInOrder = ordMap.keysToAscLazySeq().toRArray();
+
+    const takeSizes = Array.from(
+      (function* () {
+        yield -10;
+        for (let sz = 0; sz <= ordMap.size; sz += 27) {
+          yield sz;
+        }
+      })(),
+    );
+
+    for (const sz of takeSizes) {
+      const taken = ordMap.take(sz);
+      expect(taken.size).to.equal(Math.max(0, sz));
+      checkMapBalanceAndSize(taken);
+
+      const expectedJsMap = new Map<string, [number, string]>();
+      for (let i = 0; i < sz; i++) {
+        const k = keysInOrder[i];
+        expectedJsMap.set(k.toString(), [k, jsMap.get(k.toString())![1]]);
+      }
+
+      expectEqual(taken, expectedJsMap);
+    }
+
+    expect(ordMap.take(ordMap.size)).to.equal(ordMap);
+    expect(ordMap.take(ordMap.size + 10)).to.equal(ordMap);
+  });
+
+  it("drops part of an ordered map", () => {
+    const { ordMap, jsMap } = createMap(1000, mkNumKeyGenerator(5000));
+    const keysInOrder = ordMap.keysToAscLazySeq().toRArray();
+
+    expect(ordMap.drop(-50)).to.equal(ordMap);
+    expect(ordMap.drop(0)).to.equal(ordMap);
+
+    const dropSizes = Array.from(
+      (function* () {
+        for (let sz = 1; sz <= ordMap.size; sz += 27) {
+          yield sz;
+        }
+        yield ordMap.size;
+        yield ordMap.size + 10;
+      })(),
+    );
+
+    for (const sz of dropSizes) {
+      const dropped = ordMap.drop(sz);
+      expect(dropped.size).to.equal(Math.max(0, ordMap.size - sz));
+      checkMapBalanceAndSize(dropped);
+
+      const expectedJsMap = new Map<string, [number, string]>();
+      for (let i = sz; i < keysInOrder.length; i++) {
+        const k = keysInOrder[i];
+        expectedJsMap.set(k.toString(), [k, jsMap.get(k.toString())![1]]);
+      }
+
+      expectEqual(dropped, expectedJsMap);
+    }
+  });
+
+  it("sets by index in an ordered map", () => {
+    const { ordMap, jsMap } = createMap(1000, mkNumKeyGenerator(5000));
+    const keysInOrder = ordMap.keysToAscLazySeq().toRArray();
+
+    expect(ordMap.setByIndex(-1, "foo")).to.equal(ordMap);
+    expect(ordMap.setByIndex(ordMap.size, "foo")).to.equal(ordMap);
+    expect(ordMap.setByIndex(ordMap.size + 30, "foo")).to.equal(ordMap);
+
+    let imMap = ordMap;
+    const jsMapCopy = new Map(jsMap);
+
+    const indicesToSet = faker.helpers.arrayElements([...Array(ordMap.size).keys()], 50);
+
+    for (const idx of indicesToSet) {
+      const k = keysInOrder[idx];
+      const newV = faker.string.sample();
+      imMap = imMap.setByIndex(idx, newV);
+      jsMapCopy.set(k.toString(), [k, newV]);
+    }
+
+    checkMapBalanceAndSize(imMap);
+    expectEqual(imMap, jsMapCopy);
+  });
+
+  it("deletes by index in an ordered map", () => {
+    const { ordMap, jsMap } = createMap(1000, mkNumKeyGenerator(5000));
+    const keysInOrder = ordMap.keysToAscLazySeq().toRArray();
+
+    expect(ordMap.deleteByIndex(-1)).to.equal(ordMap);
+    expect(ordMap.deleteByIndex(ordMap.size)).to.equal(ordMap);
+    expect(ordMap.deleteByIndex(ordMap.size + 30)).to.equal(ordMap);
+
+    let imMap = ordMap;
+    const jsMapCopy = new Map(jsMap);
+
+    const indicesToDelete = faker.helpers
+      .arrayElements([...Array(ordMap.size).keys()], 50)
+      .sort((a, b) => b - a);
+    for (const idx of indicesToDelete) {
+      const k = keysInOrder[idx];
+      imMap = imMap.deleteByIndex(idx);
+      jsMapCopy.delete(k.toString());
+    }
+
+    checkMapBalanceAndSize(imMap);
+    expectEqual(imMap, jsMapCopy);
+  });
+
+  it("alters by index in an ordered map", () => {
+    const { ordMap, jsMap } = createMap(1000, mkNumKeyGenerator(5000));
+    const keysInOrder = ordMap.keysToAscLazySeq().toRArray();
+
+    expect(ordMap.alterByIndex(-1, () => "foo")).to.equal(ordMap);
+    expect(ordMap.alterByIndex(ordMap.size, () => "foo")).to.equal(ordMap);
+    expect(ordMap.alterByIndex(ordMap.size + 30, () => "foo")).to.equal(ordMap);
+
+    let imMap = ordMap;
+    const jsMapCopy = new Map(jsMap);
+
+    const indicesToAlter = faker.helpers.arrayElements(
+      [...Array(ordMap.size).keys()],
+      100,
+    );
+
+    for (const idx of indicesToAlter) {
+      const k = keysInOrder[idx];
+      const newV = faker.string.sample();
+      imMap = imMap.alterByIndex(idx, (oldK, oldV) => {
+        expect(oldK).to.equal(k);
+        expect(oldV).to.equal(jsMapCopy.get(k.toString())![1]);
+        if (k % 2 === 0) {
+          return oldV;
+        } else {
+          return oldV + newV;
+        }
+      });
+      const [oldK, oldV] = jsMapCopy.get(k.toString())!;
+
+      if (k % 2 === 0) {
+        // unchanged
+      } else {
+        jsMapCopy.set(k.toString(), [oldK, oldV + newV]);
+      }
+    }
+
+    const indexToDelete = faker.number.int({ min: 0, max: ordMap.size - 1 });
+    const k = keysInOrder[indexToDelete];
+    imMap = imMap.alterByIndex(indexToDelete, (oldK, oldV) => {
+      expect(oldK).to.equal(k);
+      expect(oldV).to.equal(jsMapCopy.get(k.toString())![1]);
+      return undefined;
+    });
+    jsMapCopy.delete(k.toString());
+
+    checkMapBalanceAndSize(imMap);
+    expectEqual(imMap, jsMapCopy);
+  });
 });
