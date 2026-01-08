@@ -775,4 +775,116 @@ describe("OrderedSet", () => {
     checkSetBalanceAndSize(imSet2);
     expectEqual(imSet2, jsSet);
   });
+
+  it("finds the index of an item", () => {
+    const { imSet } = createSet(1_000, mkNumKeyGenerator(2_000));
+    const sortedKeys = imSet.toAscLazySeq().toRArray();
+
+    for (let i = 0; i < sortedKeys.length; i++) {
+      expect(imSet.indexOf(sortedKeys[i])).to.equal(i);
+    }
+
+    expect(imSet.indexOf(-1000)).to.equal(-1);
+    expect(imSet.indexOf(99999)).to.equal(-1);
+  });
+
+  it("finds an element by index", () => {
+    const { imSet } = createSet(1_000, mkNumKeyGenerator(2_000));
+    const sortedKeys = imSet.toAscLazySeq().toRArray();
+
+    for (let i = 0; i < sortedKeys.length; i++) {
+      expect(imSet.getByIndex(i)).to.equal(sortedKeys[i]);
+    }
+
+    expect(imSet.getByIndex(-1)).to.be.undefined;
+    expect(imSet.getByIndex(1000)).to.be.undefined;
+  });
+
+  it("takes part of an ordered set", () => {
+    const { imSet } = createSet(1000, mkNumKeyGenerator(5000));
+    const keysInOrder = imSet.toAscLazySeq().toRArray();
+
+    const takeSizes = Array.from(
+      (function* () {
+        yield -10;
+        for (let sz = 0; sz <= imSet.size; sz += 27) {
+          yield sz;
+        }
+      })(),
+    );
+
+    for (const sz of takeSizes) {
+      const taken = imSet.take(sz);
+      expect(taken.size).to.equal(Math.max(0, sz));
+      checkSetBalanceAndSize(taken);
+
+      const expectedJsMap = new Map<string, number>();
+      for (let i = 0; i < sz; i++) {
+        const k = keysInOrder[i];
+        expectedJsMap.set(k.toString(), k);
+      }
+
+      expectEqual(taken, expectedJsMap);
+    }
+
+    expect(imSet.take(imSet.size)).to.equal(imSet);
+    expect(imSet.take(imSet.size + 10)).to.equal(imSet);
+  });
+
+  it("drops part of an ordered set", () => {
+    const { imSet } = createSet(1000, mkNumKeyGenerator(5000));
+    const keysInOrder = imSet.toAscLazySeq().toRArray();
+
+    expect(imSet.drop(-20)).to.equal(imSet);
+    expect(imSet.drop(0)).to.equal(imSet);
+
+    const dropSizes = Array.from(
+      (function* () {
+        for (let sz = 1; sz <= imSet.size; sz += 27) {
+          yield sz;
+        }
+        yield imSet.size;
+        yield imSet.size + 10;
+      })(),
+    );
+
+    for (const sz of dropSizes) {
+      const dropped = imSet.drop(sz);
+      expect(dropped.size).to.equal(Math.max(0, imSet.size - sz));
+      checkSetBalanceAndSize(dropped);
+
+      const expectedJsMap = new Map<string, number>();
+      for (let i = sz; i < imSet.size; i++) {
+        const k = keysInOrder[i];
+        expectedJsMap.set(k.toString(), k);
+      }
+
+      expectEqual(dropped, expectedJsMap);
+    }
+  });
+
+  it("deletes by index", () => {
+    const { imSet, jsMap } = createSet(1000, mkNumKeyGenerator(5000));
+    const keysInOrder = imSet.toAscLazySeq().toRArray();
+
+    expect(imSet.deleteByIndex(-1)).to.equal(imSet);
+    expect(imSet.deleteByIndex(imSet.size)).to.equal(imSet);
+    expect(imSet.deleteByIndex(imSet.size + 10)).to.equal(imSet);
+
+    let currentSet = imSet;
+    const jsMapCopy = new Map(jsMap);
+
+    const indicesToDelete = faker.helpers
+      .arrayElements([...Array(imSet.size).keys()], 50)
+      .sort((a, b) => b - a); // delete from largest to smallest to keep indices valid
+
+    for (const idx of indicesToDelete) {
+      const k = keysInOrder[idx];
+      currentSet = currentSet.deleteByIndex(idx);
+      jsMapCopy.delete(k.toString());
+    }
+
+    checkSetBalanceAndSize(currentSet);
+    expectEqual(currentSet, jsMapCopy);
+  });
 });

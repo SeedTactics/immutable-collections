@@ -7,17 +7,21 @@ import {
 } from "../data-structures/comparison.js";
 import {
   alter,
+  alterByIndex,
   build,
   collectValues,
   difference,
+  drop,
   foldl,
   foldr,
+  indexOf,
   intersection,
   isDisjoint,
   isKeySubset,
   iterateAsc,
   iterateDesc,
   lookup,
+  lookupByIndex,
   lookupMax,
   lookupMin,
   maxView,
@@ -25,6 +29,7 @@ import {
   partition,
   split,
   symmetricDifference,
+  take,
   TreeNode,
   union,
 } from "../data-structures/tree.js";
@@ -455,6 +460,90 @@ export class OrderedSet<T extends OrderedMapKey> {
     } else {
       const m = maxView(this.root);
       return { max: m.k, rest: new OrderedSet(this.cfg, m.rest) };
+    }
+  }
+
+  /** Lookup the index of an item in the OrderedSet
+   *
+   * @category Indexing
+   *
+   * @remarks
+   * Returns the zero-based index of the given item in the OrderedSet, or -1 if the item is not present.
+   * Runs in time O(log n)
+   */
+  indexOf(t: T): number {
+    return indexOf(this.cfg, t, this.root);
+  }
+
+  /** Lookup an item by its index
+   *
+   * @category Indexing
+   *
+   * @remarks
+   * Returns the item at the given zero-based index in the OrderedSet, or undefined if the index is out of bounds.
+   * Runs in time O(log n)
+   */
+  getByIndex(idx: number): T | undefined {
+    return lookupByIndex(idx, this.root)?.[0];
+  }
+
+  /** Take the given number of items in order
+   *
+   * @category Indexing
+   *
+   * @remarks
+   * Returns a new OrderedSet consisting of the first `count` items in the OrderedSet.
+   * If `count` is greater than or equal to the size of the OrderedSet, the original
+   * OrderedSet object instance is returned unchanged.  If `count` is less than or equal to zero,
+   * an empty OrderedSet is returned.
+   *
+   * Runs in time O(log n)
+   */
+  take(count: number): OrderedSet<T> {
+    const newRoot = take(count, this.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedSet(this.cfg, newRoot);
+    }
+  }
+
+  /** Drop the given number of entries in order
+   *
+   * @category Indexing
+   *
+   * @remarks
+   * Returns a new OrderedSet consisting of all but the first `count` items in the OrderedSet.
+   * If `count` is less than or equal to zero, the original OrderedSet object instance is returned unchanged.
+   * If `count` is greater than or equal to the size of the OrderedSet, an empty OrderedSet is returned.
+   *
+   * Runs in time O(log n)
+   */
+  drop(count: number): OrderedSet<T> {
+    const newRoot = drop(count, this.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedSet(this.cfg, newRoot);
+    }
+  }
+
+  /** Delete an item by its index
+   *
+   * @category Indexing
+   *
+   * @remarks
+   * Returns a new OrderedSet with the item at the given zero-based index removed.
+   * If the index is out of bounds, the original OrderedSet object instance is returned unchanged.
+   *
+   * Runs in time O(log n)
+   */
+  deleteByIndex(idx: number): OrderedSet<T> {
+    const newRoot = alterByIndex(idx, constUndefined, this.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedSet(this.cfg, newRoot);
     }
   }
 

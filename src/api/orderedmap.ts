@@ -29,6 +29,11 @@ import {
   lookupMax,
   partition,
   symmetricDifference,
+  indexOf,
+  lookupByIndex,
+  take,
+  drop,
+  alterByIndex,
 } from "../data-structures/tree.js";
 import { OrderedSet } from "./orderedset.js";
 
@@ -636,6 +641,133 @@ export class OrderedMap<K extends OrderedMapKey, V> {
     } else {
       const m = maxView(this.root);
       return { maxKey: m.k, maxVal: m.v, rest: new OrderedMap(this.cfg, m.rest) };
+    }
+  }
+
+  /** Find the index of a key
+   *
+   * @category Indexing
+   *
+   * @remarks
+   * Returns the zero-based index of the key in the OrderedMap, where the entries are
+   * considered as sorted in ascending order by key.  If the key is not found, returns -1.
+   *
+   * Runs in time O(log n)
+   */
+  indexOf(k: K): number {
+    return indexOf(this.cfg, k, this.root);
+  }
+
+  /** Lookup a key and value by index
+   *
+   * @category Indexing
+   *
+   * @remarks
+   * Returns the key and value at the given zero-based index in the OrderedMap, where the entries are
+   * considered as sorted in ascending order by key.  If the index is out of bounds, returns undefined.
+   *
+   * Runs in time O(log n)
+   */
+  getByIndex(idx: number): readonly [K, V] | undefined {
+    return lookupByIndex(idx, this.root);
+  }
+
+  /** Take the given number of entries in key order
+   *
+   * @category Indexing
+   *
+   * @remarks
+   * Returns a new OrderedMap consisting of the first `count` entries in ascending key order.
+   * If `count` is greater than or equal to the size of the OrderedMap, the original
+   * OrderedMap object instance is returned unchanged.  If `count` is less than or equal to zero,
+   * an empty OrderedMap is returned.
+   *
+   * Runs in time O(log n)
+   */
+  take(count: number): OrderedMap<K, V> {
+    const newRoot = take(count, this.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedMap(this.cfg, newRoot);
+    }
+  }
+
+  /** Drop the given number of entries in key order
+   *
+   * @category Indexing
+   *
+   * @remarks
+   * Returns a new OrderedMap consisting of all but the first `count` entries in ascending key order.
+   * If `count` is less than or equal to zero, the original OrderedMap object instance is returned unchanged.
+   * If `count` is greater than or equal to the size of the OrderedMap, an empty OrderedMap is returned.
+   *
+   * Runs in time O(log n)
+   */
+  drop(count: number): OrderedMap<K, V> {
+    const newRoot = drop(count, this.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedMap(this.cfg, newRoot);
+    }
+  }
+
+  /** Sets a value by index
+   *
+   * @category Indexing
+   *
+   * @remarks
+   * Returns a new OrderedMap with the value at the given zero-based index set to the provided value.
+   * If the index is out of bounds, the original OrderedMap object instance is returned unchanged.
+   *
+   * Runs in time O(log n)
+   */
+  setByIndex(idx: number, v: V): OrderedMap<K, V> {
+    const newRoot = alterByIndex(idx, () => v, this.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedMap(this.cfg, newRoot);
+    }
+  }
+
+  /** Delete by index
+   *
+   * @category Indexing
+   *
+   * @remarks
+   * Returns a new OrderedMap with the entry at the given zero-based index deleted.
+   * If the index is out of bounds, the original OrderedMap object instance is returned unchanged.
+   *
+   * Runs in time O(log n)
+   */
+  deleteByIndex(idx: number): OrderedMap<K, V> {
+    const newRoot = alterByIndex(idx, constUndefined, this.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedMap(this.cfg, newRoot);
+    }
+  }
+
+  /** Alters a value by index
+   *
+   * @category Indexing
+   *
+   * @remarks
+   * Returns a new OrderedMap with the value at the given zero-based index modified by the
+   * provided function.  If the function returns undefined, the entry is deleted.
+   * If the index is out of bounds, the original OrderedMap object instance is returned unchanged.
+   *
+   * Runs in time O(log n)
+   */
+  alterByIndex(idx: number, f: (key: K, existing: V) => V | undefined): OrderedMap<K, V> {
+    const newRoot = alterByIndex(idx, f, this.root);
+    if (newRoot === this.root) {
+      return this;
+    } else {
+      return new OrderedMap(this.cfg, newRoot);
     }
   }
 

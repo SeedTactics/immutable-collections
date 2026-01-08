@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Added indexing methods to OrderedMap and OrderedSet.  These operate on the map/set
+  as if it was a sorted list, allowing you to lookup or edit the map using indexes,
+  numbers between 0 and n - 1. All these indexing functions run in time O(log n).
+  The new functions are `indexOf`, `getByIndex`, `take`, `drop`, `setByIndex`, `deleteByIndex`,
+  and `alterByIndex`.
+
 ### Changed
 - Switch test suite to use vitest
 

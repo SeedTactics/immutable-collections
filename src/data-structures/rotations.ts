@@ -381,7 +381,7 @@ export function combineAfterInsertOrRemove<K, V>(
   return { key: k, val: v, size: 1 + left.size + right.size, left, right };
 }
 
-function insertMin<K, V>(k: K, v: V, root: TreeNode<K, V> | null): TreeNode<K, V> {
+export function insertMin<K, V>(k: K, v: V, root: TreeNode<K, V> | null): TreeNode<K, V> {
   if (root === null) return { key: k, val: v, size: 1, left: null, right: null };
   const newLeft = insertMin(k, v, root.left);
   return combineAfterLeftIncrease(newLeft, root.key, root.val, root.right);

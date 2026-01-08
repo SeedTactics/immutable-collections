@@ -74,10 +74,10 @@ export type ReturnOfComparable<T, F extends ToComparable<T>> = F extends {
 }
   ? R
   : F extends { desc: (t: T) => infer R }
-  ? R
-  : F extends (t: T) => infer R
-  ? R
-  : never;
+    ? R
+    : F extends (t: T) => infer R
+      ? R
+      : never;
 
 export function evalComparable<T, F extends ToComparable<T>>(
   f: F,
