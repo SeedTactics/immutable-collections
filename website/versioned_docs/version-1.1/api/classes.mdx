@@ -1,0 +1,468 @@
+---
+id: classes
+title: Class-based API for Immutable TypeScript Collections
+---
+
+import Export from "@site/src/components/ApiExport";
+import Summary from "@site/src/components/ApiSummary";
+import Remarks from "@site/src/components/ApiRemarks";
+
+# Class-based API for Immutable TypeScript Collections
+
+This module is the main import of immutable-collections and implements the class-based API.
+This API consists of the HashMap, HashSet, OrderedMap, OrderedSet, and LazySeq classes (along
+with some utility functions).
+
+```ts
+import { HashMap } from "@seedtactics/immutable-collections";
+
+const h = HashMap.from([ [1, "Hello"], [2, "World"] ]);
+console.log(h.get(1)); // prints Hello
+console.log(h.get(2)); // prints World
+
+const h2 = h.set(1, "Goodbye");
+console.log(h2.get(1)); // prints Goodbye
+console.log(h.get(1)); // prints Hello
+```
+
+<Export anchor="HashMap" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/hashmap.ts#L42">
+
+```typescript
+class HashMap<K extends HashKey, V>
+```
+
+</Export>
+
+<Summary>
+
+Immutable Hash Map
+
+</Summary>
+
+<Remarks>
+
+The `HashMap<K, V>` class stores key-value pairs where the keys have type `K`
+and the values type `V`.  Keys can be numbers, strings, booleans, dates, or
+custom objects which implement the [HashableObj](classes#HashableObj) and [ComparableObj](classes#ComparableObj) interfaces.
+
+
+</Remarks>
+
+[See full class details for HashMap](./hashmap)
+
+<Export anchor="HashSet" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/hashset.ts#L39">
+
+```typescript
+class HashSet<T extends HashKey>
+```
+
+</Export>
+
+<Summary>
+
+Immutable Hash Set
+
+</Summary>
+
+<Remarks>
+
+The `HashSet<T>` class stores numbers, strings, booleans, dates, or custom objects which implement the
+[HashableObj](classes#HashableObj) and [ComparableObj](classes#ComparableObj) interface.
+
+
+</Remarks>
+
+[See full class details for HashSet](./hashset)
+
+<Export anchor="OrderedMap" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L62">
+
+```typescript
+class OrderedMap<K extends OrderedMapKey, V>
+```
+
+</Export>
+
+<Summary>
+
+Immutable Ordered Map
+
+</Summary>
+
+<Remarks>
+
+The `OrderedMap<K, V>` class stores key-value pairs where the keys have type `K` and the values type `V`.
+Keys can be numbers, strings, booleans, dates, or custom objects which implement the [ComparableObj](classes#ComparableObj) interface.
+The entries are stored in a balanced binary tree, and various methods can iterate over the entries in either ascending
+or descending order of keys.
+
+
+</Remarks>
+
+[See full class details for OrderedMap](./orderedmap)
+
+<Export anchor="OrderedSet" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedset.ts#L60">
+
+```typescript
+class OrderedSet<T extends OrderedMapKey>
+```
+
+</Export>
+
+<Summary>
+
+Immutable Ordered Set
+
+</Summary>
+
+<Remarks>
+
+The `OrderedSet<T>` class stores numbers, strings, booleans, dates, or custom objects which implement the
+[ComparableObj](classes#ComparableObj) interface.
+
+
+</Remarks>
+
+[See full class details for OrderedSet](./orderedset)
+
+<Export anchor="LazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L49">
+
+```typescript
+class LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+A class-wrapper around iterables
+
+</Summary>
+
+<Remarks>
+
+The `LazySeq<T>` class stores an [iterable](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterable_protocol)
+of type `T` and provides a number of methods to transform the iterable.
+The general format for data manipulation is to start with some data in
+a data structure such as an array, object, [HashMap](hashmap#HashMap), etc. Create a new
+LazySeq chain starting from the initial data, call various transformation
+methods to map, group, filter, aggregate the data, and finally terminate the
+chain by converting back to a data structure. Because most of the transformation
+methods are lazy, the new terminating data structure can be built directly from the
+transformed data in one pass.
+
+
+</Remarks>
+
+[See full class details for LazySeq](./lazyseq)
+
+### Comparison Utils
+
+<Export anchor="OrderedMapKey" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/comparison.ts#L42">
+
+```typescript
+export type OrderedMapKey = string | number | boolean | Date | ComparableObj;
+```
+
+</Export>
+
+<Summary>
+
+The possible types for a key in an OrderedMap
+
+</Summary>
+
+
+<Export anchor="ComparableObj" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/comparison.ts#L30">
+
+```typescript
+export type ComparableObj = {
+  compare(other: ComparableObj): number;
+};
+```
+
+</Export>
+
+<Summary>
+
+Interface allowing custom key objects in an OrderedMap
+
+</Summary>
+
+<Remarks>
+
+If you wish to use a custom object as a key in a HashMap or OrderedMap, you must implement the `compare` function.
+The `compare` function should return a negative number if `this < other`, return zero if `this` equals `other`, and
+return a positive number if `this > other`.  A common technique is to use subtraction to compare numbers
+and [String.localeCompare](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/localeCompare)
+to compare srings.  Comparing multiple properties can either use a sequence of `if` statements or use `||` to combine.
+
+<details>
+
+<summary>Example</summary>
+
+<div>
+
+```ts
+class SomeKey {
+ public readonly a: number;
+ public readonly b: string;
+ constructor(a: number, b: string) {
+   this.a = a;
+   this.b = b;
+ }
+
+ compare(other: SomeKey): number {
+   return (this.a - other.a) || this.b.localeCompare(other.b);
+ }
+}
+```
+
+</div>
+
+</details>
+
+
+</Remarks>
+
+<Export anchor="mkCompareByProperties" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/comparison.ts#L133">
+
+```typescript
+function mkCompareByProperties<T>(
+  ...getKeys: ReadonlyArray<ToComparable<T>>
+): (a: T, b: T) => -1 | 0 | 1
+```
+
+</Export>
+
+<Summary>
+
+Combine multiple comparable properties into a single comparison function
+
+</Summary>
+
+<Remarks>
+
+`mkCompareByProperties` will return a comparison function for the type `T` which
+compares multiple properties in order.  Each property is specified by an
+extraction function which extracts the property from the type `T`.  The comparison
+function will compare each property in order, returning as soon as a single property is
+not equal.  Strings are compared using
+[localeCompare](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/localeCompare).
+
+This function can optionally be used to implement [ComparableObj](#ComparableObj), but typically
+a direct implementation is shorter.  `mkCompareByProperties` is instead used primarily
+by [LazySeq](lazyseq#LazySeq).
+
+<details>
+
+<summary>Example</summary>
+
+<div>
+
+```ts
+type Foo = {
+  readonly someNum: number;
+  readonly someStr: string;
+}
+
+const compareFoo: (a: Foo, b: Foo) => -1 | 0 | 1 = mkCompareByProperties(
+  f => f.someNum,
+  { desc: f => f.someStr }
+);
+
+console.log(compareFoo(
+  { someNum: 1, someStr: "Hello"},
+  { someNum: 2, someStr: "Hello"}
+)); // prints -1
+console.log(compareFoo(
+  { someNum: 42, someStr: "AAA"},
+  { someNum: 42, someStr: "ZZZ"}
+)); // prints 1 due to descending ordering of the strings
+```
+
+</div>
+
+</details>
+
+
+</Remarks>
+
+<Export anchor="ToComparableBase" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/comparison.ts#L51">
+
+```typescript
+export type ToComparableBase<T> =
+  | ((t: T) => number | null)
+  | ((t: T) => string | null)
+  | ((t: T) => boolean | null)
+  | ((t: T) => Date | null)
+  | ((t: T) => ComparableObj | null);
+```
+
+</Export>
+
+<Summary>
+
+A function which converts or extracts a comparable value
+
+</Summary>
+
+<Remarks>
+
+This is used primarily by [LazySeq](lazyseq#LazySeq) to extract comparable values from an object for grouping.
+
+
+</Remarks>
+
+<Export anchor="ToComparable" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/comparison.ts#L67">
+
+```typescript
+export type ToComparable<T> =
+  | { asc: ToComparableBase<T> }
+  | { desc: ToComparableBase<T> }
+  | ToComparableBase<T>;
+```
+
+</Export>
+
+<Summary>
+
+A function which converts or extracts a comparable value and a direction
+
+</Summary>
+
+<Remarks>
+
+This is used primarily by [LazySeq](lazyseq#LazySeq) to extract comparable values from an object for grouping,
+while also allowing you to specify if the ordering should be in ascending or descending order.
+For example, see [LazySeq.distinctAndSortBy](lazyseq#distinctAndSortBy).
+
+
+</Remarks>
+
+### Hash Utils
+
+<Export anchor="HashKey" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/hashing.ts#L70">
+
+```typescript
+export type HashKey = string | number | boolean | Date | (HashableObj & ComparableObj);
+```
+
+</Export>
+
+<Summary>
+
+The possible types for a key in a HashMap
+
+</Summary>
+
+
+<Export anchor="HashableObj" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/hashing.ts#L43">
+
+```typescript
+export type HashableObj = {
+  hash(): number;
+};
+```
+
+</Export>
+
+<Summary>
+
+Interface allowing custom key objects in a HashMap
+
+</Summary>
+
+<Remarks>
+
+If you wish to use a custom object as a key in a HashMap, you must implement the `hash` function
+defined in the HashableObj type and the `compare` function defined in the [ComparableObj](#ComparableObj) type.
+The hash value must be a 32-bit integer.  The [hashValues](#hashValues) function can help implementing
+the hash function.
+
+<details>
+
+<summary>Example</summary>
+
+<div>
+
+```ts
+class SomeKey {
+ public readonly a: number;
+ public readonly b: string;
+ constructor(a: number, b: string) {
+   this.a = a;
+   this.b = b;
+ }
+
+ hash(): number {
+   return hashValues(this.a, this.b);
+ }
+
+ compare(other: SomeKey): number {
+   return (this.a - other.a) || this.b.localeCompare(other.b);
+ }
+}
+```
+
+</div>
+
+</details>
+
+
+</Remarks>
+
+<Export anchor="hashValues" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/hashing.ts#L146">
+
+```typescript
+function hashValues(
+  ...vals: ReadonlyArray<
+    string | number | boolean | Date | HashableObj | null | undefined
+  >
+): number
+```
+
+</Export>
+
+<Summary>
+
+Combine multiple hashable values into a single hash
+
+</Summary>
+
+<Remarks>
+
+Useful helper function to hash multiple values to a single hash.
+This uses the [FNV-1 hash function](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function), which is
+**NOT** secure.  If you need a secure hash, use something like [highwayhash](https://github.com/google/highwayhash#third-party-implementations--bindings)
+and implement a custom [HashableObj](#HashableObj) interface.
+
+
+</Remarks>
+
+<Export anchor="ToHashable" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/hashing.ts#L59">
+
+```typescript
+export type ToHashable<T> =
+  | ((t: T) => number | null)
+  | ((t: T) => string | null)
+  | ((t: T) => boolean | null)
+  | ((t: T) => Date | null)
+  | ((t: T) => (HashableObj & ComparableObj) | null);
+```
+
+</Export>
+
+<Summary>
+
+A function which converts or extracts a hashable value
+
+</Summary>
+
+<Remarks>
+
+This is used primarily by [LazySeq](lazyseq#LazySeq) to extract hashable values from an object for grouping.
+For example, see [LazySeq.groupBy](lazyseq#groupBy).
+
+
+</Remarks>
+

@@ -1,0 +1,1759 @@
+---
+id: lazyseq
+title: Utility Methods for Iterables
+---
+
+import Export from "@site/src/components/ApiExport";
+import Summary from "@site/src/components/ApiSummary";
+import Remarks from "@site/src/components/ApiRemarks";
+
+# Utility Methods for Iterables
+
+```typescript
+class LazySeq<T>
+```
+
+<Summary>
+
+A class-wrapper around iterables
+
+</Summary>
+
+<Remarks>
+
+The `LazySeq<T>` class stores an [iterable](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterable_protocol)
+of type `T` and provides a number of methods to transform the iterable.
+The general format for data manipulation is to start with some data in
+a data structure such as an array, object, [HashMap](hashmap#HashMap), etc. Create a new
+LazySeq chain starting from the initial data, call various transformation
+methods to map, group, filter, aggregate the data, and finally terminate the
+chain by converting back to a data structure. Because most of the transformation
+methods are lazy, the new terminating data structure can be built directly from the
+transformed data in one pass.
+
+
+</Remarks>
+
+### Static Creation Methods
+
+<Export anchor="of" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L54">
+
+```typescript
+static of<T>(iter: Iterable<T>): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Creates a new LazySeq from any Iterable
+
+</Summary>
+
+
+<Export anchor="ofIterator" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L76">
+
+```typescript
+static ofIterator<T>(f: () => Iterator<T>): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Creates a new LazySeq from any iterator
+
+</Summary>
+
+<Remarks>
+
+Like the [iterator protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#The_iterator_protocol),
+the iterator function is called each time the LazySeq is iterated.  Typically, you would use zero-argument
+[generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*) to create the iterator.
+
+<details>
+
+<summary>Example</summary>
+
+<div>
+
+```typescript
+const oddNums = LazySeq.ofIterator(function* () {
+  for (let i = 1; i < 10; i += 2) {
+    yield i;
+  }
+});
+```
+
+</div>
+
+</details>
+
+
+</Remarks>
+
+<Export anchor="ofObject" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L91">
+
+```typescript
+static ofObject<V>(obj: { [k: string]: V }): LazySeq<readonly [string, V]>
+```
+
+</Export>
+
+<Summary>
+
+Creates a new LazySeq from the keys and values of an object
+
+</Summary>
+
+<Remarks>
+
+Only the [own properties](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/hasOwnProperty) of the object are included.
+
+
+</Remarks>
+
+<Export anchor="ofRange" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L109">
+
+```typescript
+static ofRange(start: number, end: number, step?: number): LazySeq<number>
+```
+
+</Export>
+
+<Summary>
+
+Creates a new LazySeq of numbers with a given start, end, and step
+
+</Summary>
+
+<Remarks>
+
+The range is inclusive of the start and exclusive of the end.  The step defaults to 1 and can be negative.
+Note there is no infinite loop prevention, so make sure the step is not zero.
+
+
+</Remarks>
+
+### Transformation
+
+<Export anchor="Symbol_iterator" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L133">
+
+```typescript
+𝑜𝑏𝑗.[Symbol.iterator](): Iterator<T>
+```
+
+</Export>
+
+<Summary>
+
+Iterates the entries in the LazySeq
+
+</Summary>
+
+<Remarks>
+
+This is the default iteration when using `for .. of` directly on the `LazySeq`.
+
+
+</Remarks>
+
+<Export anchor="aggregate" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L150">
+
+```typescript
+𝑜𝑏𝑗.aggregate<K, S>(
+    key: (x: T) => K & JsMapKey,
+    val: (x: T) => S,
+    combine: (s1: S, s2: S) => S
+): LazySeq<readonly [K, S]>
+```
+
+</Export>
+
+<Summary>
+
+Strictly combines entries which map to the same key
+
+</Summary>
+
+<Remarks>
+
+`aggregate` strictly transforms each entry in the LazySeq using the provided
+`key` and `val` functions.  Entries which map to the same key are then combined
+with the `combine` function.  Internally, this uses a javascript Map so the keys
+must be strings or numbers.
+
+For more complex keys, use instead [LazySeq.toHashMap](#toHashMap), [LazySeq.buildHashMap](#buildHashMap), [LazySeq.toOrderedMap](#toOrderedMap), or
+[LazySeq.buildOrderedMap](#buildOrderedMap).
+
+
+</Remarks>
+
+<Export anchor="append" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L172">
+
+```typescript
+𝑜𝑏𝑗.append(x: T): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Lazily appends the given value to the end of the LazySeq
+
+</Summary>
+
+
+<Export anchor="chunk" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L187">
+
+```typescript
+𝑜𝑏𝑗.chunk(size: number): LazySeq<ReadonlyArray<T>>
+```
+
+</Export>
+
+<Summary>
+
+Lazily splits the LazySeq into chunks of the given size
+
+</Summary>
+
+<Remarks>
+
+Each chunk except the final chunk will have exactly `size` entries.
+
+
+</Remarks>
+
+<Export anchor="concat" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L221">
+
+```typescript
+𝑜𝑏𝑗.concat(i: Iterable<T>): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Lazily adds the specified iterable to the end of the LazySeq
+
+</Summary>
+
+<Remarks>
+
+In other words, when iterated the resulting LazySeq will first yield the
+entries in the input LazySeq and then the entries in the iterable passed into `concat`.
+
+<details>
+
+<summary>Example</summary>
+
+<div>
+
+```typescript
+const nums = LazySeq.of([1, 2, 3]).concat([4, 5, 6]);
+for (const x of nums) {
+ console.log(x);
+});
+// the above prints 1, 2, 3, 4, 5, 6
+```
+
+</div>
+
+</details>
+
+
+</Remarks>
+
+<Export anchor="distinct" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L238">
+
+```typescript
+𝑜𝑏𝑗.distinct(this: LazySeq<T & JsMapKey>): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Strictly calculates only the distinct entries in the LazySeq
+
+</Summary>
+
+<Remarks>
+
+Internally, this uses a javascript Set so the entries must be strings or numbers.
+For more complex entries, use instead [LazySeq.distinctBy](#distinctBy), [LazySeq.toHashSet](#toHashSet)
+or [LazySeq.toOrderedSet](#toOrderedSet).
+
+
+</Remarks>
+
+<Export anchor="distinctBy" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L266">
+
+```typescript
+𝑜𝑏𝑗.distinctBy(prop: ToHashable<T>, ...props: Array<ToHashable<T>>): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Strictly calculates only the entries with distinct properties in the LazySeq
+
+</Summary>
+
+<Remarks>
+
+This method is given one or more property-extraction functions.  `distinctBy` then
+calculates the distinct entries in the LazySeq based on the tuple of those properties
+using a [HashMap](hashmap#HashMap) internally, so properties must be [ToHashable](classes#ToHashable).
+
+`distinctBy` and [LazySeq.toHashMap](#toHashMap) are very similar; the main difference is that when
+you have multiple properties you want to use, `distinctBy` internally handles creating a
+custom key tuple.
+
+See also [LazySeq.distinctAndSortBy](#distinctAndSortBy) if you want to sort the entries by the properties.
+
+
+</Remarks>
+
+<Export anchor="distinctAndSortBy" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L302">
+
+```typescript
+𝑜𝑏𝑗.distinctAndSortBy(prop: ToComparable<T>, ...props: Array<ToComparable<T>>): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Strictly calculates only the entries with distinct properties in the LazySeq and yields them in sorted order
+
+</Summary>
+
+<Remarks>
+
+This method is given one or more property-extraction functions.  `distinctAndSortBy` then
+inserts them internally into a [OrderedMap](orderedmap#OrderedMap) and yields them in ascending order.
+Thus, all properties must implement [ToComparable](classes#ToComparable).
+
+`distinctAndSortBy` and [LazySeq.toOrderedMap](#toOrderedMap) are very similar; the main difference is that when
+you have multiple properties you want to use, `distinctAndSortBy` internally handles creating a
+custom key tuple.
+
+
+</Remarks>
+
+<Export anchor="drop" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L325">
+
+```typescript
+𝑜𝑏𝑗.drop(n: number): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Lazily skips over a given number of entries in the LazySeq
+
+</Summary>
+
+<Remarks>
+
+When the resulting LazySeq is iterated, the first `n` entries will be skipped.  If `n` is
+larger than the total number of entries, the resulting LazySeq will be empty.
+
+
+</Remarks>
+
+<Export anchor="dropWhile" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L349">
+
+```typescript
+𝑜𝑏𝑗.dropWhile(f: (x: T) => boolean): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Lazily skips over entries until the specified predicate is false
+
+</Summary>
+
+<Remarks>
+
+When the resulting LazySeq is iterated, each entry is passed to the predicate function.
+If an entry returns true, it is skipped.  If an entry returns false, it is yielded and
+from then on the remainder of the entries are yielded unchanged.
+Thus, only the initial prefix of entries for which the predicate returns true are skipped.
+
+
+</Remarks>
+
+<Export anchor="filter" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L384">
+
+```typescript
+𝑜𝑏𝑗.filter<S extends T>(f: (x: T) => x is S): LazySeq<S>
+```
+
+</Export>
+
+<Summary>
+
+Lazily filters the entries in the LazySeq to be only those returning true from a predicate function
+
+</Summary>
+
+<Remarks>
+
+This type signature using a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates)
+to allow the correct type after filtering to be inferred.
+
+<details>
+
+<summary>Example</summary>
+
+<div>
+
+```typescript
+function isFish(pet: Fish | Bird): pet is Fish {
+  return (pet as Fish).swim !== undefined;
+ }
+
+const animals: LazySeq<Fish | Bird> = LazySeq.of([sunfish, penguin, goldfish, albatross]);
+const fish = animals.filter(isFish); // the type will be correctly inferred to be LazySeq<Fish>
+```
+
+</div>
+
+</details>
+
+
+</Remarks>
+
+<Export anchor="filter2" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L390">
+
+```typescript
+𝑜𝑏𝑗.filter(f: (x: T) => boolean): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Lazily filters the entries in the LazySeq to be only those returning true from a predicate function
+
+</Summary>
+
+
+<Export anchor="flatMap" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L408">
+
+```typescript
+𝑜𝑏𝑗.flatMap<S>(f: (x: T) => Iterable<S>): LazySeq<S>
+```
+
+</Export>
+
+<Summary>
+
+Lazily map each entry to multiple values and flatten all the resulting values into a single sequence
+
+</Summary>
+
+
+<Export anchor="groupBy" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L448">
+
+```typescript
+𝑜𝑏𝑗.groupBy<PropFn extends ToHashable<T>, PropFns extends ToHashable<T>[]>(
+    propFn: PropFn,
+    ...fs: PropFns
+): LazySeq<[TupleOfHashProps<T, [PropFn, ...PropFns]>, ReadonlyArray<T>]>
+```
+
+</Export>
+
+<Summary>
+
+Strictly group the values by one or more properties and yield the resulting groups
+
+</Summary>
+
+<Remarks>
+
+`groupBy` takes one or more property-extraction functions and groups the values by the
+tuple of these properties.  For each tuple of properties, all values which have the same
+tuple are combined into an array.  Internally, this uses a [HashMap](hashmap#HashMap) so
+the resulting groups appear in any order and thus properties must be hashable.
+Use [LazySeq.orderedGroupBy](#orderedGroupBy) if the properties can only be compared but not hashed.
+
+This function is very similar to [LazySeq.toLookup](#toLookup), but the main advantage of `groupBy`
+is that you do not need to create a custom key class for a tuple of multiple properties.
+
+The `TupleOfHashProps` type is a helper type which extracts the type of each property and creates
+a tuple of those types.
+
+<details>
+
+<summary>Example</summary>
+
+<div>
+
+```typescript
+const seq = LazySeq.of([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+const groups = seq.groupBy(x => x % 2, x => x % 3);
+// groups will consist of the following
+// the first element of each group is the tuple of [x % 2, x % 3] and the second is the array of values
+//   [ [0, 0], [6, 12] ]
+//   [ [0, 1], [4, 10] ]
+//   [ [0, 2], [2, 8] ]
+//   [ [1, 0], [3, 9] ]
+//   [ [1, 1], [1, 7] ]
+//   [ [1, 2], [5, 11] ]
+```
+
+</div>
+
+</details>
+
+
+</Remarks>
+
+<Export anchor="orderedGroupBy" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L501">
+
+```typescript
+𝑜𝑏𝑗.orderedGroupBy<PropFn extends ToComparable<T>, PropFns extends ToComparable<T>[]>(
+    propfn: PropFn,
+    ...fns: PropFns
+): LazySeq<[TupleOfCmpProps<T, [PropFn, ...PropFns]>, ReadonlyArray<T>]>
+```
+
+</Export>
+
+<Summary>
+
+Strictly group the values by one or more properties and yield the resulting groups
+
+</Summary>
+
+<Remarks>
+
+`orderedGroupBy` takes one or more property-extraction functions and groups the values by the
+tuple of these properties.  For each tuple of properties, all values which have the same
+tuple are combined into an array.  Internally, this uses an [OrderedMap](orderedmap#OrderedMap) so
+the resulting groups will appear in ascending order of key.
+
+This function is very similar to [LazySeq.toOrderedLookup](#toOrderedLookup), but the main advantage of `orderedGroupBy`
+is that you do not need to create a custom key class for a tuple of multiple properties.
+
+The `TupleOfCmpProps` type is a helper type which extracts the type of each property and creates
+a tuple of those types.
+
+
+</Remarks>
+
+<Export anchor="map" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L554">
+
+```typescript
+𝑜𝑏𝑗.map<S>(f: (x: T, idx: number) => S): LazySeq<S>
+```
+
+</Export>
+
+<Summary>
+
+Lazily apply a function to each entry in a LazySeq
+
+</Summary>
+
+<Remarks>
+
+Each element of the LazySeq is applied to the provided function `f`, along with
+the zero-based index of the element.
+
+
+</Remarks>
+
+<Export anchor="collect" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L573">
+
+```typescript
+𝑜𝑏𝑗.collect<S>(f: (x: T) => S | null | undefined): LazySeq<S>
+```
+
+</Export>
+
+<Summary>
+
+Lazily apply a function to each entry in a LazySeq and only include those which are not null or undefined
+
+</Summary>
+
+<Remarks>
+
+Each element of the LazySeq is applied to the provided function `f`.  If the result is not null or
+undefined, it is included in the resulting LazySeq.
+
+
+</Remarks>
+
+<Export anchor="prepend" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L589">
+
+```typescript
+𝑜𝑏𝑗.prepend(x: T): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Lazily prepend the given value to the beginning of the LazySeq
+
+</Summary>
+
+
+<Export anchor="prependAll" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L606">
+
+```typescript
+𝑜𝑏𝑗.prependAll(i: Iterable<T>): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Lazily adds the specified iterable to the beginning of the LazySeq
+
+</Summary>
+
+<Remarks>
+
+In other words, when iterated the resulting LazySeq will first yield the
+entries in the iterable passed to `prependAll` and then after that yield the
+entries in the LazySeq.
+
+
+</Remarks>
+
+<Export anchor="sortWith" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L623">
+
+```typescript
+𝑜𝑏𝑗.sortWith(compare: (v1: T, v2: T) => number): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Strictly sort the values in the LazySeq using the provided comparison function
+
+</Summary>
+
+<Remarks>
+
+This produces a new sorted LazySeq and thus is intended to be used in the middle of a chain of
+transformations.  If you want to terminate the LazySeq into a sorted data structure, use
+[LazySeq.toSortedArray](#toSortedArray) or [LazySeq.toOrderedMap](#toOrderedMap).
+
+
+</Remarks>
+
+<Export anchor="sortBy" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L638">
+
+```typescript
+𝑜𝑏𝑗.sortBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Strictly sort the values in the LazySeq by the provided properties
+
+</Summary>
+
+<Remarks>
+
+`sortBy` takes one or more property-extraction functions.  The values are applied to each property-extraction
+function and then sorted by the tuple of resulting properties.
+This produces a new sorted LazySeq and thus is intended to be used in the middle of a chain of
+transformations.  If you want to terminate the LazySeq into a sorted data structure, use
+[LazySeq.toSortedArray](#toSortedArray) or [LazySeq.toOrderedMap](#toOrderedMap).
+
+
+</Remarks>
+
+<Export anchor="tail" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L659">
+
+```typescript
+𝑜𝑏𝑗.tail(): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Lazily create a LazySeq which iterates all but the first entry
+
+</Summary>
+
+<Remarks>
+
+If the LazySeq is empty, the resulting LazySeq will also be empty.  If the LazySeq is not empty,
+all but the first entry will be included in the resulting LazySeq.
+
+<details>
+
+<summary>Example</summary>
+
+<div>
+
+```typescript
+const s = LazySeq.of([1, 2, 3, 4, 5]);
+for (const x of s.tail()) {
+  console.log(x);
+}
+// prints 2, 3, 4, 5
+```
+
+</div>
+
+</details>
+
+
+</Remarks>
+
+<Export anchor="take" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L682">
+
+```typescript
+𝑜𝑏𝑗.take(n: number): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Lazily take the initial specified number of entries in the LazySeq and ignore the rest
+
+</Summary>
+
+<Remarks>
+
+When the resulting LazySeq is iterated, the first `n` entries will be yielded.  If `n` is
+larger than the total number of entries, the entire LazySeq will be yielded.  Any entries
+beyond the first `n` will be ignored.
+
+
+</Remarks>
+
+<Export anchor="takeWhile" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L705">
+
+```typescript
+𝑜𝑏𝑗.takeWhile(f: (x: T) => boolean): LazySeq<T>
+```
+
+</Export>
+
+<Summary>
+
+Lazily takes entries while the specified predicate is true
+
+</Summary>
+
+<Remarks>
+
+When the resulting LazySeq is iterated, each entry is passed to the predicate function.
+If an entry returns true, it is yielded.  As soon as an entry returns false, it
+is not yielded and no more entries are processed.
+
+
+</Remarks>
+
+<Export anchor="zip" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L741">
+
+```typescript
+𝑜𝑏𝑗.zip<S>(other: Iterable<S>): LazySeq<readonly [T, S]>
+```
+
+</Export>
+
+<Summary>
+
+Lazily combine the LazySeq with an iterable entry by entry into tuples of size 2
+
+</Summary>
+
+<Remarks>
+
+Both the LazySeq and the iterable are jointly iterated element-by-element.  The elements
+are combined into a tuple of size 2.  As soon as one of the iterators is exhausted, the
+iteration ends and any remaining elements in the other iterator are ignored.
+
+<details>
+
+<summary>Example</summary>
+
+<div>
+
+```typescript
+const s1 = LazySeq.of([1, 2, 3]);
+const s2 = LazySeq.of(['a', 'b', 'c']);
+const s3 = s1.zip(s2);
+for (const [x, y] of s3) {
+  console.log(x, y);
+}
+// prints 3 lines:
+// 1 a
+// 2 b
+// 3 c
+```
+
+</div>
+
+</details>
+
+
+</Remarks>
+
+### Query
+
+<Export anchor="every" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L764">
+
+```typescript
+𝑜𝑏𝑗.every(f: (x: T) => boolean): boolean
+```
+
+</Export>
+
+<Summary>
+
+Check if all entries in the LazySeq return true from the provided function
+
+</Summary>
+
+<Remarks>
+
+If the LazySeq is empty, this function returns true.
+
+
+</Remarks>
+
+<Export anchor="some" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L780">
+
+```typescript
+𝑜𝑏𝑗.some(f: (x: T) => boolean): boolean
+```
+
+</Export>
+
+<Summary>
+
+Check if any entry in the LazySeq return true from the provided function
+
+</Summary>
+
+<Remarks>
+
+If the LazySeq is empty, this function returns false.
+
+
+</Remarks>
+
+<Export anchor="isEmpty" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L793">
+
+```typescript
+𝑜𝑏𝑗.isEmpty(): boolean
+```
+
+</Export>
+
+<Summary>
+
+Returns true if the LazySeq is empty
+
+</Summary>
+
+
+<Export anchor="find" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L805">
+
+```typescript
+𝑜𝑏𝑗.find(f: (v: T) => boolean): T | undefined
+```
+
+</Export>
+
+<Summary>
+
+Search for an entry which returns true when provided to `f`.
+
+</Summary>
+
+<Remarks>
+
+If found, the element is returned.  Otherwise, `undefined` is returned.
+
+
+</Remarks>
+
+<Export anchor="head" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L818">
+
+```typescript
+𝑜𝑏𝑗.head(): T | undefined
+```
+
+</Export>
+
+<Summary>
+
+Returns the first entry of the LazySeq or undefined if the LazySeq is empty.
+
+</Summary>
+
+
+<Export anchor="length" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L831">
+
+```typescript
+𝑜𝑏𝑗.length(): number
+```
+
+</Export>
+
+<Summary>
+
+Returns the length of the LazySeq
+
+</Summary>
+
+
+<Export anchor="maxBy" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L848">
+
+```typescript
+𝑜𝑏𝑗.maxBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): T | undefined
+```
+
+</Export>
+
+<Summary>
+
+Returns the maximum value in the LazySeq
+
+</Summary>
+
+<Remarks>
+
+If the LazySeq is empty, `undefined` is returned.  Otherwise, each function passed to `maxBy`
+is applied to each entry in the LazySeq and the entry with the maximum value is returned.
+
+
+</Remarks>
+
+<Export anchor="minBy" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L871">
+
+```typescript
+𝑜𝑏𝑗.minBy(prop: ToComparable<T>, ...props: ReadonlyArray<ToComparable<T>>): T | undefined
+```
+
+</Export>
+
+<Summary>
+
+Returns the minimum value in the LazySeq
+
+</Summary>
+
+<Remarks>
+
+If the LazySeq is empty, `undefined` is returned.  Otherwise, each function passed to `minBy`
+is applied to each entry in the LazySeq and the entry with the minimum value is returned.
+
+
+</Remarks>
+
+<Export anchor="sumBy" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L894">
+
+```typescript
+𝑜𝑏𝑗.sumBy(getNumber: (v: T) => number): number
+```
+
+</Export>
+
+<Summary>
+
+Sums up the entries in the LazySeq
+
+</Summary>
+
+<Remarks>
+
+Applies the passed function to each entry in the LazySeq and sums up the results.
+If the LazySeq is empty, 0 is returned.
+
+
+</Remarks>
+
+### Conversion
+
+<Export anchor="toRArray" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L906">
+
+```typescript
+𝑜𝑏𝑗.toRArray(): ReadonlyArray<T>
+```
+
+</Export>
+
+<Summary>
+
+Converts the LazySeq to a readonly array
+
+</Summary>
+
+
+<Export anchor="toMutableArray" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L917">
+
+```typescript
+𝑜𝑏𝑗.toMutableArray(): Array<T>
+```
+
+</Export>
+
+<Summary>
+
+Converts the LazySeq to an Array
+
+</Summary>
+
+<Remarks>
+
+In the spirit of immutability, you should prefer [LazySeq.toRArray](#toRArray) which returns a readonly array.
+
+
+</Remarks>
+
+<Export anchor="toSortedArray" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L928">
+
+```typescript
+𝑜𝑏𝑗.toSortedArray(
+    prop: ToComparable<T>,
+    ...props: ReadonlyArray<ToComparable<T>>
+): ReadonlyArray<T>
+```
+
+</Export>
+
+<Summary>
+
+Sorts the entries in the LazySeq and returns a readonly array
+
+</Summary>
+
+<Remarks>
+
+The entries are sorted by the properties returned by the passed functions.
+
+
+</Remarks>
+
+<Export anchor="toHashMap" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L946">
+
+```typescript
+𝑜𝑏𝑗.toHashMap<K, S extends NotUndefined>(
+    f: (x: T) => readonly [K & HashKey, S],
+    merge?: (v1: S, v2: S) => S
+): HashMap<K & HashKey, S>
+```
+
+</Export>
+
+<Summary>
+
+Converts the entries in the LazySeq to a HashMap
+
+</Summary>
+
+<Remarks>
+
+This is a convenience function for [HashMap.from](hashmap#from) which creates a HashMap from a function
+which converts the entries in the LazySeq to a tuple of a key and a value.  When a duplicate key is
+found, the provided merge function is used to determine the value; see the docs for
+[HashMap.from](hashmap#from) for details.  If you don't wish to merge values, [LazySeq.toLookup](#toLookup) and
+[LazySeq.toLookupMap](#toLookupMap) keep all the duplicate values.
+
+
+</Remarks>
+
+<Export anchor="buildHashMap" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L963">
+
+```typescript
+𝑜𝑏𝑗.buildHashMap<K>(key: (x: T) => K & HashKey): HashMap<K & HashKey, T>
+```
+
+</Export>
+
+<Summary>
+
+Converts the entries in the LazySeq to a HashMap
+
+</Summary>
+
+<Remarks>
+
+This is a convenience function for [HashMap.build](hashmap#build) which creates a HashMap from a
+key extraction function. With duplicate keys, the later value is used.  See the docs for [HashMap.build](hashmap#build) for details.
+If you don't wish to overwrite values, [LazySeq.toLookup](#toLookup) and
+[LazySeq.toLookupMap](#toLookupMap) keep all the duplicate values.
+
+
+</Remarks>
+
+<Export anchor="buildHashMap2" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L975">
+
+```typescript
+𝑜𝑏𝑗.buildHashMap<K, S extends NotUndefined>(
+    key: (x: T) => K & HashKey,
+    val: (old: S | undefined, t: T) => S
+): HashMap<K & HashKey, S>
+```
+
+</Export>
+
+<Summary>
+
+Converts the entries in the LazySeq to a HashMap
+
+</Summary>
+
+<Remarks>
+
+This is a convenience function for [HashMap.build](hashmap#build) which creates a HashMap from a
+key extraction function and a value extraction function.  See the docs for
+[HashMap.build](hashmap#build) for details.  If you don't wish to merge values, [LazySeq.toLookup](#toLookup) and
+[LazySeq.toLookupMap](#toLookupMap) keep all the duplicate values.
+
+
+</Remarks>
+
+<Export anchor="toOrderedMap" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1000">
+
+```typescript
+𝑜𝑏𝑗.toOrderedMap<K, S extends NotUndefined>(
+    f: (x: T) => readonly [K & OrderedMapKey, S],
+    merge?: (v1: S, v2: S) => S
+): OrderedMap<K & OrderedMapKey, S>
+```
+
+</Export>
+
+<Summary>
+
+Converts the entries in the LazySeq to an OrderedMap
+
+</Summary>
+
+<Remarks>
+
+This is a convenience function for [OrderedMap.from](orderedmap#from) which creates an OrderedMap from a function
+which converts the entries in the LazySeq to a tuple of a key and a value.  When a duplicate key is
+found, the provided merge function is used to determine the value; see the docs for
+[OrderedMap.from](orderedmap#from) for details.
+If you don't wish to overwrite values, [LazySeq.toOrderedLookup](#toOrderedLookup) and
+[LazySeq.toOrderedLookup](#toOrderedLookup) keep all the duplicate values.
+
+
+</Remarks>
+
+<Export anchor="buildOrderedMap" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1018">
+
+```typescript
+𝑜𝑏𝑗.buildOrderedMap<K>(key: (x: T) => K & OrderedMapKey): OrderedMap<K & OrderedMapKey, T>
+```
+
+</Export>
+
+<Summary>
+
+Converts the entries in the LazySeq to an OrderedMap
+
+</Summary>
+
+<Remarks>
+
+This is a convenience function for [OrderedMap.build](orderedmap#build) which creates an OrderedMap from a
+key extraction function.  When a duplicate key is found, the value is overwritten with the later value.
+See the docs for [OrderedMap.build](orderedmap#build) for details.
+If you don't wish to overwrite values, [LazySeq.toOrderedLookup](#toOrderedLookup) and
+[LazySeq.toLookupOrderedMap](#toLookupOrderedMap) keep all the duplicate values.
+
+
+</Remarks>
+
+<Export anchor="buildOrderedMap2" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1031">
+
+```typescript
+𝑜𝑏𝑗.buildOrderedMap<K, S extends NotUndefined>(
+    key: (x: T) => K & OrderedMapKey,
+    val: (old: S | undefined, t: T) => S
+): OrderedMap<K & OrderedMapKey, S>
+```
+
+</Export>
+
+<Summary>
+
+Converts the entries in the LazySeq to an OrderedMap
+
+</Summary>
+
+<Remarks>
+
+This is a convenience function for [OrderedMap.build](orderedmap#build) which creates an OrderedMap from a
+key extraction function and a value extraction function.  See the docs for
+[OrderedMap.build](orderedmap#build) for details.
+If you don't wish to merge values, [LazySeq.toOrderedLookup](#toOrderedLookup) and
+[LazySeq.toLookupOrderedMap](#toLookupOrderedMap) keep all the duplicate values.
+
+
+</Remarks>
+
+<Export anchor="toRMap" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1054">
+
+```typescript
+𝑜𝑏𝑗.toRMap<K, S>(
+    f: (x: T) => readonly [K & JsMapKey, S],
+    merge?: (v1: S, v2: S) => S
+): ReadonlyMap<K, S>
+```
+
+</Export>
+
+<Summary>
+
+Converts the entries of the LazySeq to a readonly JS Map
+
+</Summary>
+
+<Remarks>
+
+This function builds a [JS Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) from the entries in the LazySeq.
+Each entry in the LazySeq is convered to a tuple of key and value using the provided function.  If a duplicate key is found, the provided merge
+function is called to determine the value for the key.  If no merge function is provided, the last value for the key is used.
+If you don't wish to merge values, [LazySeq.toRLookup](#toRLookup) keeps all the duplicate values.
+
+
+</Remarks>
+
+<Export anchor="toMutableMap" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1072">
+
+```typescript
+𝑜𝑏𝑗.toMutableMap<K, S>(
+    f: (x: T) => readonly [K & JsMapKey, S],
+    merge?: (v1: S, v2: S) => S
+): Map<K, S>
+```
+
+</Export>
+
+<Summary>
+
+Converts the entries of the LazySeq to a JS Map
+
+</Summary>
+
+<Remarks>
+
+This function builds a [JS Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) from the entries in the LazySeq.
+Each entry in the LazySeq is convered to a tuple of key and value using the provided function.  If a duplicate key is found, the provided merge
+function is called to determine the value for the key.  If no merge function is provided, the last value for the key is used.
+
+In the spirit of immutability, [LazySeq.toRMap](#toRMap) is preferred over this function unless neccisary.
+
+
+</Remarks>
+
+<Export anchor="toObject" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1102">
+
+```typescript
+𝑜𝑏𝑗.toObject<S>(
+    f: (x: T) => readonly [string, S],
+    merge?: (v1: S, v2: S) => S
+): { [key: string]: S }
+```
+
+</Export>
+
+<Summary>
+
+Converts the entries of the LazySeq to a JS Object
+
+</Summary>
+
+<Remarks>
+
+This function builds a javascript object from the entries in the LazySeq.
+Each entry in the LazySeq is convered to a tuple of key and value using the provided function.  If a duplicate key is found, the provided merge
+function is called to determine the value for the key.  If no merge function is provided, the last value for the key is used.
+
+
+</Remarks>
+
+<Export anchor="toObject2" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1116">
+
+```typescript
+𝑜𝑏𝑗.toObject<S>(
+    f: (x: T) => readonly [number, S],
+    merge?: (v1: S, v2: S) => S
+): { [key: number]: S }
+```
+
+</Export>
+
+<Summary>
+
+Converts the entries of the LazySeq to a JS Object
+
+</Summary>
+
+<Remarks>
+
+This function builds a javascript object from the entries in the LazySeq.
+Each entry in the LazySeq is convered to a tuple of key and value using the provided function.  If a duplicate key is found, the provided merge
+function is called to determine the value for the key.  If no merge function is provided, the last value for the key is used.
+
+
+</Remarks>
+
+<Export anchor="toHashSet" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1151">
+
+```typescript
+𝑜𝑏𝑗.toHashSet<S>(converter: (x: T) => S & HashKey): HashSet<S & HashKey>
+```
+
+</Export>
+
+<Summary>
+
+Converts the entries in the LazySeq to a HashSet
+
+</Summary>
+
+<Remarks>
+
+This is a convenience function for [HashSet.build](hashset#build) which creates a HashSet from a function
+which converts the entries in the LazySeq to a hashable value.
+
+
+</Remarks>
+
+<Export anchor="toOrderedSet" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1163">
+
+```typescript
+𝑜𝑏𝑗.toOrderedSet<S>(converter: (x: T) => S & OrderedMapKey): OrderedSet<S & OrderedMapKey>
+```
+
+</Export>
+
+<Summary>
+
+Converts the entries in the LazySeq to an OrderedSet
+
+</Summary>
+
+<Remarks>
+
+This is a convenience function for [OrderedSet.build](orderedset#build) which creates an OrderedSet from a function
+which converts the entries in the LazySeq to an orderable value.
+
+
+</Remarks>
+
+<Export anchor="toRSet" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1175">
+
+```typescript
+𝑜𝑏𝑗.toRSet<S>(converter: (x: T) => S & JsMapKey): ReadonlySet<S>
+```
+
+</Export>
+
+<Summary>
+
+Converts the entries in the LazySeq to a JS Set
+
+</Summary>
+
+<Remarks>
+
+`toRSet` converts the entries in the LazySeq to a readonly
+[JS Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set).
+
+
+</Remarks>
+
+<Export anchor="toMutableSet" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1188">
+
+```typescript
+𝑜𝑏𝑗.toMutableSet<S>(converter: (x: T) => S & JsMapKey): Set<S>
+```
+
+</Export>
+
+<Summary>
+
+Converts the entries in the LazySeq to a JS Set
+
+</Summary>
+
+<Remarks>
+
+`toRSet` converts the entries in the LazySeq to a mutable
+[JS Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set).
+In the spirit of immutability, [LazySeq.toRSet](#toRSet) is preferred over this function unless neccisary.
+
+
+</Remarks>
+
+<Export anchor="fold" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1205">
+
+```typescript
+𝑜𝑏𝑗.fold<S>(zero: S, f: (soFar: S, cur: T) => S): S
+```
+
+</Export>
+
+<Summary>
+
+Reduce all the entries in the LazySeq to a single value
+
+</Summary>
+
+<Remarks>
+
+`fold` reduces all the entries in the LazySeq to a single value using the provided function.  The function
+combines elements in order from the LazySeq, with the first element being combined with the zero value, and
+then the result of that combination is combined with the second element, and so on.
+
+
+</Remarks>
+
+<Export anchor="reduce" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1222">
+
+```typescript
+𝑜𝑏𝑗.reduce(f: (soFar: T, cur: T) => T): T
+```
+
+</Export>
+
+<Summary>
+
+Reduce all the entries in the LazySeq to a single value
+
+</Summary>
+
+<Remarks>
+
+`reduce` works the same as [Array.reduce](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce).
+When given with no initial value, the accumulator is initialized to the first element of the LazySeq and the combining function
+is called starting with the second value.  An error is thrown if the LazySeq is empty.
+
+
+</Remarks>
+
+<Export anchor="reduce2" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1233">
+
+```typescript
+𝑜𝑏𝑗.reduce<S>(f: (soFar: S, cur: T) => S, initialValue: S): S
+```
+
+</Export>
+
+<Summary>
+
+Reduce all the entries in the LazySeq to a single value
+
+</Summary>
+
+<Remarks>
+
+`reduce` works the same as [Array.reduce](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce)
+and when givin an initial value is the same as [LazySeq.fold](#fold).  The initial value is combined with the first element, the result
+of that combination is combined with the second element, and so on.
+
+
+</Remarks>
+
+<Export anchor="transform" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1267">
+
+```typescript
+𝑜𝑏𝑗.transform<U>(f: (s: LazySeq<T>) => U): U
+```
+
+</Export>
+
+<Summary>
+
+Apply a function to the LazySeq
+
+</Summary>
+
+<Remarks>
+
+Applies the provided function `f` to `this` and returns the result.  This is a convenience function
+which allows you to continue to chain operations without having to create a new
+temporary variable.
+
+
+</Remarks>
+
+### Grouping
+
+<Export anchor="toLookup" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1279">
+
+```typescript
+𝑜𝑏𝑗.toLookup<K>(key: (x: T) => K & HashKey): HashMap<K & HashKey, ReadonlyArray<T>>
+```
+
+</Export>
+
+<Summary>
+
+Group entries in the LazySeq by a key, returning a HashMap with an array of values
+
+</Summary>
+
+<Remarks>
+
+The key function is used to extract a key for each entry and then entries are grouped by a key.  All the values that
+have the same key are collected into an array and returned in a [HashMap](hashmap#HashMap).
+
+
+</Remarks>
+
+<Export anchor="toLookup2" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1289">
+
+```typescript
+𝑜𝑏𝑗.toLookup<K, S>(
+    key: (x: T) => K & HashKey,
+    val: (x: T) => S
+): HashMap<K & HashKey, ReadonlyArray<S>>
+```
+
+</Export>
+
+<Summary>
+
+Group entries in the LazySeq by a key, returning a HashMap with an array of values
+
+</Summary>
+
+<Remarks>
+
+Each element in the LazySeq is converted to a key and a value using the provided functions.
+The keys are used to group the values into an array and the result is returned in a [HashMap](hashmap#HashMap).
+
+
+</Remarks>
+
+<Export anchor="toOrderedLookup" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1330">
+
+```typescript
+𝑜𝑏𝑗.toOrderedLookup<K>(
+    key: (x: T) => K & OrderedMapKey
+): OrderedMap<K & OrderedMapKey, ReadonlyArray<T>>
+```
+
+</Export>
+
+<Summary>
+
+Group entries in the LazySeq by a key, returning an OrderedMap with an array of values
+
+</Summary>
+
+<Remarks>
+
+The key function is used to extract a key for each entry and then entries are grouped by a key.  All the values that
+have the same key are collected into an array and returned in an [OrderedMap](orderedmap#OrderedMap).
+
+
+</Remarks>
+
+<Export anchor="toOrderedLookup2" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1342">
+
+```typescript
+𝑜𝑏𝑗.toOrderedLookup<K, S>(
+    key: (x: T) => K & OrderedMapKey,
+    val: (x: T) => S
+): OrderedMap<K & OrderedMapKey, ReadonlyArray<S>>
+```
+
+</Export>
+
+<Summary>
+
+Group entries in the LazySeq by a key, returning an OrderedMap with an array of values
+
+</Summary>
+
+<Remarks>
+
+Each element in the LazySeq is converted to a key and a value using the provided functions.
+The keys are used to group the values into an array and the result is returned in an [OrderedMap](orderedmap#OrderedMap).
+
+
+</Remarks>
+
+<Export anchor="toLookupMap" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1385">
+
+```typescript
+𝑜𝑏𝑗.toLookupMap<K1, K2>(
+    key1: (x: T) => K1 & HashKey,
+    key2: (x: T) => K2 & HashKey
+): HashMap<K1 & HashKey, HashMap<K2 & HashKey, T>>
+```
+
+</Export>
+
+<Summary>
+
+Group entries in the LazySeq by two keys, returning a HashMap of HashMaps
+
+</Summary>
+
+<Remarks>
+
+All entries in the LazySeq are first grouped by `key1`.  For each `key1`, all the values that share the same `key1`
+are then grouped by `key2`.  Entries with the same `key1` and `key2` overwrite previous entries with the same keys
+(see the more general `toLookupMap` for a version with a merge function).  The result is a [HashMap](hashmap#HashMap) of
+[HashMap](hashmap#HashMap)s.
+
+
+</Remarks>
+
+<Export anchor="toLookupMap2" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1401">
+
+```typescript
+𝑜𝑏𝑗.toLookupMap<K1, K2, S extends NotUndefined>(
+    key1: (x: T) => K1 & HashKey,
+    key2: (x: T) => K2 & HashKey,
+    val: (x: T) => S,
+    mergeVals?: (v1: S, v2: S) => S
+): HashMap<K1 & HashKey, HashMap<K2 & HashKey, S>>
+```
+
+</Export>
+
+<Summary>
+
+Group entries in the LazySeq by two keys, returning a HashMap of HashMaps
+
+</Summary>
+
+<Remarks>
+
+All entries in the LazySeq are passed to the provided functions to extract a `key1`, `key2`, and value.
+They are then first grouped by `key1`.  For each `key1`, all the values that share the same `key1`
+are then grouped by `key2`.  Entries with the same `key1` and `key2` are either merged using the `mergeVals` function
+if it is provided, otherwise values later in the LazySeq overwrite previous values with the same keys.
+The result is a [HashMap](hashmap#HashMap) of [HashMap](hashmap#HashMap)s.
+
+
+</Remarks>
+
+<Export anchor="toLookupOrderedMap" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1443">
+
+```typescript
+𝑜𝑏𝑗.toLookupOrderedMap<K1, K2>(
+    key1: (x: T) => K1 & OrderedMapKey,
+    key2: (x: T) => K2 & OrderedMapKey
+): OrderedMap<K1 & OrderedMapKey, OrderedMap<K2 & OrderedMapKey, T>>
+```
+
+</Export>
+
+<Summary>
+
+Group entries in the LazySeq by two keys, returning an OrderedMap of OrderedMaps
+
+</Summary>
+
+<Remarks>
+
+All entries in the LazySeq are first grouped by `key1`.  For each `key1`, all the values that share the same `key1`
+are then grouped by `key2`.  Entries with the same `key1` and `key2` overwrite previous entries with the same keys
+(see the more general `toLookupOrderedMap` for a version with a merge function).  The result is an [OrderedMap](orderedmap#OrderedMap) of
+[OrderedMap](orderedmap#OrderedMap)s.
+
+
+</Remarks>
+
+<Export anchor="toLookupOrderedMap2" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1459">
+
+```typescript
+𝑜𝑏𝑗.toLookupOrderedMap<K1, K2, S>(
+    key1: (x: T) => K1 & OrderedMapKey,
+    key2: (x: T) => K2 & OrderedMapKey,
+    val: (x: T) => S,
+    mergeVals?: (v1: S, v2: S) => S
+): OrderedMap<K1 & OrderedMapKey, OrderedMap<K2 & OrderedMapKey, S>>
+```
+
+</Export>
+
+<Summary>
+
+Group entries in the LazySeq by two keys, returning an OrderedMap of OrderedMaps
+
+</Summary>
+
+<Remarks>
+
+All entries in the LazySeq are passed to the provided functions to extract a `key1`, `key2`, and value.
+They are then first grouped by `key1`.  For each `key1`, all the values that share the same `key1`
+are then grouped by `key2`.  Entries with the same `key1` and `key2` are either merged using the `mergeVals` function
+if it is provided, otherwise values later in the LazySeq overwrite previous values with the same keys.
+The result is a [OrderedMap](orderedmap#OrderedMap) of [OrderedMap](orderedmap#OrderedMap)s.
+
+
+</Remarks>
+
+<Export anchor="toRLookup" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1498">
+
+```typescript
+𝑜𝑏𝑗.toRLookup<K>(key: (x: T) => K): ReadonlyMap<K, ReadonlyArray<T>>
+```
+
+</Export>
+
+<Summary>
+
+Group entries in the LazySeq by a key, returning a Javascript Map with an array of values
+
+</Summary>
+
+<Remarks>
+
+The key function is used to extract a key for each entry and then entries are grouped by a key.  All the values that
+have the same key are collected into an array and returned in an [JS Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map).
+
+
+</Remarks>
+
+<Export anchor="toRLookup2" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/lazyseq.ts#L1509">
+
+```typescript
+𝑜𝑏𝑗.toRLookup<K, S>(key: (x: T) => K, val: (x: T) => S): ReadonlyMap<K, ReadonlyArray<S>>
+```
+
+</Export>
+
+<Summary>
+
+Group entries in the LazySeq by a key, returning a Javascript Map with an array of values
+
+</Summary>
+
+<Remarks>
+
+Each element in the LazySeq is converted to a key and a value using the provided functions.
+The keys are used to group the values into an array and the result is returned in an
+[JS Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map).
+
+
+</Remarks>
+
