@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 1.1.1 - 2026-01-16
 ### Fixed
 - Better integration with vitest for more efficient equality comparisons.  No changes
   to the implementations of the data structures themselves.

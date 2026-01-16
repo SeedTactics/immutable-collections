@@ -26,7 +26,7 @@ import * as tree from "@seedtactics/immutable-collections/tree";
 
 ### Data
 
-<Export anchor="TreeNode" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/rotations.ts#L44">
+<Export anchor="TreeNode" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/rotations.ts#L44">
 
 ```typescript
 export type TreeNode<K, V> = {
@@ -55,7 +55,7 @@ references to the tree.  You can directly access the `size` property to determin
 
 </Remarks>
 
-<Export anchor="MutableTreeNode" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/rotations.ts#L61">
+<Export anchor="MutableTreeNode" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/rotations.ts#L61">
 
 ```typescript
 export type MutableTreeNode<K, V> = {
@@ -86,7 +86,7 @@ the various immutable adjustment operations.
 
 ### Comparison Utils
 
-<Export anchor="ComparisonConfig" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/comparison.ts#L210">
+<Export anchor="ComparisonConfig" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/comparison.ts#L210">
 
 ```typescript
 export type ComparisonConfig<K> = {
@@ -111,7 +111,7 @@ The [mkCompareByProperties](#mkCompareByProperties) function can help implement 
 
 </Remarks>
 
-<Export anchor="mkComparisonConfig" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/comparison.ts#L251">
+<Export anchor="mkComparisonConfig" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/comparison.ts#L251">
 
 ```typescript
 function mkComparisonConfig<K extends OrderedMapKey>(): ComparisonConfig<K>
@@ -133,7 +133,7 @@ numbers, strings, booleans, dates, and objects which implement the [ComparableOb
 
 </Remarks>
 
-<Export anchor="ComparableObj" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/comparison.ts#L30">
+<Export anchor="ComparableObj" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/comparison.ts#L30">
 
 ```typescript
 export type ComparableObj = {
@@ -185,7 +185,7 @@ class SomeKey {
 
 </Remarks>
 
-<Export anchor="mkCompareByProperties" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/comparison.ts#L133">
+<Export anchor="mkCompareByProperties" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/comparison.ts#L133">
 
 ```typescript
 function mkCompareByProperties<T>(
@@ -250,7 +250,7 @@ console.log(compareFoo(
 
 ### Lookup
 
-<Export anchor="lookup" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L56">
+<Export anchor="lookup" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L56">
 
 ```typescript
 function lookup<K, V>(
@@ -269,7 +269,7 @@ Lookup a key in the tree
 </Summary>
 
 
-<Export anchor="lookupMin" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L80">
+<Export anchor="lookupMin" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L80">
 
 ```typescript
 function lookupMin<K, V>(root: TreeNode<K, V>): readonly [K, V]
@@ -284,7 +284,7 @@ Find the minimum key in the tree and return the key and value.
 </Summary>
 
 
-<Export anchor="lookupMax" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L96">
+<Export anchor="lookupMax" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L96">
 
 ```typescript
 function lookupMax<K, V>(root: TreeNode<K, V>): readonly [K, V]
@@ -301,7 +301,7 @@ Find the maximum key in the tree and return the key and value.
 
 ### Modification
 
-<Export anchor="alter" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L131">
+<Export anchor="alter" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L131">
 
 ```typescript
 function alter<K, V>(
@@ -340,7 +340,7 @@ Runs in time O(log n)
 
 ### Initial Construction
 
-<Export anchor="mutateInsert" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L198">
+<Export anchor="mutateInsert" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L198">
 
 ```typescript
 function mutateInsert<K, V, T>(
@@ -375,7 +375,7 @@ Typically this should happen in a single function whose return value is [TreeNod
 
 </Remarks>
 
-<Export anchor="from" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L251">
+<Export anchor="from" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L251">
 
 ```typescript
 function from<K, V>(
@@ -405,7 +405,7 @@ is used, overwriting the first value `v1`.
 
 </Remarks>
 
-<Export anchor="build" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L304">
+<Export anchor="build" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L304">
 
 ```typescript
 function build<K, V>(
@@ -432,7 +432,7 @@ not desired, use the more generalized version of `build` which also provides a v
 
 </Remarks>
 
-<Export anchor="build2" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L321">
+<Export anchor="build2" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L321">
 
 ```typescript
 function build<T, K, V>(
@@ -464,7 +464,7 @@ merge the new item `t` into the existing value `old`.
 
 ### Iteration
 
-<Export anchor="iterateAsc" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L395">
+<Export anchor="iterateAsc" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L395">
 
 ```typescript
 function iterateAsc<K, V, T>(
@@ -490,7 +490,7 @@ call `iterateAsc` again if you want to iterate the tree again.
 
 </Remarks>
 
-<Export anchor="iterateDesc" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L421">
+<Export anchor="iterateDesc" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L421">
 
 ```typescript
 function iterateDesc<K, V, T>(
@@ -516,7 +516,7 @@ call `iterateDesc` again if you want to iterate the tree again.
 
 </Remarks>
 
-<Export anchor="foldl" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L448">
+<Export anchor="foldl" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L448">
 
 ```typescript
 function foldl<K, V, T>(
@@ -543,7 +543,7 @@ which is then combined with the next smallest key, and so on.
 
 </Remarks>
 
-<Export anchor="foldr" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L479">
+<Export anchor="foldr" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L479">
 
 ```typescript
 function foldr<K, V, T>(
@@ -572,7 +572,7 @@ which is then combined with the second-to-largest key, and so on.
 
 ### Transformation
 
-<Export anchor="mapValues" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L514">
+<Export anchor="mapValues" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L514">
 
 ```typescript
 function mapValues<K, V1, V2>(
@@ -602,7 +602,7 @@ This runs in O(n) time.
 
 </Remarks>
 
-<Export anchor="collectValues" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L554">
+<Export anchor="collectValues" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L554">
 
 ```typescript
 function collectValues<K, V1, V2>(
@@ -635,7 +635,7 @@ This runs in O(n) time.
 
 ### Views
 
-<Export anchor="SplitResult" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L588">
+<Export anchor="SplitResult" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L588">
 
 ```typescript
 export type SplitResult<K, V> = {
@@ -654,7 +654,7 @@ The result of splitting a tree into keys above and below a given key
 </Summary>
 
 
-<Export anchor="split" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L605">
+<Export anchor="split" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L605">
 
 ```typescript
 function split<K, V>(
@@ -683,7 +683,7 @@ Runs in O(log n) time.
 
 </Remarks>
 
-<Export anchor="partition" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L645">
+<Export anchor="partition" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L645">
 
 ```typescript
 function partition<K, V>(
@@ -716,7 +716,7 @@ This runs in O(n) time.
 
 </Remarks>
 
-<Export anchor="ViewResult" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L676">
+<Export anchor="ViewResult" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L676">
 
 ```typescript
 export type ViewResult<K, V> = {
@@ -735,7 +735,7 @@ The combination of a single key-value and a balanced tree of all remaining value
 </Summary>
 
 
-<Export anchor="minView" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L693">
+<Export anchor="minView" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L693">
 
 ```typescript
 function minView<K, V>(root: TreeNode<K, V>): ViewResult<K, V>
@@ -760,7 +760,7 @@ Runs in O(log n) time, so can be used to efficiently pop the minimum key.
 
 </Remarks>
 
-<Export anchor="maxView" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L708">
+<Export anchor="maxView" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L708">
 
 ```typescript
 function maxView<K, V>(root: TreeNode<K, V>): ViewResult<K, V>
@@ -785,7 +785,7 @@ Runs in O(log n) time, so can be used to efficiently pop the maximum key.
 
 </Remarks>
 
-<Export anchor="isKeySubset" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L721">
+<Export anchor="isKeySubset" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L721">
 
 ```typescript
 function isKeySubset<K, V1, V2>(
@@ -812,7 +812,7 @@ Runs in time O(m log(n/m + 1)) where m is the size of root1 and n is the size of
 
 </Remarks>
 
-<Export anchor="isDisjoint" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L759">
+<Export anchor="isDisjoint" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L759">
 
 ```typescript
 function isDisjoint<K, V1, V2>(
@@ -842,7 +842,7 @@ Runs in time O(m log(n/m + 1)) where m is the size of the smaller set and n is t
 
 ### Indexing
 
-<Export anchor="indexOf" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L793">
+<Export anchor="indexOf" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L793">
 
 ```typescript
 function indexOf<K, V>(
@@ -871,7 +871,7 @@ Runs in O(log n) time.
 
 </Remarks>
 
-<Export anchor="lookupByIndex" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L831">
+<Export anchor="lookupByIndex" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L831">
 
 ```typescript
 function lookupByIndex<K, V>(
@@ -898,7 +898,7 @@ Runs in O(log n) time.
 
 </Remarks>
 
-<Export anchor="take" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L859">
+<Export anchor="take" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L859">
 
 ```typescript
 function take<K, V>(
@@ -922,7 +922,7 @@ Runs in O(log n) time.
 
 </Remarks>
 
-<Export anchor="drop" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L881">
+<Export anchor="drop" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L881">
 
 ```typescript
 function drop<K, V>(
@@ -946,7 +946,7 @@ Runs in O(log n) time.
 
 </Remarks>
 
-<Export anchor="alterByIndex" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L909">
+<Export anchor="alterByIndex" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L909">
 
 ```typescript
 function alterByIndex<K, V>(
@@ -977,7 +977,7 @@ This runs in O(log n) time.
 
 ### Bulk Modification
 
-<Export anchor="union" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L963">
+<Export anchor="union" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L963">
 
 ```typescript
 function union<K, V>(
@@ -1009,7 +1009,7 @@ Runs in time O(m log(n/m)) where m is the size of the smaller tree and n is the 
 
 </Remarks>
 
-<Export anchor="intersection" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L1028">
+<Export anchor="intersection" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L1028">
 
 ```typescript
 function intersection<K, V>(
@@ -1040,7 +1040,7 @@ Runs in time O(m log(n/m)) where m is the size of the smaller tree and n is the 
 
 </Remarks>
 
-<Export anchor="difference" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L1077">
+<Export anchor="difference" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L1077">
 
 ```typescript
 function difference<K, V1, V2>(
@@ -1072,7 +1072,7 @@ Runs in time O(m log(n/m)) where m is the size of the smaller tree and n is the 
 
 </Remarks>
 
-<Export anchor="symmetricDifference" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L1118">
+<Export anchor="symmetricDifference" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L1118">
 
 ```typescript
 function symmetricDifference<K, V>(
@@ -1100,7 +1100,7 @@ Runs in time O(m log(n/m)) where m is the size of the smaller tree and n is the 
 
 </Remarks>
 
-<Export anchor="adjust" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/data-structures/tree.ts#L1175">
+<Export anchor="adjust" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/data-structures/tree.ts#L1175">
 
 ```typescript
 function adjust<K, V1, V2>(

@@ -37,7 +37,7 @@ the `alter` method will copy at most `O(log n)` entries.
 
 ### Creating Ordered Maps
 
-<Export anchor="empty" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L77">
+<Export anchor="empty" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L77">
 
 ```typescript
 static empty<K extends OrderedMapKey, V extends NotUndefined>(): OrderedMap<
@@ -68,7 +68,7 @@ or using various methods on [LazySeq](lazyseq#LazySeq) to convert a `LazySeq` to
 
 </Remarks>
 
-<Export anchor="from" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L99">
+<Export anchor="from" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L99">
 
 ```typescript
 static from<K extends OrderedMapKey, V extends NotUndefined>(
@@ -100,7 +100,7 @@ Runs in time O(n log n)
 
 </Remarks>
 
-<Export anchor="build" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L118">
+<Export anchor="build" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L118">
 
 ```typescript
 static build<K extends OrderedMapKey, V extends NotUndefined>(
@@ -128,7 +128,7 @@ Runs in time O(n log n)
 
 </Remarks>
 
-<Export anchor="build2" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L136">
+<Export anchor="build2" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L136">
 
 ```typescript
 static build<T, K extends OrderedMapKey, V extends NotUndefined>(
@@ -161,7 +161,7 @@ Runs in time O(n log n)
 
 ### IReadOnlyMap interface
 
-<Export anchor="size" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L162">
+<Export anchor="size" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L162">
 
 ```typescript
 𝑜𝑏𝑗.size(): number
@@ -176,7 +176,7 @@ size is a readonly property containing the number of entries in the OrderedMap.
 </Summary>
 
 
-<Export anchor="get" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L173">
+<Export anchor="get" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L173">
 
 ```typescript
 𝑜𝑏𝑗.get(k: K): V | undefined
@@ -197,7 +197,7 @@ Runs in time O(log n)
 
 </Remarks>
 
-<Export anchor="has" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L184">
+<Export anchor="has" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L184">
 
 ```typescript
 𝑜𝑏𝑗.has(k: K): boolean
@@ -218,7 +218,7 @@ Runs in time O(log n)
 
 </Remarks>
 
-<Export anchor="Symbol_iterator" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L196">
+<Export anchor="Symbol_iterator" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L196">
 
 ```typescript
 𝑜𝑏𝑗.[Symbol.iterator](): MapIterator<[K, V]>
@@ -240,7 +240,7 @@ all keys and values in ascinding order of keys.
 
 </Remarks>
 
-<Export anchor="entries" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L210">
+<Export anchor="entries" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L210">
 
 ```typescript
 𝑜𝑏𝑗.entries(): MapIterator<[K, V]>
@@ -264,7 +264,7 @@ iterated more than once.
 
 </Remarks>
 
-<Export anchor="keys" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L224">
+<Export anchor="keys" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L224">
 
 ```typescript
 𝑜𝑏𝑗.keys(): MapIterator<K>
@@ -288,7 +288,7 @@ create an iterable that can be iterated more than once.
 
 </Remarks>
 
-<Export anchor="values" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L240">
+<Export anchor="values" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L240">
 
 ```typescript
 𝑜𝑏𝑗.values(): MapIterator<V>
@@ -313,7 +313,7 @@ iterated more than once.
 
 </Remarks>
 
-<Export anchor="forEach" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L252">
+<Export anchor="forEach" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L252">
 
 ```typescript
 𝑜𝑏𝑗.forEach(f: (val: V, k: K, map: OrderedMap<K, V>) => void): void
@@ -337,7 +337,7 @@ by ascending order of key.
 
 ### Iteration
 
-<Export anchor="foldl" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L272">
+<Export anchor="foldl" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L272">
 
 ```typescript
 𝑜𝑏𝑗.foldl<T>(f: (acc: T, key: K, val: V) => T, zero: T): T
@@ -360,7 +360,7 @@ which is then combined with the next smallest key, and so on.
 
 </Remarks>
 
-<Export anchor="foldr" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L285">
+<Export anchor="foldr" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L285">
 
 ```typescript
 𝑜𝑏𝑗.foldr<T>(f: (key: K, val: V, acc: T) => T, zero: T): T
@@ -383,7 +383,7 @@ which is then combined with the second-to-largest key, and so on.
 
 </Remarks>
 
-<Export anchor="toAscLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L293">
+<Export anchor="toAscLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L293">
 
 ```typescript
 𝑜𝑏𝑗.toAscLazySeq(): LazySeq<readonly [K, V]>
@@ -398,7 +398,7 @@ Creates a LazySeq which iterates all the entries in the OrderedMap in ascending 
 </Summary>
 
 
-<Export anchor="keysToAscLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L302">
+<Export anchor="keysToAscLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L302">
 
 ```typescript
 𝑜𝑏𝑗.keysToAscLazySeq(): LazySeq<K>
@@ -413,7 +413,7 @@ Creates a LazySeq which iterates all the keys in the OrderedMap in ascending ord
 </Summary>
 
 
-<Export anchor="valuesToAscLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L311">
+<Export anchor="valuesToAscLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L311">
 
 ```typescript
 𝑜𝑏𝑗.valuesToAscLazySeq(): LazySeq<V>
@@ -428,7 +428,7 @@ Creates a LazySeq which iterates all the values in the OrderedMap in ascending o
 </Summary>
 
 
-<Export anchor="toDescLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L320">
+<Export anchor="toDescLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L320">
 
 ```typescript
 𝑜𝑏𝑗.toDescLazySeq(): LazySeq<readonly [K, V]>
@@ -443,7 +443,7 @@ Creates a LazySeq which iterates all the entries in the OrderedMap in descending
 </Summary>
 
 
-<Export anchor="keysToDescLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L329">
+<Export anchor="keysToDescLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L329">
 
 ```typescript
 𝑜𝑏𝑗.keysToDescLazySeq(): LazySeq<K>
@@ -458,7 +458,7 @@ Creates a LazySeq which iterates all the keys in the OrderedMap in descending or
 </Summary>
 
 
-<Export anchor="valuesToDescLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L338">
+<Export anchor="valuesToDescLazySeq" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L338">
 
 ```typescript
 𝑜𝑏𝑗.valuesToDescLazySeq(): LazySeq<V>
@@ -473,7 +473,7 @@ Creates a LazySeq which iterates all the values in the OrderedMap in descending 
 </Summary>
 
 
-<Export anchor="keySet" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L353">
+<Export anchor="keySet" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L353">
 
 ```typescript
 𝑜𝑏𝑗.keySet(): OrderedSet<K>
@@ -499,7 +499,7 @@ share the same underlying tree without problems.
 
 ### Modification
 
-<Export anchor="set" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L367">
+<Export anchor="set" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L367">
 
 ```typescript
 𝑜𝑏𝑗.set(k: K, v: V): OrderedMap<K, V>
@@ -523,7 +523,7 @@ Runs in time O(log n)
 
 </Remarks>
 
-<Export anchor="alter" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L393">
+<Export anchor="alter" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L393">
 
 ```typescript
 𝑜𝑏𝑗.alter(k: K, f: (existing: V | undefined) => V | undefined): OrderedMap<K, V>
@@ -554,7 +554,7 @@ Runs in time O(log n)
 
 </Remarks>
 
-<Export anchor="delete" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L411">
+<Export anchor="delete" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L411">
 
 ```typescript
 𝑜𝑏𝑗.delete(k: K): OrderedMap<K, V>
@@ -579,7 +579,7 @@ Runs in time O(log n)
 
 ### Transformation
 
-<Export anchor="partition" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L436">
+<Export anchor="partition" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L436">
 
 ```typescript
 𝑜𝑏𝑗.partition(f: (k: K, v: V) => boolean): readonly [OrderedMap<K, V>, OrderedMap<K, V>]
@@ -609,7 +609,7 @@ This runs in O(n) time.
 
 </Remarks>
 
-<Export anchor="mapValues" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L463">
+<Export anchor="mapValues" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L463">
 
 ```typescript
 𝑜𝑏𝑗.mapValues<V2>(f: (v: V, k: K) => V2): OrderedMap<K, V2>
@@ -639,7 +639,7 @@ This runs in O(n) time.
 
 </Remarks>
 
-<Export anchor="collectValues" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L489">
+<Export anchor="collectValues" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L489">
 
 ```typescript
 𝑜𝑏𝑗.collectValues<V2>(f: (v: V, k: K) => V2 | null | undefined): OrderedMap<K, V2>
@@ -670,7 +670,7 @@ This runs in O(n) time.
 
 </Remarks>
 
-<Export anchor="filter" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L510">
+<Export anchor="filter" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L510">
 
 ```typescript
 𝑜𝑏𝑗.filter(f: (v: V, k: K) => boolean): OrderedMap<K, V>
@@ -696,7 +696,7 @@ This runs in O(n) time.
 
 </Remarks>
 
-<Export anchor="split" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L531">
+<Export anchor="split" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L531">
 
 ```typescript
 𝑜𝑏𝑗.split(k: K): {
@@ -726,7 +726,7 @@ This runs in time O(log n) so is efficient.
 
 </Remarks>
 
-<Export anchor="transform" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L553">
+<Export anchor="transform" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L553">
 
 ```typescript
 𝑜𝑏𝑗.transform<U>(f: (s: OrderedMap<K, V>) => U): U
@@ -751,7 +751,7 @@ temporary variable.
 
 ### Min/Max Keys
 
-<Export anchor="lookupMin" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L564">
+<Export anchor="lookupMin" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L564">
 
 ```typescript
 𝑜𝑏𝑗.lookupMin(): readonly [K, V] | undefined
@@ -772,7 +772,7 @@ In O(log n) time, find the minimum key.  Returns undefined if the OrderedMap is 
 
 </Remarks>
 
-<Export anchor="lookupMax" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L576">
+<Export anchor="lookupMax" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L576">
 
 ```typescript
 𝑜𝑏𝑗.lookupMax(): readonly [K, V] | undefined
@@ -793,7 +793,7 @@ In O(log n) time, find the maximum key.  Returns undefined if the OrderedMap is 
 
 </Remarks>
 
-<Export anchor="deleteMin" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L588">
+<Export anchor="deleteMin" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L588">
 
 ```typescript
 𝑜𝑏𝑗.deleteMin(): OrderedMap<K, V>
@@ -814,7 +814,7 @@ In O(log n) time, find and remove the minimum key.
 
 </Remarks>
 
-<Export anchor="deleteMax" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L601">
+<Export anchor="deleteMax" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L601">
 
 ```typescript
 𝑜𝑏𝑗.deleteMax(): OrderedMap<K, V>
@@ -835,7 +835,7 @@ In O(log n) time, find and remove the maximum key.
 
 </Remarks>
 
-<Export anchor="minView" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L616">
+<Export anchor="minView" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L616">
 
 ```typescript
 𝑜𝑏𝑗.minView():
@@ -860,7 +860,7 @@ undefined is returned.
 
 </Remarks>
 
-<Export anchor="maxView" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L636">
+<Export anchor="maxView" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L636">
 
 ```typescript
 𝑜𝑏𝑗.maxView():
@@ -887,7 +887,7 @@ undefined is returned.
 
 ### Indexing
 
-<Export anchor="indexOf" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L657">
+<Export anchor="indexOf" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L657">
 
 ```typescript
 𝑜𝑏𝑗.indexOf(k: K): number
@@ -911,7 +911,7 @@ Runs in time O(log n)
 
 </Remarks>
 
-<Export anchor="getByIndex" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L671">
+<Export anchor="getByIndex" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L671">
 
 ```typescript
 𝑜𝑏𝑗.getByIndex(idx: number): readonly [K, V] | undefined
@@ -935,7 +935,7 @@ Runs in time O(log n)
 
 </Remarks>
 
-<Export anchor="take" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L687">
+<Export anchor="take" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L687">
 
 ```typescript
 𝑜𝑏𝑗.take(count: number): OrderedMap<K, V>
@@ -961,7 +961,7 @@ Runs in time O(log n)
 
 </Remarks>
 
-<Export anchor="drop" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L707">
+<Export anchor="drop" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L707">
 
 ```typescript
 𝑜𝑏𝑗.drop(count: number): OrderedMap<K, V>
@@ -986,7 +986,7 @@ Runs in time O(log n)
 
 </Remarks>
 
-<Export anchor="setByIndex" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L726">
+<Export anchor="setByIndex" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L726">
 
 ```typescript
 𝑜𝑏𝑗.setByIndex(idx: number, v: V): OrderedMap<K, V>
@@ -1010,7 +1010,7 @@ Runs in time O(log n)
 
 </Remarks>
 
-<Export anchor="deleteByIndex" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L745">
+<Export anchor="deleteByIndex" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L745">
 
 ```typescript
 𝑜𝑏𝑗.deleteByIndex(idx: number): OrderedMap<K, V>
@@ -1034,7 +1034,7 @@ Runs in time O(log n)
 
 </Remarks>
 
-<Export anchor="alterByIndex" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L765">
+<Export anchor="alterByIndex" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L765">
 
 ```typescript
 𝑜𝑏𝑗.alterByIndex(idx: number, f: (key: K, existing: V) => V | undefined): OrderedMap<K, V>
@@ -1061,7 +1061,7 @@ Runs in time O(log n)
 
 ### Bulk Modification
 
-<Export anchor="union" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L789">
+<Export anchor="union" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L789">
 
 ```typescript
 𝑜𝑏𝑗.union(
@@ -1093,7 +1093,7 @@ Runs in time O(m log(n/m)) where m is the size of the smaller map and n is the s
 
 </Remarks>
 
-<Export anchor="union2" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L815">
+<Export anchor="union2" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L815">
 
 ```typescript
 static union<K extends OrderedMapKey, V extends NotUndefined>(
@@ -1124,7 +1124,7 @@ then the OrderedMap object instance is returned unchanged.
 
 </Remarks>
 
-<Export anchor="intersection" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L850">
+<Export anchor="intersection" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L850">
 
 ```typescript
 𝑜𝑏𝑗.intersection(
@@ -1155,7 +1155,7 @@ Runs in time O(m log(n/m)) where m is the size of the smaller map and n is the s
 
 </Remarks>
 
-<Export anchor="intersection2" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L874">
+<Export anchor="intersection2" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L874">
 
 ```typescript
 static intersection<K extends OrderedMapKey, V extends NotUndefined>(
@@ -1184,7 +1184,7 @@ OrderedMap object instance is returned unchanged.
 
 </Remarks>
 
-<Export anchor="difference" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L909">
+<Export anchor="difference" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L909">
 
 ```typescript
 𝑜𝑏𝑗.difference<V2>(other: OrderedMap<K, V2>): OrderedMap<K, V>
@@ -1213,7 +1213,7 @@ Runs in time O(m log(n/m)) where m is the size of the smaller map and n is the s
 
 </Remarks>
 
-<Export anchor="symmetricDifference" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L929">
+<Export anchor="symmetricDifference" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L929">
 
 ```typescript
 𝑜𝑏𝑗.symmetricDifference(other: OrderedMap<K, V>): OrderedMap<K, V>
@@ -1238,7 +1238,7 @@ Runs in time O(m log(n/m)) where m is the size of the smaller map and n is the s
 
 </Remarks>
 
-<Export anchor="withoutKeys" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L950">
+<Export anchor="withoutKeys" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L950">
 
 ```typescript
 𝑜𝑏𝑗.withoutKeys(other: OrderedSet<K>): OrderedMap<K, V>
@@ -1264,7 +1264,7 @@ Runs in time O(m log(n/m)) where m is the size of the smaller map and n is the s
 
 </Remarks>
 
-<Export anchor="adjust" src="https://github.com/SeedTactics/immutable-collections/blob/9a8aebeb9db3aa08048dd17a4943c919cc5b6e13/src/api/orderedmap.ts#L992">
+<Export anchor="adjust" src="https://github.com/SeedTactics/immutable-collections/blob/73f51c1bb3f3eedd6819a870d999e6b14e38895f/src/api/orderedmap.ts#L992">
 
 ```typescript
 𝑜𝑏𝑗.adjust<V2>(
