@@ -888,4 +888,17 @@ describe("OrderedSet", () => {
     checkSetBalanceAndSize(currentSet);
     expectEqual(currentSet, jsMapCopy);
   });
+
+  it("Doesn't crash if undefined is passed", () => {
+    // The types prevent calling with undefined, but if it happens accidentially,
+    // it used to result in a stack overflow, but only the first time trying to compare two keys.
+    // Now it is just an error.
+    let imSet = OrderedSet.empty<number>();
+
+    imSet = imSet.add(4);
+
+    // Will fail since it will try to compare
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+    expect(() => imSet.add(undefined as any)).to.throw("cannot compare keys");
+  });
 });

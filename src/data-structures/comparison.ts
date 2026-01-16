@@ -276,6 +276,9 @@ export function mkComparisonConfig<K extends OrderedMapKey>(): ComparisonConfig<
       case "boolean":
         m.compare = boolCompare as unknown as (a: K, b: K) => number;
         return;
+
+      default:
+        throw new Error("cannot compare keys");
     }
   }
 
