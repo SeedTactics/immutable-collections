@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+- Better integration with vitest for more efficient equality comparisons.  No changes
+  to the implementations of the data structures themselves.
+- Give a proper error message if you accidentally pass undefined for a key.  The types
+  prevent this, but if you override the type system and pass undefined, the code will
+  now throw an error.
+
 ## 1.1.0 - 2026-01-08
 ### Added
 - Added indexing methods to OrderedMap and OrderedSet.  These operate on the map/set
