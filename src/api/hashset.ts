@@ -510,4 +510,4 @@ export class HashSet<T extends HashKey> {
     this.size = size;
   }
 }
-Object.defineProperty(HashSet.prototype, "@@__IMMUTABLE_KEYED__@@", { value: true });
+Object.defineProperty(HashSet.prototype, "@@__IMMUTABLE_SET__@@", { value: true });

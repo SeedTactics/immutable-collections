@@ -173,6 +173,7 @@ describe("Ordered Map", () => {
   it("has immutable keyed property", () => {
     const m = OrderedMap.empty<number, string>().set(2, "2");
     expect(m).to.have.a.property("@@__IMMUTABLE_KEYED__@@");
+    expect(m).to.have.a.property("@@__IMMUTABLE_ORDERED__@@");
   });
 
   it("creates a string key map", () => {

@@ -94,7 +94,8 @@ describe("OrderedSet", () => {
 
   it("has immutable keyed property", () => {
     const m = OrderedSet.empty<number>().add(2);
-    expect(m).to.have.a.property("@@__IMMUTABLE_KEYED__@@");
+    expect(m).to.have.a.property("@@__IMMUTABLE_SET__@@");
+    expect(m).to.have.a.property("@@__IMMUTABLE_ORDERED__@@");
   });
 
   it("creates a string set", () => {

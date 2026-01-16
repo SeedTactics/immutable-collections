@@ -739,4 +739,5 @@ export class OrderedSet<T extends OrderedMapKey> {
   }
 }
 
-Object.defineProperty(OrderedSet.prototype, "@@__IMMUTABLE_KEYED__@@", { value: true });
+Object.defineProperty(OrderedSet.prototype, "@@__IMMUTABLE_SET__@@", { value: true });
+Object.defineProperty(OrderedSet.prototype, "@@__IMMUTABLE_ORDERED__@@", { value: true });

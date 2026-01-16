@@ -84,7 +84,7 @@ describe("HashSet", () => {
 
   it("has immutable keyed property", () => {
     const m = HashSet.empty<number>().add(2);
-    expect(m).to.have.a.property("@@__IMMUTABLE_KEYED__@@");
+    expect(m).to.have.a.property("@@__IMMUTABLE_SET__@@");
   });
 
   it("creates a string set", () => {

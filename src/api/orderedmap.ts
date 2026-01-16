@@ -1011,3 +1011,4 @@ export class OrderedMap<K extends OrderedMapKey, V> {
 }
 
 Object.defineProperty(OrderedMap.prototype, "@@__IMMUTABLE_KEYED__@@", { value: true });
+Object.defineProperty(OrderedMap.prototype, "@@__IMMUTABLE_ORDERED__@@", { value: true });
