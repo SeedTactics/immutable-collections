@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 1.1.0 - 2026-01-08
 ### Added
 - Added indexing methods to OrderedMap and OrderedSet.  These operate on the map/set
   as if it was a sorted list, allowing you to lookup or edit the map using indexes,
